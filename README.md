@@ -15,15 +15,13 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 4. 保持这个黑色窗口打开；先在本机浏览器打开 `http://127.0.0.1:8787`，也可以用同一 Wi-Fi 下的手机、平板或其他电脑打开窗口显示的局域网地址。
 5. 在网页内点击“自动扫描”，查看 USB、AT 口、SIM、信号、网络和短信状态。
 
-普通启动方式默认是**只读模式**，不会改 APN、USB 模式、eSIM Profile 或模块配置。发送短信、eSIM 下载/切换和新模块改造分别需要从对应的专用启动文件开启，并且仍会要求在网页中输入确认词。
+现在只需要双击一个 `Start-Web-Console.cmd`。网页会显示模块状态、eSIM 管理、短信发送和原始模块设置；所有会写入卡片或模块的操作仍必须在网页中输入确认词。
 ### 启动文件说明
 
-- `Start-Web-Console.cmd`：普通入口，只读查看模块、网络、短信和 eSIM 状态。
-- `Start-Web-Console-Management.cmd`：日常管理入口，统一处理 eSIM 的启用/停用、下载自己购买的 `LPA:1$...` 套餐、处理 eSIM 通知，以及手动发送短信。每次写入仍需网页确认；短信必须手动填写号码和内容，运营商可能收费；不提供删除 Profile。
-- `Start-Web-Console-Original-Module-Setup.cmd`：仅用于实际扫描为 `2CA3:4006` 的兼容原始模块，按两次确认完成 USB 网卡模式设置。已经正常工作的模块不要使用。
+只保留 `Start-Web-Console.cmd`。双击后在网页里完成查看状态、eSIM Profile 启用/停用、下载自己购买的 `LPA:1$...` 套餐、处理 eSIM 通知、手动发送短信，以及兼容原始模块的 USB 网卡设置。短信必须手动填写号码和内容，运营商可能收费；eSIM 下载、切换和原始模块设置均有额外确认；不提供删除 Profile。
 ### 新模块怎么开始
 
-如果设备最初识别为 `2CA3:4006`，请使用 `Start-Web-Console-Original-Module-Setup.cmd`。先执行只读检查，再按网页提示确认。程序会先保存该模块返回的原始 USB 配置，再进行 VID/PID 与 USB 网卡模式的两阶段设置；已经正常工作的模块不要走这条流程。
+如果设备最初识别为 `2CA3:4006`，仍然使用 `Start-Web-Console.cmd`。先执行只读检查，再按网页提示确认。程序会先保存该模块返回的原始 USB 配置，再进行 VID/PID 与 USB 网卡模式的两阶段设置；已经正常工作的模块不要走这条流程。
 
 ### 使用提醒
 
@@ -57,7 +55,7 @@ For eSIM functions, run `Install-eSIM-Tools.cmd` once. It downloads the latest o
 
 This is for a compatible module detected as USB `2CA3:4006`, not for a module that already works as `2C7C:0125`.
 
-1. Use `Start-Web-Console-Original-Module-Setup.cmd` instead of the normal launcher.
+1. Use the normal `Start-Web-Console.cmd` launcher.
 2. In **Original Module Setup**, select **Inspect Original USB**. This only sends read-only `AT` queries and records nothing on the modem.
 3. If Windows cannot open the original device, bind its original USB interface to the WinUSB driver and inspect again. Windows does not permit normal serial drivers and raw USB access to own the same interface at once.
 4. Select **Convert to Quectel** and type `CONVERT`. The program reads that exact module's `AT+QCFG="usbcfg"` reply, preserves its existing parameter layout, changes only the USB VID/PID to `2C7C:0125`, and restarts the module.
@@ -70,10 +68,7 @@ The converter is deliberately two-stage. It will not change a module in the norm
 
 | File | What it allows |
 | --- | --- |
-| `Start-Web-Console.cmd` | Read-only diagnostics, profile list, SMS inbox, and safe AT queries. |
-| `Start-Web-Console-Management.cmd` | Manage eSIM profiles and manually confirmed SMS sending. Carrier charges may apply. |
-| `Start-Web-Console-Original-Module-Setup.cmd` | The two explicit writes used only for an untouched compatible module. |
-Each write action is additionally confirmed in the browser. Activation codes and SMS text are not stored by the app; activation codes are redacted from API output.
+| `Start-Web-Console.cmd` | One local console for diagnostics, eSIM management, SMS, and the separately confirmed original-module setup flow. |`r`nEach write action is additionally confirmed in the browser. Activation codes and SMS text are not stored by the app; activation codes are redacted from API output.
 
 ## Security
 
