@@ -16,6 +16,12 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 5. 在网页内点击“自动扫描”，查看 USB、AT 口、SIM、信号、网络和短信状态。
 
 普通启动方式默认是**只读模式**，不会改 APN、USB 模式、eSIM Profile 或模块配置。发送短信、eSIM 下载/切换和新模块改造分别需要从对应的专用启动文件开启，并且仍会要求在网页中输入确认词。
+### 启动文件说明
+
+- `Start-Web-Console.cmd`：普通入口，只读查看模块、网络、短信和 eSIM 状态。
+- `Start-Web-Console-eSIM-Management.cmd`：统一管理已有 eSIM Profile 的启用/停用，以及下载自己购买的 `LPA:1$...` 套餐。每次写入仍需网页确认，不提供删除 Profile。
+- `Start-Web-Console-SMS-Send.cmd`：开放网页内的短信发送。必须手动填写收件号码和内容；不会自动发送或转发短信，运营商可能收费。
+- `Start-Web-Console-Original-Module-Setup.cmd`：仅用于实际扫描为 `2CA3:4006` 的兼容原始模块，按两次确认完成 USB 网卡模式设置。已经正常工作的模块不要使用。
 
 ### 新模块怎么开始
 
