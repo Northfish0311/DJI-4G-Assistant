@@ -3,6 +3,8 @@
 A native Windows control hub for the first-generation DJI Cellular Dongle and compatible Baiwang / QDC507 / Quectel USB LTE modules. It runs on the Windows PC and provides a bilingual Chinese/English web console. Use it directly in a browser on the Windows PC, or optionally from a phone, tablet, or another computer on the same LAN.
 
 It is a local tool, not a shared website. Every computer starts its own local address, such as `http://192.168.x.x:8787`.
+
+[详细中文使用说明](docs/使用说明.md)
 ## 中文说明
 
 **DJI RoamDock for Windows** 是一个运行在 Windows 电脑上的本地管理页，面向 DJI Cellular Dongle 一代，以及兼容的 Baiwang / QDC507 / Quectel USB 4G 模块。电脑插上模块后，Windows 本机浏览器可直接打开；手机、平板或同一 Wi-Fi 下的其他电脑也可以打开电脑自动显示的局域网地址进行管理。
@@ -26,7 +28,7 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 ### 使用提醒
 
 - 这是局域网工具，不是公用网站；不要把端口暴露到公网。
-- 共享 Wi-Fi 下请设置 `CONSOLE_TOKEN`。
+- 家里自用 Wi-Fi 一般不需要设置密码；公司、酒店或公共 Wi-Fi 才建议按 [详细中文使用说明](docs/使用说明.md#地址与安全) 设置网页访问密码。
 - eSIM 激活码、短信和模块标识属于敏感信息，请不要发到公开 Issue 或截图中。
 
 ## Capabilities
