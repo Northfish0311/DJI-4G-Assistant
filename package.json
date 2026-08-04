@@ -1,0 +1,24 @@
+{
+  "name": "dji-cellular-dongle-windows-hub",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Native Windows hub for DJI Cellular Dongle, Quectel USB LTE modules, eSIM profiles, SMS, and original-module setup.",
+  "main": "web/server.js",
+  "scripts": {
+    "start": "node web/server.js",
+    "check": "node --check web/server.js && node --check web/original-usb.js && node --check web/public/app.js"
+  },
+  "keywords": [
+    "dji",
+    "quectel",
+    "euicc",
+    "esim",
+    "lte",
+    "modem",
+    "ipad"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "usb": "2.16.0"
+  }
+}

@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>DJI Cellular Dongle Windows Hub</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">DJI Cellular Dongle / Quectel / eUICC</p>
+        <h1 data-i18n="title">DJI Cellular Dongle Windows Hub</h1>
+        <p id="hostLine" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
+      </div>
+      <div class="top-actions">
+        <div class="status-pill" id="statusPill" data-i18n="idle">Idle</div>
+        <button id="languageBtn" class="secondary">中文</button>
+        <button id="autoScanBtn" data-i18n="autoScan">Auto Scan</button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <nav class="rail" aria-label="Sections">
+        <button class="nav-btn active" data-target="overview" data-i18n="overview">Overview</button>
+        <button class="nav-btn" data-target="euicc" data-i18n="esim">eSIM</button>
+        <button class="nav-btn" data-target="sms" data-i18n="sms">SMS</button>
+        <button class="nav-btn" data-target="atlab" data-i18n="atLab">AT Lab</button>
+        <button class="nav-btn" data-target="system" data-i18n="system">System</button>
+      </nav>
+
+      <section class="content">
+        <section id="overview" class="view active">
+          <div class="hero-panel">
+            <div>
+              <p class="eyebrow" data-i18n="currentDevice">Current Device</p>
+              <h2 id="deviceTitle" data-i18n="waitingScan">Waiting for scan</h2>
+              <p id="deviceSubtitle" data-i18n="insertScan">Insert the dongle, then run Auto Scan.</p>
+            </div>
+            <div class="signal-ring">
+              <span id="signalValue">--</span>
+              <small data-i18n="csq">CSQ</small>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric"><span data-i18n="usb">USB</span><strong id="vidPid" data-i18n="unknown">Unknown</strong></article>
+            <article class="metric"><span data-i18n="atPort">AT Port</span><strong id="atPort" data-i18n="unknown">Unknown</strong></article>
+            <article class="metric"><span data-i18n="network">Network</span><strong id="netState" data-i18n="unknown">Unknown</strong></article>
+            <article class="metric"><span data-i18n="sim">SIM</span><strong id="simState" data-i18n="unknown">Unknown</strong></article>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="quickActions">Quick Actions</h2></div>
+            <div class="action-grid">
+              <button data-action="device-check" data-i18n="deviceCheck">Device Check</button>
+              <button data-action="find-at" data-i18n="findAt">Find AT</button>
+              <button data-action="module-status" data-i18n="moduleStatus">Module Status</button>
+              <button data-action="lpac-profiles" data-i18n="esimProfiles">eSIM Profiles</button>
+              <button data-action="windows-network" data-i18n="windowsNetwork">Windows Network</button>
+            </div>
+          </div>
+
+          <div class="panel setup-panel">
+            <div class="panel-head"><h2 data-i18n="stockSetup">Original Module Setup</h2></div>
+            <div class="info-list">
+              <p data-i18n="stockSetupDescription">For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.</p>
+            </div>
+            <div class="panel-actions">
+              <button data-action="stock-module-probe" class="secondary" data-i18n="stockProbe">Inspect Original USB</button>
+              <button id="stockConvertBtn" data-stock-action data-i18n="stockConvert">Convert to Quectel</button>
+              <button id="stockUsbnetBtn" data-stock-action data-i18n="stockUsbnet">Finish USB Ethernet</button>
+            </div>
+            <p class="hint" id="stockSetupHint" data-i18n="stockSetupLocked">Setup writes are locked. Use the dedicated original-module setup launcher to enable them.</p>
+          </div>
+        </section>
+
+        <section id="euicc" class="view">
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="esimProfiles">eSIM Profiles</h2><button data-action="lpac-profiles" data-i18n="refresh">Refresh</button></div>
+            <div id="profilesList" class="profile-list empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
+          </div>
+
+          <div class="panel danger-panel">
+            <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
+            <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
+            <p class="hint" id="profileActionsHint" data-i18n="profileWritesLocked">Read-only mode: profile writes are locked.</p>
+          </div>
+
+          <div class="panel danger-panel">
+            <div class="panel-head"><h2 data-i18n="profileDownload">Download New Profile</h2></div>
+            <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
+            <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
+            <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="profileNotifications">Profile Notifications</h2><button data-action="lpac-notifications" data-i18n="refresh">Refresh</button></div>
+            <div id="notificationsList" class="notification-list empty" data-i18n="noNotifications">No notification data loaded.</div>
+            <div class="panel-actions"><button id="processNotificationsBtn" class="secondary" data-profile-notifications data-i18n="processNotifications">Process Pending Notifications</button></div>
+            <p class="hint" id="profileNotificationsHint" data-i18n="profileNotificationsLocked">Notification processing is locked on this local server.</p>
+          </div>
+        </section>
+
+        <section id="sms" class="view">
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="smsInbox">SMS Inbox</h2><button data-action="sms-list" data-i18n="readSms">Read SMS</button></div>
+            <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2><button id="smsPollingBtn" class="secondary" data-i18n="startPolling">Auto Refresh</button></div>
+            <div class="form-grid">
+              <div class="field-row"><label for="smsNumberInput" data-i18n="recipient">Recipient</label><input id="smsNumberInput" inputmode="tel" autocomplete="tel" placeholder="+447700900123"></div>
+              <div class="field-row"><label for="smsMessageInput" data-i18n="message">Message</label><textarea id="smsMessageInput" rows="3" maxlength="480" autocomplete="off"></textarea></div>
+            </div>
+            <div class="panel-actions"><button id="sendSmsBtn" data-sms-send data-i18n="sendSms">Send SMS</button></div>
+            <p class="hint" id="smsSendHint" data-i18n="smsSendLocked">SMS sending is locked on this local server.</p>
+          </div>
+        </section>
+
+        <section id="atlab" class="view">
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="safeAtConsole">Safe AT Console</h2><button data-action="baseline" data-i18n="baseline">Baseline</button></div>
+            <div class="at-row"><input id="atInput" value="AT+CSQ" autocomplete="off"><button id="sendAtBtn" data-i18n="send">Send</button></div>
+            <div class="preset-row">
+              <button class="secondary preset" data-command="ATI">ATI</button>
+              <button class="secondary preset" data-command="AT+CSQ" data-i18n="signal">Signal</button>
+              <button class="secondary preset" data-command="AT+CEREG?">CEREG</button>
+              <button class="secondary preset" data-command="AT+QNWINFO" data-i18n="network">Network</button>
+              <button class="secondary preset" data-command="AT+QCFG=&quot;usbnet&quot;">usbnet</button>
+            </div>
+            <p class="hint" data-i18n="readonlyAtHint">Read-only AT commands are allowed. Configuration writes remain blocked by default.</p>
+          </div>
+        </section>
+
+        <section id="system" class="view">
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="howWorks">How It Works</h2></div>
+            <div class="info-list">
+              <p><strong data-i18n="githubPage">GitHub page:</strong> project documentation and the UI source.</p>
+              <p><strong data-i18n="localConsole">Local console:</strong> each computer runs its own server; iPad opens that computer's LAN address.</p>
+              <p><strong data-i18n="hardwareScope">Hardware scope:</strong> this console only controls the DJI / Quectel module plugged into this computer.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head"><h2 data-i18n="connection">Connection</h2><button data-action="health" data-i18n="refresh">Refresh</button></div>
+            <div class="field-row" id="tokenRow"><label for="tokenInput" data-i18n="consoleToken">Console Token</label><input id="tokenInput" type="password" autocomplete="current-password"></div>
+            <div class="field-row"><label for="portInput" data-i18n="atPort">AT Port</label><input id="portInput" value="COM5" autocomplete="off"></div>
+            <div class="action-grid">
+              <button data-action="ports" data-i18n="ports">Ports</button>
+              <button data-action="device-check" data-i18n="device">Device</button>
+              <button data-action="find-at" data-i18n="findAt">Find AT</button>
+              <button data-action="module-status" data-i18n="module">Module</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="panel-head"><h2 data-i18n="liveLog">Live Log</h2><button id="clearBtn" class="secondary" data-i18n="clear">Clear</button></div>
+          <pre id="output"></pre>
+        </section>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

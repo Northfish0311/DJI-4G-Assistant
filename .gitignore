@@ -1,0 +1,27 @@
+# Local downloads and binaries
+*.zip
+*.7z
+*.tar.gz
+*.msi
+*.exe
+*.dll
+
+# Logs and temporary files
+*.log
+log/
+tmp/
+temp/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Keep private test data out by default
+private/
+secrets/
+*.token
+*.env
+.local/
+node_modules/
