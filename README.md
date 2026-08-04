@@ -1,5 +1,7 @@
 # DJI RoamDock for Windows
 
+> **完整版 / Full version：** 适合新模块、原始 `2CA3:4006` 模块，或需要模块改造、短信和完整诊断的用户。包含详细中文说明。
+
 A native Windows control hub for the first-generation DJI Cellular Dongle and compatible Baiwang / QDC507 / Quectel USB LTE modules. It runs on the Windows PC and provides a bilingual Chinese/English web console. Use it directly in a browser on the Windows PC, or optionally from a phone, tablet, or another computer on the same LAN.
 
 It is a local tool, not a shared website. Every computer starts its own local address, such as `http://192.168.x.x:8787`.
@@ -66,13 +68,15 @@ This is for a compatible module detected as USB `2CA3:4006`, not for a module th
 
 The converter is deliberately two-stage. It will not change a module in the normal launcher, will not use a fixed copied parameter count, and writes a local pre-change baseline to `.local/baselines/` before completing conversion. That directory is ignored by Git.
 
-## eSIM and SMS Launchers
+## eSIM and SMS Launchers / eSIM 与短信入口
 
 | File | What it allows |
 | --- | --- |
-| `Start-Web-Console.cmd` | One local console for diagnostics, eSIM management, SMS, and the separately confirmed original-module setup flow. |`r`nEach write action is additionally confirmed in the browser. Activation codes and SMS text are not stored by the app; activation codes are redacted from API output.
+| `Start-Web-Console.cmd` | One local console for diagnostics, eSIM management, SMS, and the separately confirmed original-module setup flow. |
 
-## Security
+**中文说明：** 项目只保留一个 `Start-Web-Console.cmd`。双击后网页可以查看模块状态、管理 eSIM、读取和手动发送短信；当检测到兼容原始模块时，也会显示单独确认的原始模块设置流程。每次写入仍需在网页中确认。激活码和短信内容不被应用保存，接口输出会隐藏激活码。
+
+## Security / 安全说明
 
 - Keep the console on a trusted LAN. It can reveal eSIM identifiers and SMS.
 - For a shared Wi-Fi, set a token before launch: `$env:CONSOLE_TOKEN = "a-long-random-password"`.
@@ -80,7 +84,9 @@ The converter is deliberately two-stage. It will not change a module in the norm
 - Do not use the original-module setup flow on a module which already has a working configuration.
 - No eSIM delete action is exposed by the web page.
 
-## Manual Commands
+**中文说明：** 家里自用 Wi-Fi 一般可以直接使用。公司、酒店或公共 Wi-Fi 时，建议先在 PowerShell 运行 `$env:CONSOLE_TOKEN = "你自己的密码"`，再运行 `.\Start-Web-Console.cmd`，并在网页的“Console Token / 控制台密码”输入同一密码。不要把局域网地址暴露到公网或无密码的公网穿透服务。已经能正常使用的模块不要运行原始模块设置；网页没有删除 eSIM Profile 的功能。
+
+## Manual Commands / 手动命令
 
 ```powershell
 npm install
@@ -88,12 +94,17 @@ npm run check
 npm start
 ```
 
-## Compatibility Notes
+**中文说明：** 这些是安装、检查和开发排错时的手动命令。普通用户直接双击 `Start-Web-Console.cmd` 即可，不必输入这些命令。
+
+## Compatibility Notes / 兼容性说明
 
 The original-module path is designed for the observed Baiwang / QDC507-style `2CA3:4006` device only. It does not claim to support every DJI-branded LTE accessory. Raw USB access on Windows depends on a compatible WinUSB binding; this is a Windows driver ownership requirement, not a modem configuration problem.
 
+**中文说明：** 原始模块设置只针对已观察到的 Baiwang / QDC507 风格 `2CA3:4006` 设备，不代表所有 DJI 标识的 LTE 配件都能使用。Windows 需要兼容的 WinUSB 驱动绑定才能访问原始 USB 接口，这是 Windows 驱动占用规则，不等同于模块硬件损坏。
+
 The eSIM functions use [lpac](https://github.com/estkme-group/lpac). This project is independently implemented and does not include code from DJOneHub or VoHive.
 
+**中文说明：** eSIM 功能调用官方 `lpac` 工具。本项目独立实现，不包含 DJOneHub 或 VoHive 的代码。
 ## License
 
 MIT. See [LICENSE](LICENSE).
