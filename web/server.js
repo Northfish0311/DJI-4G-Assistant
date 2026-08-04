@@ -332,7 +332,7 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/health") {
     sendJson(res, 200, {
       ok: true,
-      name: "DJI Cellular Dongle Windows Hub",
+      name: "DJI RoamDock for Windows",
       time: new Date().toISOString(),
       host: os.hostname(),
       urls: localIps().map((ip) => `http://${ip}:${port}`),
@@ -654,7 +654,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`DJI Cellular Dongle Windows Hub running on http://localhost:${port}`);
+  console.log(`DJI RoamDock for Windows running on http://localhost:${port}`);
   console.log("");
   console.log("Open this on iPad Safari:");
   console.log(primaryConsoleUrl());

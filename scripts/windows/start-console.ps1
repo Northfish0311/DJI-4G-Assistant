@@ -30,7 +30,7 @@ function Test-Node {
 
 function Show-Intro {
   Clear-Host
-  Write-Host "DJI Cellular Dongle Windows Hub" -ForegroundColor Cyan
+  Write-Host "DJI RoamDock for Windows" -ForegroundColor Cyan
   Write-Host "=================" -ForegroundColor Cyan
   Write-Host ""
   Write-Host "1. Plug the DJI / Quectel dongle into this Windows computer."

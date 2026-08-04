@@ -1,4 +1,4 @@
-# DJI Cellular Dongle Windows Hub
+# DJI RoamDock for Windows
 
 A native Windows control hub for the first-generation DJI Cellular Dongle and compatible Baiwang / QDC507 / Quectel USB LTE modules. It runs on the Windows PC and provides a bilingual Chinese/English control page for an iPad, phone, or browser on the same LAN.
 

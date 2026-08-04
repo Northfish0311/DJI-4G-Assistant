@@ -7,7 +7,7 @@ const languageBtn = document.querySelector("#languageBtn");
 
 const copy = {
   en: {
-    title: "DJI Cellular Dongle Windows Hub", hostLocal: "Local control page for the module connected to this computer.",
+    title: "DJI RoamDock for Windows", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
     autoScan: "Auto Scan", switchToChinese: "中文", switchToEnglish: "English",
     overview: "Overview", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",

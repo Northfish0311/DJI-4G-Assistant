@@ -1,5 +1,5 @@
 {
-  "name": "dji-cellular-dongle-windows-hub",
+  "name": "dji-roamdock-windows",
   "version": "0.1.0",
   "private": false,
   "description": "Native Windows hub for DJI Cellular Dongle, Quectel USB LTE modules, eSIM profiles, SMS, and original-module setup.",
