@@ -332,7 +332,7 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/health") {
     sendJson(res, 200, {
       ok: true,
-      name: "DJI RoamDock for Windows",
+      name: "DJI RoamDock Pro for Windows",
       time: new Date().toISOString(),
       host: os.hostname(),
       urls: localIps().map((ip) => `http://${ip}:${port}`),
@@ -654,7 +654,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`DJI RoamDock for Windows running on http://localhost:${port}`);
+  console.log(`DJI RoamDock Pro for Windows running on http://localhost:${port}`);
   console.log("");
   console.log("Open this in any browser on this Windows PC, or from a trusted device on the same LAN:");
   console.log(primaryConsoleUrl());

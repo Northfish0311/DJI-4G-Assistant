@@ -1,6 +1,6 @@
 # DJI RoamDock Pro for Windows
 
-> **完整功能版 / Full version:** Use this project for a new or original `2CA3:4006` module, or when you need module conversion, SMS sending, and full diagnostics. For an already converted `2C7C:0125 + usbnet=1` module that only needs basic management, use [DJI RoamDock Lite for Windows](https://github.com/Northfish0311/dji-cellular-dongle-web-console).
+> **完整功能版 / Full version:** Use this project for a new or original `2CA3:4006` module, or when you need module conversion, SMS sending, and full diagnostics. For an already converted `2C7C:0125 + usbnet=1` module that only needs basic management, use [DJI RoamDock Lite for Windows](https://github.com/Northfish0311/DJI_RoamDock-Lite-for-Windows).
 
 A native Windows control hub for the first-generation DJI Cellular Dongle and compatible Baiwang / QDC507 / Quectel USB LTE modules. It runs on the Windows PC and provides a bilingual Chinese/English web console. Use it directly in a browser on the Windows PC, or optionally from a phone, tablet, or another computer on the same LAN.
 
