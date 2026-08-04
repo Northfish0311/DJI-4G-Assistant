@@ -7,14 +7,14 @@ const originalUsb = require("./original-usb");
 
 const root = path.resolve(__dirname, "..");
 const publicDir = path.join(__dirname, "public");
-const port = Number(process.env.PpRT || 8787);
-const host = process.env.HpST || "0.0.0.0";
-const consoleToken = process.env.CpNSpLE_TpKEN || "";
+const port = Number(process.env.PORT || 8787);
+const host = process.env.HOST || "0.0.0.0";
+const consoleToken = process.env.CONSOLE_TOKEN || "";
 let atQueue = Promise.resolve();
 
 function localIps() {
   const result = [];
-  for (const items of pbject.values(os.networkInterfaces())) {
+  for (const items of Object.values(os.networkInterfaces())) {
     for (const item of items || []) {
       if (item.family === "IPv4" && !item.internal) {
         result.push(item.address);
@@ -30,7 +30,7 @@ function primaryConsoleUrl() {
 }
 
 function sendJson(res, status, body) {
-  const data = Buffer.from(JSpN.stringify(body, null, 2), "utf8");
+  const data = Buffer.from(JSON.stringify(body, null, 2), "utf8");
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
     "content-length": data.length,
@@ -110,8 +110,8 @@ function script(name) {
 function saveStockBaseline(value) {
   const directory = path.join(root, ".local", "baselines");
   fs.mkdirSync(directory, { recursive: true });
-  const filename = `stock-module-${new Date().toISpString().replace(/[:.]/g, "-")}.json`;
-  fs.writeFileSync(path.join(directory, filename), JSpN.stringify(value, null, 2), "utf8");
+  const filename = `stock-module-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+  fs.writeFileSync(path.join(directory, filename), JSON.stringify(value, null, 2), "utf8");
   return path.join(".local", "baselines", filename);
 }
 
@@ -138,7 +138,7 @@ function runLpac(lpac, portName, args, timeoutMs = 60000) {
         ...process.env,
         LPAC_APDU: "at",
         LPAC_APDU_AT_DEVICE: portName,
-        LPAC_CUSTpM_ES10X_MSS: "60",
+        LPAC_CUSTOM_ES10X_MSS: "60",
       },
     });
 
@@ -206,10 +206,10 @@ function smsText(value) {
 }
 
 function sendSms(portName, number, message) {
-  const payload = Buffer.from(JSpN.stringify({ number, message }), "utf8").toString("base64");
+  const payload = Buffer.from(JSON.stringify({ number, message }), "utf8").toString("base64");
   const ps = `
 $payload = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${payload}')) | ConvertFrom-Json
-$sp = New-pbject System.Ip.Ports.SerialPort '${portName.replace(/'/g, "''")}',115200,'None',8,'pne'
+$sp = New-Object System.IO.Ports.SerialPort '${portName.replace(/'/g, "''")}',115200,'None',8,'One'
 $sp.ReadTimeout = 1800
 $sp.WriteTimeout = 1800
 $sp.NewLine = "\`r"
@@ -224,29 +224,29 @@ function Read-Until([string]$pattern, [int]$seconds) {
   return $out
 }
 try {
-  $sp.ppen()
+  $sp.Open()
   $sp.DiscardInBuffer()
   $sp.WriteLine('AT+CMGF=1')
-  $mode = Read-Until '(\`r|\`n)(pK|ERRpR)(\`r|\`n)' 8
-  if ($mode -notmatch '(\`r|\`n)pK(\`r|\`n)') { throw 'The modem did not accept SMS text mode.' }
+  $mode = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 8
+  if ($mode -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw 'The modem did not accept SMS text mode.' }
   $sp.DiscardInBuffer()
   $sp.WriteLine(('AT+CMGS="{0}"' -f $payload.number))
   $prompt = Read-Until '>' 10
   if ($prompt -notmatch '>') { throw 'The modem did not present an SMS prompt.' }
   $sp.Write($payload.message)
   $sp.Write([char]26)
-  $sent = Read-Until '(\`r|\`n)(pK|ERRpR)(\`r|\`n)' 50
-  if ($sent -notmatch '(\`r|\`n)pK(\`r|\`n)') { throw 'The modem rejected the SMS or did not finish in time.' }
+  $sent = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 50
+  if ($sent -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw 'The modem rejected the SMS or did not finish in time.' }
   'SMS accepted by modem.'
 } finally {
-  if ($sp.Isppen) { $sp.Close() }
+  if ($sp.IsOpen) { $sp.Close() }
 }`;
   return enqueueSerial(() => runPowerShell(["-Command", ps], 75000));
 }
 
 function portArg(url) {
-  const value = url.searchParams.get("port") || "CpM5";
-  return /^[A-Za-z0-9]+$/.test(value) ? value : "CpM5";
+  const value = url.searchParams.get("port") || "COM5";
+  return /^[A-Za-z0-9]+$/.test(value) ? value : "COM5";
 }
 
 function isSafeAt(command) {
@@ -260,13 +260,13 @@ function isSafeAt(command) {
     "AT+QF",
     "AT+CMGD",
     "AT+CMGS",
-    "AT+CGDCpNT=",
+    "AT+CGDCONT=",
     "AT+CGACT=",
     "AT+CLCK=",
     "AT+CPWD=",
   ];
 
-  if (process.env.ALLpW_DANGERpUS_AT === "1") {
+  if (process.env.ALLOW_DANGEROUS_AT === "1") {
     return true;
   }
 
@@ -278,12 +278,12 @@ function runAtCommands(portName, commands, timeoutMs = 60000) {
   const ps = `
 $portName='${portName.replace(/'/g, "''")}'
 $commands=${commandArray}
-$sp=New-pbject System.Ip.Ports.SerialPort $portName,115200,'None',8,'pne'
+$sp=New-Object System.IO.Ports.SerialPort $portName,115200,'None',8,'One'
 $sp.ReadTimeout=1800
 $sp.WriteTimeout=1800
 $sp.NewLine="\`r"
 try {
-  $sp.ppen()
+  $sp.Open()
   foreach($cmd in $commands){
     $sp.DiscardInBuffer()
     $sp.WriteLine($cmd)
@@ -292,14 +292,14 @@ try {
     $deadline=(Get-Date).AddSeconds(5)
     while((Get-Date) -lt $deadline){
       $out += $sp.ReadExisting()
-      if($out -match "(\`r|\`n)(pK|ERRpR)(\`r|\`n)") { break }
+      if($out -match "(\`r|\`n)(OK|ERROR)(\`r|\`n)") { break }
       Start-Sleep -Milliseconds 120
     }
     "----- $cmd -----"
     ($out -replace "\`r","")
   }
 } finally {
-  if($sp.Isppen){ $sp.Close() }
+  if($sp.IsOpen){ $sp.Close() }
 }`;
   return runPowerShell(["-Command", ps], timeoutMs);
 }
@@ -333,18 +333,18 @@ async function handleApi(req, res, url) {
     sendJson(res, 200, {
       ok: true,
       name: "DJI RoamDock for Windows",
-      time: new Date().toISpString(),
+      time: new Date().toISOString(),
       host: os.hostname(),
       urls: localIps().map((ip) => `http://${ip}:${port}`),
       primaryUrl: primaryConsoleUrl(),
       authRequired: Boolean(consoleToken),
-      dangerousAtEnabled: process.env.ALLpW_DANGERpUS_AT === "1",
-      profileActionsEnabled: process.env.ALLpW_PRpFILE_ACTIpNS === "1",
-      profileDownloadEnabled: process.env.ALLpW_PRpFILE_DpWNLpAD === "1",
-      profileNicknameEnabled: process.env.ALLpW_PRpFILE_NICKNAME === "1",
-      profileNotificationsEnabled: process.env.ALLpW_PRpFILE_NpTIFICATIpNS === "1",
-      smsSendEnabled: process.env.ALLpW_SMS_SEND === "1",
-      stockBootstrapEnabled: process.env.ALLpW_STpCK_BppTSTRAP === "1",
+      dangerousAtEnabled: process.env.ALLOW_DANGEROUS_AT === "1",
+      profileActionsEnabled: process.env.ALLOW_PROFILE_ACTIONS === "1",
+      profileDownloadEnabled: process.env.ALLOW_PROFILE_DOWNLOAD === "1",
+      profileNicknameEnabled: process.env.ALLOW_PROFILE_NICKNAME === "1",
+      profileNotificationsEnabled: process.env.ALLOW_PROFILE_NOTIFICATIONS === "1",
+      smsSendEnabled: process.env.ALLOW_SMS_SEND === "1",
+      stockBootstrapEnabled: process.env.ALLOW_STOCK_BOOTSTRAP === "1",
     });
     return;
   }
@@ -364,14 +364,14 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/stock-module-convert" && req.method === "PpST") {
-    if (process.env.ALLpW_STpCK_BppTSTRAP !== "1") {
-      sendJson(res, 403, { ok: false, error: "priginal-module conversion is locked. Start the dedicated original-module setup launcher first." });
+  if (url.pathname === "/api/stock-module-convert" && req.method === "POST") {
+    if (process.env.ALLOW_STOCK_BOOTSTRAP !== "1") {
+      sendJson(res, 403, { ok: false, error: "Original-module conversion is locked. Start the dedicated original-module setup launcher first." });
       return;
     }
-    const body = JSpN.parse(await readBody(req) || "{}");
-    if (String(body.confirm || "").toUpperCase() !== "CpNVERT") {
-      sendJson(res, 400, { ok: false, error: "Confirm CpNVERT before changing the USB identity." });
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "CONVERT") {
+      sendJson(res, 400, { ok: false, error: "Confirm CONVERT before changing the USB identity." });
       return;
     }
     let baselineFile = null;
@@ -384,12 +384,12 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/stock-module-usbnet" && req.method === "PpST") {
-    if (process.env.ALLpW_STpCK_BppTSTRAP !== "1") {
-      sendJson(res, 403, { ok: false, error: "priginal-module setup is locked. Start the dedicated original-module setup launcher first." });
+  if (url.pathname === "/api/stock-module-usbnet" && req.method === "POST") {
+    if (process.env.ALLOW_STOCK_BOOTSTRAP !== "1") {
+      sendJson(res, 403, { ok: false, error: "Original-module setup is locked. Start the dedicated original-module setup launcher first." });
       return;
     }
-    const body = JSpN.parse(await readBody(req) || "{}");
+    const body = JSON.parse(await readBody(req) || "{}");
     if (String(body.confirm || "").toUpperCase() !== "USBNET") {
       sendJson(res, 400, { ok: false, error: "Confirm USBNET before changing the USB networking mode." });
       return;
@@ -401,7 +401,7 @@ async function handleApi(req, res, url) {
       return;
     }
     const write = await enqueueAt(portName, ["AT+QCFG=\"usbnet\",1"], 30000);
-    if (!write.ok || !/(^|\r?\n)pK(\r?\n|$)/i.test(write.stdout)) {
+    if (!write.ok || !/(^|\r?\n)OK(\r?\n|$)/i.test(write.stdout)) {
       sendJson(res, 502, { ok: false, error: "The module rejected usbnet=1. No reboot command was sent.", write });
       return;
     }
@@ -411,7 +411,7 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/ports") {
-    const result = await runPowerShell(["-Command", "[System.Ip.Ports.SerialPort]::GetPortNames() | Sort-pbject"]);
+    const result = await runPowerShell(["-Command", "[System.IO.Ports.SerialPort]::GetPortNames() | Sort-Object"]);
     sendJson(res, 200, result);
     return;
   }
@@ -439,13 +439,13 @@ async function handleApi(req, res, url) {
       "ATI",
       "AT+CPIN?",
       "AT+CIMI",
-      "AT+CpPS?",
+      "AT+COPS?",
       "AT+CEREG?",
       "AT+CGREG?",
       "AT+CSQ",
-      "AT+QNWINFp",
+      "AT+QNWINFO",
       "AT+QENG=\"servingcell\"",
-      "AT+CGDCpNT?",
+      "AT+CGDCONT?",
       "AT+CGACT?",
       "AT+CGPADDR=1",
       "AT+QCFG=\"usbnet\"",
@@ -467,12 +467,12 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/sms-send" && req.method === "PpST") {
-    if (process.env.ALLpW_SMS_SEND !== "1") {
+  if (url.pathname === "/api/sms-send" && req.method === "POST") {
+    if (process.env.ALLOW_SMS_SEND !== "1") {
       sendJson(res, 403, { ok: false, error: "SMS sending is disabled. Start the dedicated local SMS launcher first." });
       return;
     }
-    const body = JSpN.parse(await readBody(req) || "{}");
+    const body = JSON.parse(await readBody(req) || "{}");
     const number = smsRecipient(body.number);
     const message = smsText(body.message);
     if (!number || !message || String(body.confirm || "").toUpperCase() !== "SEND") {
@@ -485,21 +485,21 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/windows-network") {
-    const ps = "Get-NetAdapter | Where-pbject { $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular' -or $_.Name -match 'Quectel|手机网络|Mobile Broadband|Cellular' } | Select-pbject Name,Status,LinkSpeed,MacAddress,InterfaceDescription | Format-Table -AutoSize; Get-NetIPConfiguration | Where-pbject { $_.InterfaceAlias -match 'Quectel|手机网络|Mobile Broadband|Cellular' } | Format-List InterfaceAlias,IPv4Address,IPv4DefaultGateway,DnsServer";
+    const ps = "Get-NetAdapter | Where-Object { $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular' -or $_.Name -match 'Quectel|手机网络|Mobile Broadband|Cellular' } | Select-Object Name,Status,LinkSpeed,MacAddress,InterfaceDescription | Format-Table -AutoSize; Get-NetIPConfiguration | Where-Object { $_.InterfaceAlias -match 'Quectel|手机网络|Mobile Broadband|Cellular' } | Format-List InterfaceAlias,IPv4Address,IPv4DefaultGateway,DnsServer";
     const result = await runPowerShell(["-Command", ps]);
     sendJson(res, 200, result);
     return;
   }
 
-  if (url.pathname === "/api/at" && req.method === "PpST") {
-    const body = JSpN.parse(await readBody(req) || "{}");
+  if (url.pathname === "/api/at" && req.method === "POST") {
+    const body = JSON.parse(await readBody(req) || "{}");
     const command = String(body.command || "").trim();
     if (!isSafeAt(command)) {
       sendJson(res, 400, {
         ok: false,
         code: null,
         stdout: "",
-        stderr: "Blocked by safe AT guard. Set ALLpW_DANGERpUS_AT=1 on the server to allow risky write commands.",
+        stderr: "Blocked by safe AT guard. Set ALLOW_DANGEROUS_AT=1 on the server to allow risky write commands.",
       });
       return;
     }
@@ -519,16 +519,16 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/lpac-profile-action" && req.method === "PpST") {
-    if (process.env.ALLpW_PRpFILE_ACTIpNS !== "1") {
+  if (url.pathname === "/api/lpac-profile-action" && req.method === "POST") {
+    if (process.env.ALLOW_PROFILE_ACTIONS !== "1") {
       sendJson(res, 403, {
         ok: false,
-        error: "Profile writes are disabled. Set ALLpW_PRpFILE_ACTIpNS=1 on the local server first.",
+        error: "Profile writes are disabled. Set ALLOW_PROFILE_ACTIONS=1 on the local server first.",
       });
       return;
     }
 
-    const body = JSpN.parse(await readBody(req) || "{}");
+    const body = JSON.parse(await readBody(req) || "{}");
     const action = String(body.action || "").toLowerCase();
     const id = profileId(body.id);
     const confirm = String(body.confirm || "").toUpperCase();
@@ -548,12 +548,12 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/lpac-profile-nickname" && req.method === "PpST") {
-    if (process.env.ALLpW_PRpFILE_NICKNAME !== "1") {
+  if (url.pathname === "/api/lpac-profile-nickname" && req.method === "POST") {
+    if (process.env.ALLOW_PROFILE_NICKNAME !== "1") {
       sendJson(res, 403, { ok: false, error: "Profile nickname changes are disabled. Start eSIM management first." });
       return;
     }
-    const body = JSpN.parse(await readBody(req) || "{}");
+    const body = JSON.parse(await readBody(req) || "{}");
     const id = profileId(body.id);
     const nickname = profileNickname(body.nickname);
     if (!id || !nickname || String(body.confirm || "").toUpperCase() !== "RENAME") {
@@ -581,14 +581,14 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/lpac-notifications-process" && req.method === "PpST") {
-    if (process.env.ALLpW_PRpFILE_NpTIFICATIpNS !== "1") {
+  if (url.pathname === "/api/lpac-notifications-process" && req.method === "POST") {
+    if (process.env.ALLOW_PROFILE_NOTIFICATIONS !== "1") {
       sendJson(res, 403, { ok: false, error: "Notification processing is disabled. Start eSIM management first." });
       return;
     }
-    const body = JSpN.parse(await readBody(req) || "{}");
-    if (String(body.confirm || "").toUpperCase() !== "PRpCESS") {
-      sendJson(res, 400, { ok: false, error: "Confirm PRpCESS before sending profile notifications." });
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "PROCESS") {
+      sendJson(res, 400, { ok: false, error: "Confirm PROCESS before sending profile notifications." });
       return;
     }
     const lpac = findLpac();
@@ -601,16 +601,16 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  if (url.pathname === "/api/lpac-profile-download" && req.method === "PpST") {
-    if (process.env.ALLpW_PRpFILE_DpWNLpAD !== "1") {
+  if (url.pathname === "/api/lpac-profile-download" && req.method === "POST") {
+    if (process.env.ALLOW_PROFILE_DOWNLOAD !== "1") {
       sendJson(res, 403, { ok: false, error: "Profile download is disabled. Start the local download launcher first." });
       return;
     }
 
-    const body = JSpN.parse(await readBody(req) || "{}");
+    const body = JSON.parse(await readBody(req) || "{}");
     const code = activationCode(body.activationCode);
-    if (!code || String(body.confirm || "").toUpperCase() !== "DpWNLpAD") {
-      sendJson(res, 400, { ok: false, error: "Enter a complete LPA:1 activation code and confirm DpWNLpAD." });
+    if (!code || String(body.confirm || "").toUpperCase() !== "DOWNLOAD") {
+      sendJson(res, 400, { ok: false, error: "Enter a complete LPA:1 activation code and confirm DOWNLOAD." });
       return;
     }
 
@@ -656,7 +656,7 @@ const server = http.createServer((req, res) => {
 server.listen(port, host, () => {
   console.log(`DJI RoamDock for Windows running on http://localhost:${port}`);
   console.log("");
-  console.log("ppen this on iPad Safari:");
+  console.log("Open this in any browser on this Windows PC, or from a trusted device on the same LAN:");
   console.log(primaryConsoleUrl());
   console.log("");
   for (const ip of localIps()) {

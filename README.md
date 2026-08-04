@@ -5,7 +5,7 @@ A native Windows control hub for the first-generation DJI Cellular Dongle and co
 It is a local tool, not a shared website. Every computer starts its own local address, such as `http://192.168.x.x:8787`.
 ## 中文说明
 
-**DJI RoamDock for Windows** 是一个运行在 Windows 电脑上的本地管理页，面向 DJI Cellular Dongle 一代，以及兼容的 Baiwang / QDC507 / Quectel USB 4G 模块。电脑插上模块后，iPad、手机或同一 Wi-Fi 下的浏览器可以打开电脑自动显示的局域网地址进行管理。
+**DJI RoamDock for Windows** 是一个运行在 Windows 电脑上的本地管理页，面向 DJI Cellular Dongle 一代，以及兼容的 Baiwang / QDC507 / Quectel USB 4G 模块。电脑插上模块后，Windows 本机浏览器可直接打开；手机、平板或同一 Wi-Fi 下的其他电脑也可以打开电脑自动显示的局域网地址进行管理。
 
 ### 最简单的使用方式
 
@@ -67,13 +67,11 @@ The converter is deliberately two-stage. It will not change a module in the norm
 | File | What it allows |
 | --- | --- |
 | `Start-Web-Console.cmd` | Read-only diagnostics, profile list, SMS inbox, and safe AT queries. |
-| `Start-Web-Console-Profile-Controls.cmd` | Enable or disable an existing eSIM profile. |
-| `Start-Web-Console-eSIM-Download.cmd` | Download a new profile with an activation code you own. |
-| `Start-Web-Console-eSIM-Management.cmd` | Profile actions, download, nickname, and notification processing. |
+| `Start-Web-Console-eSIM-Management.cmd` | Manage eSIM profiles: enable/disable, download a profile you own, nickname, and notification processing. |
 | `Start-Web-Console-SMS-Send.cmd` | Send SMS. Carrier charges may apply. |
 | `Start-Web-Console-Original-Module-Setup.cmd` | The two explicit writes used only for an untouched compatible module. |
 
-Legacy `Start-iPad-*` launchers are kept for compatibility, but iPad is never required. Each write action is additionally confirmed in the browser. Activation codes and SMS text are not stored by the app; activation codes are redacted from API output.
+Each write action is additionally confirmed in the browser. Activation codes and SMS text are not stored by the app; activation codes are redacted from API output.
 
 ## Security
 
