@@ -1,6 +1,6 @@
-# DJI RoamDock for Windows
+# DJI RoamDock Pro for Windows
 
-> **完整版 / Full version：** 适合新模块、原始 `2CA3:4006` 模块，或需要模块改造、短信和完整诊断的用户。包含详细中文说明。
+> **完整功能版 / Full version:** Use this project for a new or original `2CA3:4006` module, or when you need module conversion, SMS sending, and full diagnostics. For an already converted `2C7C:0125 + usbnet=1` module that only needs basic management, use [DJI RoamDock Lite for Windows](https://github.com/Northfish0311/dji-cellular-dongle-web-console).
 
 A native Windows control hub for the first-generation DJI Cellular Dongle and compatible Baiwang / QDC507 / Quectel USB LTE modules. It runs on the Windows PC and provides a bilingual Chinese/English web console. Use it directly in a browser on the Windows PC, or optionally from a phone, tablet, or another computer on the same LAN.
 
@@ -9,11 +9,11 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 [详细中文使用说明](docs/使用说明.md)
 ## 中文说明
 
-**DJI RoamDock for Windows** 是一个运行在 Windows 电脑上的本地管理页，面向 DJI Cellular Dongle 一代，以及兼容的 Baiwang / QDC507 / Quectel USB 4G 模块。电脑插上模块后，Windows 本机浏览器可直接打开；手机、平板或同一 Wi-Fi 下的其他电脑也可以打开电脑自动显示的局域网地址进行管理。
+**DJI RoamDock Pro for Windows** 是完整功能版，运行在 Windows 电脑上，面向 DJI Cellular Dongle 一代，以及兼容的 Baiwang / QDC507 / Quectel USB 4G 模块。新模块、原始 `2CA3:4006` 模块，或需要改 USB 网卡、发短信、完整诊断的用户，用这个项目。电脑插上模块后，Windows 本机浏览器可直接打开；手机、平板或同一 Wi-Fi 下的其他电脑也可以打开电脑自动显示的局域网地址进行管理。
 
 ### 最简单的使用方式
 
-1. 安装 Node.js LTS，下载或克隆本仓库。
+1. 安装 [Node.js LTS](https://nodejs.org/)，下载或克隆本仓库。
 2. 在项目目录运行一次 `npm install`。
 3. 插入模块，双击 `Start-Web-Console.cmd`。
 4. 保持这个黑色窗口打开；先在本机浏览器打开 `http://127.0.0.1:8787`，也可以用同一 Wi-Fi 下的手机、平板或其他电脑打开窗口显示的局域网地址。
@@ -38,13 +38,13 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 - Detect the modem, COM ports, signal, SIM state, registered network, APN, PDP state, and Windows network adapter.
 - Present a fast local control page in Chinese or English for Windows browsers, phones, tablets, and other trusted LAN devices.
 - List eSIM profiles through `lpac`, enable or disable a profile, set a profile nickname, download a profile with an `LPA:1$...` code, and process pending eSIM notifications.
-- Read SMS, optionally refresh the inbox, and send an SMS only from a dedicated launcher.
-- Keep the normal launcher read-only.
+- Read and refresh SMS, and manually send an SMS after entering the recipient, content, and a confirmation.
+- Use one local launcher for diagnostics and management; every operation that writes to the module or eSIM requires an explicit confirmation in the web page.
 - Guide a compatible untouched module from `2CA3:4006` to `2C7C:0125`, then set `usbnet=1` so the module provides its own USB Ethernet connection.
 
 ## Windows Quick Start
 
-1. Install a current Node.js LTS release.
+1. Install a current [Node.js LTS release](https://nodejs.org/).
 2. Download this repository and open its folder.
 3. Run `npm install` once. This installs the USB library needed only for untouched-module detection.
 4. Plug in the module and double-click `Start-Web-Console.cmd`.
