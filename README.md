@@ -3,6 +3,29 @@
 A native Windows control hub for the first-generation DJI Cellular Dongle and compatible Baiwang / QDC507 / Quectel USB LTE modules. It runs on the Windows PC and provides a bilingual Chinese/English control page for an iPad, phone, or browser on the same LAN.
 
 It is a local tool, not a shared website. Every computer starts its own local address, such as `http://192.168.x.x:8787`.
+## 中文说明
+
+**DJI RoamDock for Windows** 是一个运行在 Windows 电脑上的本地管理页，面向 DJI Cellular Dongle 一代，以及兼容的 Baiwang / QDC507 / Quectel USB 4G 模块。电脑插上模块后，iPad、手机或同一 Wi-Fi 下的浏览器可以打开电脑自动显示的局域网地址进行管理。
+
+### 最简单的使用方式
+
+1. 安装 Node.js LTS，下载或克隆本仓库。
+2. 在项目目录运行一次 `npm install`。
+3. 插入模块，双击 `Start-iPad-Console.cmd`。
+4. 保持这个黑色窗口打开；用 iPad Safari 打开窗口显示的地址。
+5. 在网页内点击“自动扫描”，查看 USB、AT 口、SIM、信号、网络和短信状态。
+
+普通启动方式默认是**只读模式**，不会改 APN、USB 模式、eSIM Profile 或模块配置。发送短信、eSIM 下载/切换和新模块改造分别需要从对应的专用启动文件开启，并且仍会要求在网页中输入确认词。
+
+### 新模块怎么开始
+
+如果设备最初识别为 `2CA3:4006`，请使用 `Start-iPad-Console-Original-Module-Setup.cmd`。先执行只读检查，再按网页提示确认。程序会先保存该模块返回的原始 USB 配置，再进行 VID/PID 与 USB 网卡模式的两阶段设置；已经正常工作的模块不要走这条流程。
+
+### 使用提醒
+
+- 这是局域网工具，不是公用网站；不要把端口暴露到公网。
+- 共享 Wi-Fi 下请设置 `CONSOLE_TOKEN`。
+- eSIM 激活码、短信和模块标识属于敏感信息，请不要发到公开 Issue 或截图中。
 
 ## Capabilities
 
