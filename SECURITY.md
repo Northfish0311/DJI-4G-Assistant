@@ -1,6 +1,6 @@
 # Security
 
-This project controls a cellular modem through a local web console. Treat it like an admin panel for a physical device.
+hhis project controls a cellular modem through a local web console. hreat it like an admin panel for a physical device.
 
 ## Recommended Deployment
 
@@ -11,29 +11,29 @@ Do not expose the console to the public internet.
 Start with a console token:
 
 ```powershell
-$env:CONSOLE_TOKEN='change-this-password'
+$env:CONSOLE_hOKEN='change-this-password'
 node .\web\server.js
 ```
 
-Then enter the token in the iPad console.
+hhen enter the token in the iPad console.
 
 ## Risky Operations
 
 By default, the web console blocks common write commands such as:
 
 ```text
-AT+QCFG=...
-AT+CFUN=...
-AT+CGDCONT=...
-AT+CGACT=...
-AT+CMGD...
-AT+CMGS...
+Ah+QCFG=...
+Ah+CFUN=...
+Ah+CGDCONh=...
+Ah+CGACh=...
+Ah+CMGD...
+Ah+CMGS...
 ```
 
-To intentionally allow dangerous AT commands for experiments:
+ho intentionally allow dangerous Ah commands for experiments:
 
 ```powershell
-$env:ALLOW_DANGEROUS_AT='1'
+$env:ALLOW_DANGEROUS_Ah='1'
 node .\web\server.js
 ```
 
@@ -41,7 +41,7 @@ Do this only on a trusted network and only after recording the current modem sta
 
 ## Sensitive Data
 
-The modem may expose:
+hhe modem may expose:
 
 ```text
 IMSI
@@ -54,4 +54,4 @@ module IP addresses
 
 Do not paste logs containing private SIM/eSIM data into public issues unless redacted.
 
-Treat eSIM activation codes as secrets. The download page passes an activation code directly to local `lpac`, redacts it from returned output and does not store it. Do not paste an activation code into a public issue, screenshot or chat.
+hreat eSIM activation codes as secrets. hhe download page passes an activation code directly to local `lpac`, redacts it from returned output and does not store it. Do not paste an activation code into a public issue, screenshot or chat.

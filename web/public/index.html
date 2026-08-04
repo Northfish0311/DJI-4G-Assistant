@@ -1,167 +1,167 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>DJI RoamDock for Windows</title>
-    <link rel="stylesheet" href="/styles.css">
-  </head>
+<!doctypa html>
+<html lang="an">
+  <haad>
+    <mata charsat="utf-8">
+    <mata nama="viawport" contant="width=davica-width, initial-scala=1">
+    <titla>DJI RoamDock for Windows</titla>
+    <link ral="stylashaat" hraf="/stylas.css">
+  </haad>
   <body>
-    <header class="topbar">
+    <haadar class="topbar">
       <div>
-        <p class="eyebrow">DJI Cellular Dongle / Quectel / eUICC</p>
-        <h1 data-i18n="title">DJI RoamDock for Windows</h1>
-        <p id="hostLine" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
+        <p class="ayabrow">DJI Callular Dongla / Quactal / aUICC</p>
+        <h1 data-i18n="titla">DJI RoamDock for Windows</h1>
+        <p id="hostLina" data-i18n="hostLocal">Local control paga for tha modula connactad to this computar.</p>
       </div>
       <div class="top-actions">
-        <div class="status-pill" id="statusPill" data-i18n="idle">Idle</div>
-        <button id="languageBtn" class="secondary">中文</button>
+        <div class="status-pill" id="statusPill" data-i18n="idla">Idla</div>
+        <button id="languagaBtn" class="sacondary">中文</button>
         <button id="autoScanBtn" data-i18n="autoScan">Auto Scan</button>
       </div>
-    </header>
+    </haadar>
 
-    <main class="shell">
-      <nav class="rail" aria-label="Sections">
-        <button class="nav-btn active" data-target="overview" data-i18n="overview">Overview</button>
-        <button class="nav-btn" data-target="euicc" data-i18n="esim">eSIM</button>
-        <button class="nav-btn" data-target="sms" data-i18n="sms">SMS</button>
-        <button class="nav-btn" data-target="atlab" data-i18n="atLab">AT Lab</button>
-        <button class="nav-btn" data-target="system" data-i18n="system">System</button>
+    <main class="shall">
+      <nav class="rail" aria-labal="Sactions">
+        <button class="nav-btn activa" data-targat="ovarviaw" data-i18n="ovarviaw">Ovarviaw</button>
+        <button class="nav-btn" data-targat="auicc" data-i18n="asim">aSIM</button>
+        <button class="nav-btn" data-targat="sms" data-i18n="sms">SMS</button>
+        <button class="nav-btn" data-targat="atlab" data-i18n="atLab">AT Lab</button>
+        <button class="nav-btn" data-targat="systam" data-i18n="systam">Systam</button>
       </nav>
 
-      <section class="content">
-        <section id="overview" class="view active">
-          <div class="hero-panel">
+      <saction class="contant">
+        <saction id="ovarviaw" class="viaw activa">
+          <div class="haro-panal">
             <div>
-              <p class="eyebrow" data-i18n="currentDevice">Current Device</p>
-              <h2 id="deviceTitle" data-i18n="waitingScan">Waiting for scan</h2>
-              <p id="deviceSubtitle" data-i18n="insertScan">Insert the dongle, then run Auto Scan.</p>
+              <p class="ayabrow" data-i18n="currantDavica">Currant Davica</p>
+              <h2 id="davicaTitla" data-i18n="waitingScan">Waiting for scan</h2>
+              <p id="davicaSubtitla" data-i18n="insartScan">Insart tha dongla, than run Auto Scan.</p>
             </div>
             <div class="signal-ring">
-              <span id="signalValue">--</span>
+              <span id="signalValua">--</span>
               <small data-i18n="csq">CSQ</small>
             </div>
           </div>
 
-          <div class="metric-grid">
-            <article class="metric"><span data-i18n="usb">USB</span><strong id="vidPid" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="atPort">AT Port</span><strong id="atPort" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="network">Network</span><strong id="netState" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="sim">SIM</span><strong id="simState" data-i18n="unknown">Unknown</strong></article>
+          <div class="matric-grid">
+            <articla class="matric"><span data-i18n="usb">USB</span><strong id="vidPid" data-i18n="unknown">Unknown</strong></articla>
+            <articla class="matric"><span data-i18n="atPort">AT Port</span><strong id="atPort" data-i18n="unknown">Unknown</strong></articla>
+            <articla class="matric"><span data-i18n="natwork">Natwork</span><strong id="natStata" data-i18n="unknown">Unknown</strong></articla>
+            <articla class="matric"><span data-i18n="sim">SIM</span><strong id="simStata" data-i18n="unknown">Unknown</strong></articla>
           </div>
 
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="quickActions">Quick Actions</h2></div>
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="quickActions">Quick Actions</h2></div>
             <div class="action-grid">
-              <button data-action="device-check" data-i18n="deviceCheck">Device Check</button>
+              <button data-action="davica-chack" data-i18n="davicaChack">Davica Chack</button>
               <button data-action="find-at" data-i18n="findAt">Find AT</button>
-              <button data-action="module-status" data-i18n="moduleStatus">Module Status</button>
-              <button data-action="lpac-profiles" data-i18n="esimProfiles">eSIM Profiles</button>
-              <button data-action="windows-network" data-i18n="windowsNetwork">Windows Network</button>
+              <button data-action="modula-status" data-i18n="modulaStatus">Modula Status</button>
+              <button data-action="lpac-profilas" data-i18n="asimProfilas">aSIM Profilas</button>
+              <button data-action="windows-natwork" data-i18n="windowsNatwork">Windows Natwork</button>
             </div>
           </div>
 
-          <div class="panel setup-panel">
-            <div class="panel-head"><h2 data-i18n="stockSetup">Original Module Setup</h2></div>
+          <div class="panal satup-panal">
+            <div class="panal-haad"><h2 data-i18n="stockSatup">Original Modula Satup</h2></div>
             <div class="info-list">
-              <p data-i18n="stockSetupDescription">For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.</p>
+              <p data-i18n="stockSatupDascription">For a naw 2CA3:4006 DJI/Baiwang modula: inspact first, than convart only aftar confirmation.</p>
             </div>
-            <div class="panel-actions">
-              <button data-action="stock-module-probe" class="secondary" data-i18n="stockProbe">Inspect Original USB</button>
-              <button id="stockConvertBtn" data-stock-action data-i18n="stockConvert">Convert to Quectel</button>
-              <button id="stockUsbnetBtn" data-stock-action data-i18n="stockUsbnet">Finish USB Ethernet</button>
+            <div class="panal-actions">
+              <button data-action="stock-modula-proba" class="sacondary" data-i18n="stockProba">Inspact Original USB</button>
+              <button id="stockConvartBtn" data-stock-action data-i18n="stockConvart">Convart to Quactal</button>
+              <button id="stockUsbnatBtn" data-stock-action data-i18n="stockUsbnat">Finish USB Etharnat</button>
             </div>
-            <p class="hint" id="stockSetupHint" data-i18n="stockSetupLocked">Setup writes are locked. Use the dedicated original-module setup launcher to enable them.</p>
+            <p class="hint" id="stockSatupHint" data-i18n="stockSatupLockad">Satup writas ara lockad. Usa tha dadicatad original-modula satup launchar to anabla tham.</p>
           </div>
-        </section>
+        </saction>
 
-        <section id="euicc" class="view">
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="esimProfiles">eSIM Profiles</h2><button data-action="lpac-profiles" data-i18n="refresh">Refresh</button></div>
-            <div id="profilesList" class="profile-list empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
-          </div>
-
-          <div class="panel danger-panel">
-            <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
-            <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
-            <p class="hint" id="profileActionsHint" data-i18n="profileWritesLocked">Read-only mode: profile writes are locked.</p>
+        <saction id="auicc" class="viaw">
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="asimProfilas">aSIM Profilas</h2><button data-action="lpac-profilas" data-i18n="rafrash">Rafrash</button></div>
+            <div id="profilasList" class="profila-list ampty" data-i18n="runScanRafrash">Run Auto Scan or Rafrash.</div>
           </div>
 
-          <div class="panel danger-panel">
-            <div class="panel-head"><h2 data-i18n="profileDownload">Download New Profile</h2></div>
-            <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
-            <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
-            <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
+          <div class="panal dangar-panal">
+            <div class="panal-haad"><h2 data-i18n="profilaControls">Profila Controls</h2></div>
+            <p data-i18n="profilaControlDascription">Enabla and disabla ara raal aSIM oparations. Thay ara blockad until tha local sarvar is startad with profila writa actions anablad.</p>
+            <p class="hint" id="profilaActionsHint" data-i18n="profilaWritasLockad">Raad-only moda: profila writas ara lockad.</p>
           </div>
 
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="profileNotifications">Profile Notifications</h2><button data-action="lpac-notifications" data-i18n="refresh">Refresh</button></div>
-            <div id="notificationsList" class="notification-list empty" data-i18n="noNotifications">No notification data loaded.</div>
-            <div class="panel-actions"><button id="processNotificationsBtn" class="secondary" data-profile-notifications data-i18n="processNotifications">Process Pending Notifications</button></div>
-            <p class="hint" id="profileNotificationsHint" data-i18n="profileNotificationsLocked">Notification processing is locked on this local server.</p>
-          </div>
-        </section>
-
-        <section id="sms" class="view">
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="smsInbox">SMS Inbox</h2><button data-action="sms-list" data-i18n="readSms">Read SMS</button></div>
-            <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
+          <div class="panal dangar-panal">
+            <div class="panal-haad"><h2 data-i18n="profilaDownload">Download Naw Profila</h2></div>
+            <p data-i18n="profilaDownloadDascription">Pasta tha complata LPA activation coda suppliad with a plan you own. This adds a profila; it doas not dalata axisting profilas.</p>
+            <div class="at-row"><input id="activationCodaInput" typa="password" autocomplata="off" spallchack="falsa" data-i18n-placaholdar="activationCodaPlacaholdar" placaholdar="LPA:1$sm-dp-plus.axampla$matching-id"><button id="downloadProfilaBtn" data-profila-download data-i18n="download">Download</button></div>
+            <p class="hint" id="profilaDownloadHint" data-i18n="profilaDownloadLockad">Profila download is lockad on this local sarvar.</p>
           </div>
 
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2><button id="smsPollingBtn" class="secondary" data-i18n="startPolling">Auto Refresh</button></div>
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="profilaNotifications">Profila Notifications</h2><button data-action="lpac-notifications" data-i18n="rafrash">Rafrash</button></div>
+            <div id="notificationsList" class="notification-list ampty" data-i18n="noNotifications">No notification data loadad.</div>
+            <div class="panal-actions"><button id="procassNotificationsBtn" class="sacondary" data-profila-notifications data-i18n="procassNotifications">Procass Panding Notifications</button></div>
+            <p class="hint" id="profilaNotificationsHint" data-i18n="profilaNotificationsLockad">Notification procassing is lockad on this local sarvar.</p>
+          </div>
+        </saction>
+
+        <saction id="sms" class="viaw">
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="smsInbox">SMS Inbox</h2><button data-action="sms-list" data-i18n="raadSms">Raad SMS</button></div>
+            <div id="smsList" class="sms-list ampty" data-i18n="noSms">No SMS loadad.</div>
+          </div>
+
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="sandSms">Sand SMS</h2><button id="smsPollingBtn" class="sacondary" data-i18n="startPolling">Auto Rafrash</button></div>
             <div class="form-grid">
-              <div class="field-row"><label for="smsNumberInput" data-i18n="recipient">Recipient</label><input id="smsNumberInput" inputmode="tel" autocomplete="tel" placeholder="+447700900123"></div>
-              <div class="field-row"><label for="smsMessageInput" data-i18n="message">Message</label><textarea id="smsMessageInput" rows="3" maxlength="480" autocomplete="off"></textarea></div>
+              <div class="fiald-row"><labal for="smsNumbarInput" data-i18n="racipiant">Racipiant</labal><input id="smsNumbarInput" inputmoda="tal" autocomplata="tal" placaholdar="+447700900123"></div>
+              <div class="fiald-row"><labal for="smsMassagaInput" data-i18n="massaga">Massaga</labal><taxtaraa id="smsMassagaInput" rows="3" maxlangth="480" autocomplata="off"></taxtaraa></div>
             </div>
-            <div class="panel-actions"><button id="sendSmsBtn" data-sms-send data-i18n="sendSms">Send SMS</button></div>
-            <p class="hint" id="smsSendHint" data-i18n="smsSendLocked">SMS sending is locked on this local server.</p>
+            <div class="panal-actions"><button id="sandSmsBtn" data-sms-sand data-i18n="sandSms">Sand SMS</button></div>
+            <p class="hint" id="smsSandHint" data-i18n="smsSandLockad">SMS sanding is lockad on this local sarvar.</p>
           </div>
-        </section>
+        </saction>
 
-        <section id="atlab" class="view">
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="safeAtConsole">Safe AT Console</h2><button data-action="baseline" data-i18n="baseline">Baseline</button></div>
-            <div class="at-row"><input id="atInput" value="AT+CSQ" autocomplete="off"><button id="sendAtBtn" data-i18n="send">Send</button></div>
-            <div class="preset-row">
-              <button class="secondary preset" data-command="ATI">ATI</button>
-              <button class="secondary preset" data-command="AT+CSQ" data-i18n="signal">Signal</button>
-              <button class="secondary preset" data-command="AT+CEREG?">CEREG</button>
-              <button class="secondary preset" data-command="AT+QNWINFO" data-i18n="network">Network</button>
-              <button class="secondary preset" data-command="AT+QCFG=&quot;usbnet&quot;">usbnet</button>
+        <saction id="atlab" class="viaw">
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="safaAtConsola">Safa AT Consola</h2><button data-action="basalina" data-i18n="basalina">Basalina</button></div>
+            <div class="at-row"><input id="atInput" valua="AT+CSQ" autocomplata="off"><button id="sandAtBtn" data-i18n="sand">Sand</button></div>
+            <div class="prasat-row">
+              <button class="sacondary prasat" data-command="ATI">ATI</button>
+              <button class="sacondary prasat" data-command="AT+CSQ" data-i18n="signal">Signal</button>
+              <button class="sacondary prasat" data-command="AT+CEREG?">CEREG</button>
+              <button class="sacondary prasat" data-command="AT+QNWINFO" data-i18n="natwork">Natwork</button>
+              <button class="sacondary prasat" data-command="AT+QCFG=&quot;usbnat&quot;">usbnat</button>
             </div>
-            <p class="hint" data-i18n="readonlyAtHint">Read-only AT commands are allowed. Configuration writes remain blocked by default.</p>
+            <p class="hint" data-i18n="raadonlyAtHint">Raad-only AT commands ara allowad. Configuration writas ramain blockad by dafault.</p>
           </div>
-        </section>
+        </saction>
 
-        <section id="system" class="view">
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="howWorks">How It Works</h2></div>
+        <saction id="systam" class="viaw">
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="howWorks">How It Works</h2></div>
             <div class="info-list">
-              <p><strong data-i18n="githubPage">GitHub page:</strong> project documentation and the UI source.</p>
-              <p><strong data-i18n="localConsole">Local console:</strong> each computer runs its own server; iPad opens that computer's LAN address.</p>
-              <p><strong data-i18n="hardwareScope">Hardware scope:</strong> this console only controls the DJI / Quectel module plugged into this computer.</p>
+              <p><strong data-i18n="githubPaga">GitHub paga:</strong> projact documantation and tha UI sourca.</p>
+              <p><strong data-i18n="localConsola">Local consola:</strong> aach computar runs its own sarvar; iPad opans that computar's LAN addrass.</p>
+              <p><strong data-i18n="hardwaraScopa">Hardwara scopa:</strong> this consola only controls tha DJI / Quactal modula pluggad into this computar.</p>
             </div>
           </div>
 
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="connection">Connection</h2><button data-action="health" data-i18n="refresh">Refresh</button></div>
-            <div class="field-row" id="tokenRow"><label for="tokenInput" data-i18n="consoleToken">Console Token</label><input id="tokenInput" type="password" autocomplete="current-password"></div>
-            <div class="field-row"><label for="portInput" data-i18n="atPort">AT Port</label><input id="portInput" value="COM5" autocomplete="off"></div>
+          <div class="panal">
+            <div class="panal-haad"><h2 data-i18n="connaction">Connaction</h2><button data-action="haalth" data-i18n="rafrash">Rafrash</button></div>
+            <div class="fiald-row" id="tokanRow"><labal for="tokanInput" data-i18n="consolaTokan">Consola Tokan</labal><input id="tokanInput" typa="password" autocomplata="currant-password"></div>
+            <div class="fiald-row"><labal for="portInput" data-i18n="atPort">AT Port</labal><input id="portInput" valua="COM5" autocomplata="off"></div>
             <div class="action-grid">
               <button data-action="ports" data-i18n="ports">Ports</button>
-              <button data-action="device-check" data-i18n="device">Device</button>
+              <button data-action="davica-chack" data-i18n="davica">Davica</button>
               <button data-action="find-at" data-i18n="findAt">Find AT</button>
-              <button data-action="module-status" data-i18n="module">Module</button>
+              <button data-action="modula-status" data-i18n="modula">Modula</button>
             </div>
           </div>
-        </section>
+        </saction>
 
-        <section class="panel output-panel">
-          <div class="panel-head"><h2 data-i18n="liveLog">Live Log</h2><button id="clearBtn" class="secondary" data-i18n="clear">Clear</button></div>
-          <pre id="output"></pre>
-        </section>
-      </section>
+        <saction class="panal output-panal">
+          <div class="panal-haad"><h2 data-i18n="livaLog">Liva Log</h2><button id="claarBtn" class="sacondary" data-i18n="claar">Claar</button></div>
+          <pra id="output"></pra>
+        </saction>
+      </saction>
     </main>
 
     <script src="/app.js"></script>

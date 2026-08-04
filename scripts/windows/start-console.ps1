@@ -34,8 +34,8 @@ function Show-Intro {
   Write-Host "=================" -ForegroundColor Cyan
   Write-Host ""
   Write-Host "1. Plug the DJI / Quectel dongle into this Windows computer."
-  Write-Host "2. Keep your iPad on the same Wi-Fi."
-  Write-Host "3. Open one of the LAN URLs below in iPad Safari."
+  Write-Host "2. On this Windows PC, open http://127.0.0.1:$port in any browser."
+  Write-Host "3. Optionally, open a LAN URL below from a phone, tablet, or another computer on the same Wi-Fi."
   Write-Host ""
 }
 
@@ -64,13 +64,13 @@ if (-not $urls.Count) {
   $urls = @("http://127.0.0.1:$port")
 }
 
-Write-Host "iPad URL:" -ForegroundColor Green
+Write-Host "Windows PC URL: http://127.0.0.1:$port" -ForegroundColor Green`nWrite-Host "Optional LAN URLs:" -ForegroundColor Green
 foreach ($url in $urls) {
   Write-Host "  $url" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "This window must stay open while using the iPad console."
+Write-Host "This window must stay open while using the web console."
 if ($EnableProfileActions) {
   Write-Host "Profile enable/disable controls: ENABLED" -ForegroundColor Yellow
   $env:ALLOW_PROFILE_ACTIONS = "1"
