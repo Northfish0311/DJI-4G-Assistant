@@ -36,6 +36,7 @@
               <p class="eyebrow" data-i18n="currentDevice">Current Device</p>
               <h2 id="deviceTitle" data-i18n="waitingScan">Waiting for scan</h2>
               <p id="deviceSubtitle" data-i18n="insertScan">Insert the dongle, then run Auto Scan.</p>
+              <span id="connectionBadge" class="connection-badge">No network data</span>
             </div>
             <div class="signal-ring">
               <span id="signalValue">--</span>
@@ -48,6 +49,8 @@
             <article class="metric"><span data-i18n="atPort">AT Port</span><strong id="atPort" data-i18n="unknown">Unknown</strong></article>
             <article class="metric"><span data-i18n="network">Network</span><strong id="netState" data-i18n="unknown">Unknown</strong></article>
             <article class="metric"><span data-i18n="sim">SIM</span><strong id="simState" data-i18n="unknown">Unknown</strong></article>
+            <article class="metric"><span data-i18n="carrier">Carrier</span><strong id="carrierValue" data-i18n="unknown">Unknown</strong></article>
+            <article class="metric"><span data-i18n="radio">Radio</span><strong id="radioValue" data-i18n="unknown">Unknown</strong></article>
           </div>
 
           <div class="panel">
@@ -67,11 +70,13 @@
               <p data-i18n="stockSetupDescription">For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.</p>
             </div>
             <div class="panel-actions">
+              <button id="rescueScanBtn" class="secondary" data-i18n="rescueScan">Rescue Diagnose</button>
               <button data-action="stock-module-probe" class="secondary" data-i18n="stockProbe">Inspect Original USB</button>
               <button id="stockConvertBtn" data-stock-action data-i18n="stockConvert">Convert to Quectel</button>
               <button id="stockUsbnetBtn" data-stock-action data-i18n="stockUsbnet">Finish USB Ethernet</button>
             </div>
-            <p class="hint" id="stockSetupHint" data-i18n="stockSetupLocked">Setup writes are locked. Use the dedicated original-module setup launcher to enable them.</p>
+            <p class="hint rescue-hint" data-i18n="rescueDescription">If another tool changed the module and Windows no longer recognizes it, run Rescue Diagnose first. It only reads USB, ports, drivers, AT and network state.</p>
+            <p class="hint" id="stockSetupHint" data-i18n="stockSetupLocked">Original-module setup is available here. Each change needs a separate confirmation.</p>
           </div>
         </section>
 

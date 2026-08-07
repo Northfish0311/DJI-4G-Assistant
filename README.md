@@ -24,6 +24,12 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 
 如果设备最初识别为 `2CA3:4006`，仍然使用 `Start-Web-Console.cmd`。先执行只读检查，再按网页提示确认。程序会先保存该模块返回的原始 USB 配置，再进行 VID/PID 与 USB 网卡模式的两阶段设置；已经正常工作的模块不要走这条流程。
 
+### 别的工具改过以后无法识别
+
+先打开网页并点击“异常设备救援”。它会依次检查 Windows USB 设备、设备管理器、COM 口、网卡、可用 AT 口和原始模块接口，并保存本机诊断结果；这个阶段不会修改 VID/PID、`usbnet`、APN 或 eSIM。
+
+只有同时确认硬件属于已验证的 Baiwang / QDC507 类型，并且成功读取该模块当前的 `AT+QCFG="usbcfg"` 和 `AT+QCFG="usbnet"` 返回值后，才应进入恢复写入。找不到 AT 口时，先修复 Windows 驱动绑定或接口占用，不盲写固定参数。已经能正常联网的模块不要执行恢复。
+
 ### 使用提醒
 
 - 这是局域网工具，不是公用网站；不要把端口暴露到公网。

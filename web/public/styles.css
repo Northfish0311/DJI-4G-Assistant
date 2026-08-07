@@ -465,3 +465,46 @@ button.danger {
     grid-template-columns: 1fr;
   }
 }
+
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  margin-top: 12px;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.connection-badge::before {
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+  content: "";
+}
+
+.connection-badge.registered {
+  border-color: #f2cf86;
+  background: #fff8e8;
+  color: var(--warn);
+}
+
+.connection-badge.registered::before { background: #d99b26; }
+
+.connection-badge.online {
+  border-color: #92d8b0;
+  background: #effaf3;
+  color: var(--ok);
+}
+
+.connection-badge.online::before { background: var(--ok); }
+
+@media (min-width: 861px) {
+  .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
