@@ -8,9 +8,9 @@
     "start": "node web/server.js",
     "desktop": "electron .",
     "check": "node --check web/server.js && node --check web/original-usb.js && node --check web/public/app.js && node --check desktop/main.js",
-    "build:portable": "npm run check && electron-builder --win portable",
-    "build:installer": "npm run check && electron-builder --win nsis",
-    "build": "npm run check && electron-builder --win portable nsis",
+    "build:portable": "npm run check && electron-builder --win portable --publish never",
+    "build:installer": "npm run check && electron-builder --win nsis --publish never",
+    "build": "npm run check && electron-builder --win portable nsis --publish never",
     "test": "node --test test/*.test.js"
   },
   "keywords": [
