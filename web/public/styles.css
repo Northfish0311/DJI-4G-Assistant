@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --bg: #eef2f5;
+  --bg: #f3f5f7;
   --panel: #ffffff;
   --panel-soft: #f8fafb;
   --ink: #142029;
@@ -11,7 +11,7 @@
   --danger: #b42318;
   --ok: #15803d;
   --warn: #a15c07;
-  --shadow: 0 12px 34px rgba(21, 33, 46, 0.09);
+  --shadow: 0 4px 16px rgba(21, 33, 46, 0.07);
 }
 
 * {
@@ -37,8 +37,11 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 18px clamp(16px, 4vw, 38px);
-  background: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 15px clamp(16px, 4vw, 38px);
+  background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid var(--line);
 }
 
@@ -96,7 +99,7 @@ h2 {
 }
 
 .shell {
-  width: min(1180px, 100%);
+  width: min(1280px, 100%);
   margin: 0 auto;
   padding: 18px clamp(12px, 3vw, 28px) 34px;
   display: grid;
@@ -106,10 +109,15 @@ h2 {
 
 .rail {
   position: sticky;
-  top: 12px;
+  top: 88px;
   align-self: start;
   display: grid;
-  gap: 8px;
+  gap: 5px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
 }
 
 .nav-btn {
@@ -121,14 +129,15 @@ h2 {
 }
 
 .nav-btn.active {
-  background: #ffffff;
-  border-color: var(--line);
-  box-shadow: var(--shadow);
+  border-color: #a8d8d2;
+  background: #eaf6f4;
+  color: var(--accent-strong);
+  box-shadow: none;
 }
 
 .content {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .view {
@@ -149,12 +158,12 @@ h2 {
 }
 
 .hero-panel {
-  min-height: 150px;
+  min-height: 132px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 22px;
+  padding: 20px;
 }
 
 .hero-panel h2 {
@@ -196,11 +205,11 @@ h2 {
 }
 
 .metric {
-  min-height: 88px;
+  min-height: 76px;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: var(--shadow);
+  box-shadow: none;
   padding: 14px;
 }
 
@@ -234,13 +243,13 @@ h2 {
 .action-grid,
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 9px;
   padding: 14px;
 }
 
 .form-grid {
-  grid-template-columns: 1fr 160px;
+  grid-template-columns: 1fr;
 }
 
 .field-row {
@@ -282,8 +291,10 @@ button {
   border-radius: 6px;
   background: var(--accent);
   color: white;
+  padding: 0 14px;
   font-weight: 750;
   cursor: pointer;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease;
 }
 
 button:disabled {
@@ -414,8 +425,8 @@ button.danger {
 
 .output-panel pre {
   margin: 0;
-  min-height: 280px;
-  max-height: 45vh;
+  min-height: 170px;
+  max-height: 280px;
   overflow: auto;
   padding: 14px;
   background: #111827;
@@ -425,12 +436,6 @@ button.danger {
 }
 
 @media (max-width: 860px) {
-  .topbar,
-  .top-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
   .shell {
     grid-template-columns: 1fr;
   }
@@ -438,6 +443,8 @@ button.danger {
   .rail {
     position: static;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+    padding: 6px;
     overflow-x: auto;
   }
 
@@ -449,6 +456,22 @@ button.danger {
   .metric-grid,
   .action-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .top-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .status-pill {
+    grid-column: 1 / -1;
   }
 }
 
@@ -507,4 +530,161 @@ button.danger {
 
 @media (min-width: 861px) {
   .metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.sms-view.active {
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  align-items: start;
+}
+
+.sms-inbox-panel,
+.sms-compose-panel {
+  min-width: 0;
+}
+
+.sms-compose-panel .form-grid {
+  padding: 16px;
+}
+
+.sms-compose-panel .field-row {
+  padding: 0;
+}
+
+.sms-compose-panel .field-row + .field-row {
+  margin-top: 4px;
+}
+
+.setup-panel {
+  border-left: 4px solid #d99b26;
+}
+
+button:not(:disabled):hover {
+  background: var(--accent-strong);
+}
+
+button.secondary:not(:disabled):hover {
+  border-color: #b8c4cd;
+  background: #edf2f5;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.18);
+  outline-offset: 1px;
+}
+
+@media (max-width: 980px) {
+  .sms-view.active { grid-template-columns: 1fr; }
+}
+
+.sms-list {
+  align-content: start;
+  min-height: 210px;
+  padding: 16px;
+  background: #f7f9fa;
+}
+
+.sms-list.empty {
+  place-items: center;
+  min-height: 210px;
+  text-align: center;
+}
+
+.sms-card {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border-color: #d7e0e6;
+  background: #ffffff;
+}
+
+.sms-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 15px 5px;
+}
+
+.sms-contact {
+  min-width: 0;
+}
+
+.sms-contact span {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.sms-contact strong {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.sms-status {
+  flex: 0 0 auto;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.sms-status.unread {
+  border-color: #f0c36a;
+  background: #fff8e8;
+  color: var(--warn);
+}
+
+.sms-status.sent {
+  border-color: #92d8b0;
+  background: #effaf3;
+  color: var(--ok);
+}
+
+.sms-status.unsent {
+  border-color: #efb5b0;
+  background: #fff2f1;
+  color: var(--danger);
+}
+
+.sms-card time {
+  display: block;
+  padding: 0 15px 11px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sms-body {
+  min-height: 52px;
+  padding: 14px 15px;
+  border-top: 1px solid #e7ecef;
+  background: #fbfcfc;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sms-card-foot {
+  padding: 7px 15px;
+  border-top: 1px solid #edf0f2;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 560px) {
+  .sms-list { padding: 10px; }
+  .sms-card-head { padding: 12px 12px 5px; }
+  .sms-card time { padding: 0 12px 10px; }
+  .sms-body { padding: 12px; }
+  .sms-card-foot { padding: 7px 12px; }
 }

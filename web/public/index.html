@@ -107,13 +107,13 @@
           </div>
         </section>
 
-        <section id="sms" class="view">
-          <div class="panel">
+        <section id="sms" class="view sms-view">
+          <div class="panel sms-inbox-panel">
             <div class="panel-head"><h2 data-i18n="smsInbox">SMS Inbox</h2><button data-action="sms-list" data-i18n="readSms">Read SMS</button></div>
             <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
           </div>
 
-          <div class="panel">
+          <div class="panel sms-compose-panel">
             <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2><button id="smsPollingBtn" class="secondary" data-i18n="startPolling">Auto Refresh</button></div>
             <div class="form-grid">
               <div class="field-row"><label for="smsNumberInput" data-i18n="recipient">Recipient</label><input id="smsNumberInput" inputmode="tel" autocomplete="tel" placeholder="+447700900123"></div>

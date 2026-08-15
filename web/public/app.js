@@ -26,7 +26,7 @@ const copy = {
     profileNotifications: "Profile Notifications", noNotifications: "No notification data loaded.", noPendingNotifications: "No pending eSIM notifications.", processNotifications: "Process Pending Notifications", profileNotificationsLocked: "Notification processing is locked on this local server.", profileNotificationsEnabled: "Pending notifications can be sent and cleared on this local server.", confirmNotifications: "Send and clear all pending profile notifications?", notificationsParseError: "Notification data could not be parsed: {error}",
     rescueScan: "Rescue Diagnose", rescueDescription: "If another tool changed the module and Windows no longer recognizes it, run Rescue Diagnose first. It only reads USB, ports, drivers, AT and network state.",
     stockSetup: "Original Module Setup", stockSetupDescription: "For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.", stockProbe: "Inspect Original USB", stockConvert: "Convert to Quectel", stockUsbnet: "Finish USB Ethernet", stockSetupLocked: "Original-module setup is available here. Each change needs a separate confirmation.", stockSetupEnabled: "Original-module setup is enabled. Each change needs a separate confirmation.", confirmStockConvert: "This changes a stock module from 2CA3:4006 to 2C7C:0125. Type CONVERT to continue.", confirmStockUsbnet: "This sets usbnet=1 and restarts the converted module. Type USBNET to continue.",
-    smsInbox: "SMS Inbox", readSms: "Read SMS", noSms: "No SMS loaded.", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter an international phone number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
+    smsInbox: "SMS Inbox", readSms: "Read SMS", noSms: "No SMS loaded.", smsUnread: "Unread", smsRead: "Read", smsSent: "Sent", smsUnsent: "Unsent", smsFrom: "From", smsMessageNumber: "Message {value}", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter an international phone number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
     signal: "Signal", readonlyAtHint: "Read-only AT commands are allowed. Configuration writes remain blocked by default.",
     howWorks: "How It Works", githubPage: "GitHub page:", localConsole: "Local console:", hardwareScope: "Hardware scope:",
     connection: "Connection", consoleToken: "Console Token", ports: "Ports", device: "Device", module: "Module", windowsNetwork: "Windows Network", liveLog: "Live Log", clear: "Clear",
@@ -56,7 +56,7 @@ const copy = {
     profileNotifications: "套餐通知", noNotifications: "尚未读取通知。", noPendingNotifications: "没有待处理的 eSIM 通知。", processNotifications: "处理待发送通知", profileNotificationsLocked: "通知处理已锁定。", profileNotificationsEnabled: "本地服务可发送并清理待处理通知。", confirmNotifications: "确定发送并清理全部待处理通知吗？", notificationsParseError: "通知数据解析失败：{error}",
     rescueScan: "异常设备救援", rescueDescription: "如果模块被其他工具改动后无法识别，请先运行异常设备救援。它只读取 USB、端口、驱动、AT 和网络状态，不会写入模块。",
     stockSetup: "原始模块设置", stockSetupDescription: "适用于原始 2CA3:4006 DJI/Baiwang 模块：先检查，确认后再转换。", stockProbe: "检查原始 USB", stockConvert: "转换为 Quectel", stockUsbnet: "完成 USB 网卡设置", stockSetupLocked: "原始模块设置可在这里进行，每一次改动都需要单独确认。", stockSetupEnabled: "已开放原始模块设置，每一次改动都需要单独确认。", confirmStockConvert: "这会把原始模块从 2CA3:4006 改为 2C7C:0125。输入 CONVERT 继续。", confirmStockUsbnet: "这会设置 usbnet=1 并重启模块。输入 USBNET 继续。",
-    smsInbox: "短信收件箱", readSms: "读取短信", noSms: "尚未读取短信。", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入国际格式号码和短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
+    smsInbox: "短信收件箱", readSms: "读取短信", noSms: "尚未读取短信。", smsUnread: "未读", smsRead: "已读", smsSent: "已发送", smsUnsent: "未发送", smsFrom: "来自", smsMessageNumber: "短信 {value}", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入国际格式号码和短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
     signal: "信号", readonlyAtHint: "只允许执行只读 AT 指令，配置写入默认保持关闭。",
     howWorks: "工作方式", githubPage: "GitHub 页面：", localConsole: "本地控制台：", hardwareScope: "硬件范围：",
     connection: "连接", consoleToken: "控制台密码", ports: "端口", device: "设备", module: "模块", windowsNetwork: "Windows 网卡", liveLog: "实时日志", clear: "清空",
@@ -204,12 +204,45 @@ function renderNotifications(text) {
   } catch (error) { list.className = "notification-list empty"; list.textContent = t("notificationsParseError", { error: error.message }); }
 }
 
+function parseAtCsv(line) {
+  return [...line.matchAll(/(?:^|,)(?:"([^"]*)"|([^,]*))/g)].map((match) => (match[1] ?? match[2] ?? "").trim());
+}
+
+function decodeSmsBody(value) {
+  const body = value.trim();
+  if (!/^(?:[0-9a-f]{4})+$/i.test(body)) return body;
+  const decoded = body.match(/.{4}/g).map((chunk) => String.fromCharCode(Number.parseInt(chunk, 16))).join("");
+  return /[\p{L}\p{N}\p{P}\p{Z}\r\n]/u.test(decoded) ? decoded : body;
+}
+
+function smsStatus(status) {
+  const normalized = status.toUpperCase();
+  if (normalized.includes("UNREAD")) return { label: t("smsUnread"), className: "unread" };
+  if (normalized.includes("UNSENT")) return { label: t("smsUnsent"), className: "unsent" };
+  if (normalized.includes("SENT")) return { label: t("smsSent"), className: "sent" };
+  return { label: t("smsRead"), className: "read" };
+}
+
 function renderSms(text) {
   state.smsText = text;
   const list = document.querySelector("#smsList");
   const matches = [...text.matchAll(/\+CMGL:\s*([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n\+CMGL:|\r?\nOK|$)/g)];
   if (!matches.length) { list.className = "sms-list empty"; list.textContent = text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"); return; }
-  list.className = "sms-list"; list.innerHTML = matches.map((match) => `<article class="sms-card"><strong>${escapeHtml(match[1])}</strong><code>${escapeHtml(match[2].trim())}</code></article>`).join("");
+  list.className = "sms-list";
+  list.innerHTML = matches.map((match) => {
+    const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]);
+    const status = smsStatus(rawStatus || "READ");
+    const body = decodeSmsBody(match[2]);
+    return `<article class="sms-card">
+      <div class="sms-card-head">
+        <div class="sms-contact"><span>${escapeHtml(t("smsFrom"))}</span><strong>${escapeHtml(sender || t("unknown"))}</strong></div>
+        <span class="sms-status ${status.className}">${escapeHtml(status.label)}</span>
+      </div>
+      ${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}
+      <p class="sms-body">${escapeHtml(body)}</p>
+      <div class="sms-card-foot"><span>${escapeHtml(t("smsMessageNumber", { value: index || "-" }))}</span></div>
+    </article>`;
+  }).join("");
 }
 
 function updateProfileHint() {
