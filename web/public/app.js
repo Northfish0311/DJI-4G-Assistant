@@ -247,7 +247,9 @@ function smsStatus(status) {
 function renderSms(text) {
   state.smsText = text;
   const list = document.querySelector("#smsList");
+  const count = document.querySelector("#smsCount");
   const matches = [...text.matchAll(/\+CMGL:\s*([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n\+CMGL:|\r?\nOK|$)/g)];
+  count.textContent = String(matches.length);
   if (!matches.length) { list.className = "sms-list empty"; list.textContent = text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"); return; }
   list.className = "sms-list";
   list.innerHTML = matches.map((match) => {
@@ -448,7 +450,25 @@ tokenInput.value = localStorage.getItem("consoleToken") || "";
 tokenInput.addEventListener("change", () => localStorage.setItem("consoleToken", tokenInput.value.trim()));
 languageBtn.addEventListener("click", () => { state.language = state.language === "zh" ? "en" : "zh"; localStorage.setItem("uiLanguage", state.language); applyLanguage(); });
 for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action));
-for (const button of document.querySelectorAll(".nav-btn")) button.addEventListener("click", () => { document.querySelectorAll(".nav-btn").forEach((item) => item.classList.remove("active")); document.querySelectorAll(".view").forEach((item) => item.classList.remove("active")); button.classList.add("active"); document.querySelector(`#${button.dataset.target}`).classList.add("active"); });
+function selectView(target, updateHash = false) {
+  const button = document.querySelector(`.nav-btn[data-target="${target}"]`);
+  const view = document.querySelector(`#${target}`);
+  if (!button || !view) return;
+  document.querySelectorAll(".nav-btn").forEach((item) => item.classList.remove("active"));
+  document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
+  button.classList.add("active");
+  view.classList.add("active");
+  if (updateHash) history.replaceState(null, "", `#${target}`);
+}
+
+function resetViewScroll() {
+  requestAnimationFrame(() => window.scrollTo(0, 0));
+}
+
+for (const button of document.querySelectorAll(".nav-btn")) button.addEventListener("click", () => selectView(button.dataset.target, true));
+window.addEventListener("hashchange", () => { selectView(location.hash.slice(1)); resetViewScroll(); });
+selectView(location.hash.slice(1) || "overview");
+if (location.hash) window.addEventListener("load", resetViewScroll, { once: true });
 for (const button of document.querySelectorAll(".preset")) button.addEventListener("click", () => { document.querySelector("#atInput").value = button.dataset.command; sendAt(); });
 document.querySelector("#autoScanBtn").addEventListener("click", autoScan);
 document.querySelector("#rescueScanBtn").addEventListener("click", rescueScan);

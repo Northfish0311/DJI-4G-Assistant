@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="data:,">
     <title>DJI RoamDock Pro for Windows</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
@@ -31,27 +32,33 @@
 
       <section class="content">
         <section id="overview" class="view active">
-          <div class="hero-panel">
+          <div class="view-heading">
             <div>
               <p class="eyebrow" data-i18n="currentDevice">Current Device</p>
-              <h2 id="deviceTitle" data-i18n="waitingScan">Waiting for scan</h2>
-              <p id="deviceSubtitle" data-i18n="insertScan">Insert the dongle, then run Auto Scan.</p>
-              <span id="connectionBadge" class="connection-badge">No network data</span>
+              <h2 data-i18n="overview">Overview</h2>
             </div>
-            <div class="signal-ring">
-              <span id="signalValue">--</span>
-              <small data-i18n="csq">CSQ</small>
-            </div>
+            <button data-action="module-status" class="secondary" data-i18n="refresh">Refresh</button>
           </div>
 
-          <div class="metric-grid">
-            <article class="metric"><span data-i18n="usb">USB</span><strong id="vidPid" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="atPort">AT Port</span><strong id="atPort" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="network">Network</span><strong id="netState" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="sim">SIM</span><strong id="simState" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="carrier">Carrier</span><strong id="carrierValue" data-i18n="unknown">Unknown</strong></article>
-            <article class="metric"><span data-i18n="radio">Radio</span><strong id="radioValue" data-i18n="unknown">Unknown</strong></article>
-          </div>
+          <section class="overview-panel">
+            <div class="hero-panel">
+              <div>
+                <h2 id="deviceTitle" data-i18n="waitingScan">Waiting for scan</h2>
+                <p id="deviceSubtitle" data-i18n="insertScan">Insert the dongle, then run Auto Scan.</p>
+              </div>
+              <span id="connectionBadge" class="connection-badge">No network data</span>
+            </div>
+
+            <div class="metric-grid">
+              <article class="metric"><span data-i18n="usb">USB</span><strong id="vidPid" data-i18n="unknown">Unknown</strong></article>
+              <article class="metric"><span data-i18n="atPort">AT Port</span><strong id="atPort" data-i18n="unknown">Unknown</strong></article>
+              <article class="metric"><span data-i18n="network">Network</span><strong id="netState" data-i18n="unknown">Unknown</strong></article>
+              <article class="metric"><span data-i18n="sim">SIM</span><strong id="simState" data-i18n="unknown">Unknown</strong></article>
+              <article class="metric"><span data-i18n="carrier">Carrier</span><strong id="carrierValue" data-i18n="unknown">Unknown</strong></article>
+              <article class="metric"><span data-i18n="radio">Radio</span><strong id="radioValue" data-i18n="unknown">Unknown</strong></article>
+              <article class="metric signal-metric"><span data-i18n="csq">CSQ</span><strong id="signalValue">--</strong></article>
+            </div>
+          </section>
 
           <div class="panel">
             <div class="panel-head"><h2 data-i18n="quickActions">Quick Actions</h2></div>
@@ -81,22 +88,32 @@
         </section>
 
         <section id="euicc" class="view">
-          <div class="panel">
-            <div class="panel-head"><div><h2 data-i18n="esimProfiles">eSIM Profiles</h2><p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p></div><button data-action="lpac-profiles" data-i18n="refresh">Refresh</button></div>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">eUICC</p>
+              <h2 data-i18n="esimProfiles">eSIM Profiles</h2>
+              <p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p>
+            </div>
+            <button data-action="lpac-profiles" data-i18n="refresh">Refresh</button>
+          </div>
+
+          <div class="panel profile-panel flat-section">
             <div id="profilesList" class="profile-list empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
           </div>
 
-          <div class="panel danger-panel">
-            <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
-            <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
-            <p class="hint" id="profileActionsHint" data-i18n="profileWritesLocked">Read-only mode: profile writes are locked.</p>
-          </div>
+          <div class="secondary-grid">
+            <div class="panel danger-panel">
+              <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
+              <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
+              <p class="hint" id="profileActionsHint" data-i18n="profileWritesLocked">Read-only mode: profile writes are locked.</p>
+            </div>
 
-          <div class="panel danger-panel">
-            <div class="panel-head"><h2 data-i18n="profileDownload">Download New Profile</h2></div>
-            <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
-            <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
-            <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
+            <div class="panel danger-panel download-panel">
+              <div class="panel-head"><h2 data-i18n="profileDownload">Download New Profile</h2></div>
+              <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
+              <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
+              <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
+            </div>
           </div>
 
           <div class="panel">
@@ -108,19 +125,33 @@
         </section>
 
         <section id="sms" class="view sms-view">
-          <div class="panel sms-inbox-panel">
-            <div class="panel-head"><h2 data-i18n="smsInbox">SMS Inbox</h2><button data-action="sms-list" data-i18n="readSms">Read SMS</button></div>
-            <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">SMS</p>
+              <h2 data-i18n="sms">SMS</h2>
+            </div>
+            <div class="view-actions">
+              <button id="smsPollingBtn" class="secondary" data-i18n="startPolling">Auto Refresh</button>
+              <button data-action="sms-list" data-i18n="readSms">Read SMS</button>
+            </div>
           </div>
 
           <div class="panel sms-compose-panel">
-            <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2><button id="smsPollingBtn" class="secondary" data-i18n="startPolling">Auto Refresh</button></div>
+            <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2></div>
             <div class="form-grid">
               <div class="field-row"><label for="smsNumberInput" data-i18n="recipient">Recipient</label><input id="smsNumberInput" inputmode="tel" autocomplete="tel" placeholder="+447700900123"></div>
               <div class="field-row"><label for="smsMessageInput" data-i18n="message">Message</label><textarea id="smsMessageInput" rows="3" maxlength="480" autocomplete="off"></textarea></div>
             </div>
             <div class="panel-actions"><button id="sendSmsBtn" data-sms-send data-i18n="sendSms">Send SMS</button></div>
             <p class="hint" id="smsSendHint" data-i18n="smsSendLocked">SMS sending is locked on this local server.</p>
+          </div>
+
+          <div class="panel sms-inbox-panel flat-section">
+            <div class="panel-head">
+              <div><h2 data-i18n="smsInbox">SMS Inbox</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
+              <button data-action="sms-list" class="secondary" data-i18n="refresh">Refresh</button>
+            </div>
+            <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
           </div>
         </section>
 
