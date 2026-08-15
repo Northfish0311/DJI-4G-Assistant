@@ -17,7 +17,7 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 2. 在项目目录运行一次 `npm install`。
 3. 插入模块，双击 `Start-Web-Console.cmd`。
 4. 保持这个黑色窗口打开；先在本机浏览器打开 `http://127.0.0.1:8787`，也可以用同一 Wi-Fi 下的手机、平板或其他电脑打开窗口显示的局域网地址。
-5. 在网页内点击“自动扫描”，查看 USB、AT 口、SIM、信号、网络和短信状态。
+5. 在网页内点击“自动扫描”，查看 USB、AT 口、SIM、信号、运营商、无线制式、注册状态、模块 IP、Windows 网卡和短信状态。
 
 项目只保留一个启动文件：`Start-Web-Console.cmd`。插入模块后双击它，在网页里按需要操作即可。
 ### 新模块怎么开始
@@ -29,6 +29,8 @@ It is a local tool, not a shared website. Every computer starts its own local ad
 先打开网页并点击“异常设备救援”。它会依次检查 Windows USB 设备、设备管理器、COM 口、网卡、可用 AT 口和原始模块接口，并保存本机诊断结果；这个阶段不会修改 VID/PID、`usbnet`、APN 或 eSIM。
 
 只有同时确认硬件属于已验证的 Baiwang / QDC507 类型，并且成功读取该模块当前的 `AT+QCFG="usbcfg"` 和 `AT+QCFG="usbnet"` 返回值后，才应进入恢复写入。找不到 AT 口时，先修复 Windows 驱动绑定或接口占用，不盲写固定参数。已经能正常联网的模块不要执行恢复。
+
+救援诊断不是“一键盲刷”。它先把模块现在还能被 Windows 看到的部分找出来，帮助判断问题发生在 USB 身份、驱动、COM 口、AT 配置还是 Windows 网卡层。诊断完成后根据页面日志处理，不会因为设备名称相似就自动套用固定命令。
 
 ### 使用提醒
 

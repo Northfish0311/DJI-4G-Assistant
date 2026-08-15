@@ -459,6 +459,7 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/sms-list") {
     const commands = [
       "AT+CMGF=1",
+      "AT+CPMS=\"MT\",\"MT\",\"MT\"",
       "AT+CPMS?",
       "AT+CMGL=\"ALL\"",
     ];
