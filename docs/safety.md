@@ -1,29 +1,11 @@
-# Hardware Safety
+# 硬件安全 / Hardware Safety
 
-The normal launcher is read-only. Keep it that way for ordinary use.
+状态扫描、网络读取和救援诊断是只读操作。以下操作会改变设备状态并要求确认：eSIM 启用、停用、下载、改名或删除，短信、USSD、`usbnet` 切换、VID/PID 修改和模块重启。
 
-The dedicated original-module setup launcher can make two real modem changes after explicit browser confirmations:
+写入 eSIM 时不要拔卡、拔模块或关闭程序。删除 Profile 可能无法恢复，激活码也可能不能再次下载。
 
-```text
-AT+QCFG="usbcfg",...
-AT+QCFG="usbnet",1
-AT+CFUN=1,1
-```
+仅在程序验证为兼容的原始 `2CA3:4006` 设备上初始化。程序应先记录 `ATI`、`AT+GMR`、`usbnet`、`usbcfg`、SIM、注册和信号。已正常工作的模块不要重复初始化；未知 VID/PID、未知固件或无法读取 AT 基线时应停止。
 
-Use it only with a supported untouched `2CA3:4006` module. Do not use it on a working `2C7C:0125` module.
+桌面版每次启动生成临时密码。只在可信局域网使用，不要将端口暴露到公网或无认证隧道。
 
-Before any intentional write, record the module's own answers to:
-
-```text
-ATI
-AT+GMR
-AT+QCFG="usbnet"
-AT+QCFG="usbcfg"
-AT+CPIN?
-AT+COPS?
-AT+CEREG?
-AT+CSQ
-AT+QNWINFO
-```
-
-Do not delete eSIM profiles or enter carrier credentials through an untrusted network. The project deliberately does not expose profile deletion in its browser UI.
+The app performs real modem and eUICC writes only after explicit confirmation. Never initialize an already working or unverified device.

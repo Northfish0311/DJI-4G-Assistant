@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:,">
-    <title>DJI RoamDock Pro for Windows</title>
+    <title>DJI RoamDock</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <header class="topbar">
       <div>
         <p class="eyebrow">DJI Cellular Dongle / Quectel / eUICC</p>
-        <h1 data-i18n="title">DJI RoamDock Pro for Windows</h1>
+        <h1 data-i18n="title">DJI RoamDock</h1>
         <p id="hostLine" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
       </div>
       <div class="top-actions">
@@ -24,6 +24,7 @@
     <main class="shell">
       <nav class="rail" aria-label="Sections">
         <button class="nav-btn active" data-target="overview" data-i18n="overview">Overview</button>
+        <button class="nav-btn" data-target="network" data-i18n="networkCenter">Network</button>
         <button class="nav-btn" data-target="euicc" data-i18n="esim">eSIM</button>
         <button class="nav-btn" data-target="sms" data-i18n="sms">SMS</button>
         <button class="nav-btn" data-target="atlab" data-i18n="atLab">AT Lab</button>
@@ -68,6 +69,7 @@
               <button data-action="module-status" data-i18n="moduleStatus">Module Status</button>
               <button data-action="lpac-profiles" data-i18n="esimProfiles">eSIM Profiles</button>
               <button data-action="windows-network" data-i18n="windowsNetwork">Windows Network</button>
+              <button data-action="network-traffic" data-i18n="networkTraffic">Live Traffic</button>
             </div>
           </div>
 
@@ -87,6 +89,38 @@
           </div>
         </section>
 
+        <section id="network" class="view">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">USB LTE</p>
+              <h2 data-i18n="networkCenter">Network</h2>
+              <p class="panel-subtitle" data-i18n="networkDescription">Live Windows adapter status and session traffic.</p>
+            </div>
+            <button data-action="network-traffic" data-i18n="refresh">Refresh</button>
+          </div>
+
+          <div class="panel flat-section">
+            <div class="network-metric-grid">
+              <article class="network-metric"><span data-i18n="adapterStatus">Adapter</span><strong id="trafficAdapter">--</strong></article>
+              <article class="network-metric"><span data-i18n="downloadSpeed">Download</span><strong id="trafficRxRate">--</strong></article>
+              <article class="network-metric"><span data-i18n="uploadSpeed">Upload</span><strong id="trafficTxRate">--</strong></article>
+              <article class="network-metric"><span data-i18n="sessionDownload">Session download</span><strong id="trafficRxSession">--</strong></article>
+              <article class="network-metric"><span data-i18n="sessionUpload">Session upload</span><strong id="trafficTxSession">--</strong></article>
+              <article class="network-metric"><span>IPv4</span><strong id="trafficIpv4">--</strong></article>
+              <article class="network-metric"><span data-i18n="gateway">Gateway</span><strong id="trafficGateway">--</strong></article>
+            </div>
+          </div>
+
+          <div class="panel danger-panel">
+            <div class="panel-head"><h2 data-i18n="usbMode">USB Mode</h2></div>
+            <p data-i18n="usbModeDescription">Mode 0 keeps management interfaces available; mode 1 exposes the verified USB Ethernet mode. The module restarts after a change.</p>
+            <div class="panel-actions">
+              <button id="usbMode0Btn" class="secondary" data-usb-mode="0" data-i18n="managementMode">Management mode</button>
+              <button id="usbMode1Btn" data-usb-mode="1" data-i18n="ethernetMode">USB Ethernet mode</button>
+            </div>
+            <p class="hint" id="usbModeHint" data-i18n="usbModeRisk">Only use this on the verified 2C7C:0125 module. Switching causes a temporary disconnect.</p>
+          </div>
+        </section>
         <section id="euicc" class="view">
           <div class="view-heading">
             <div>
@@ -146,6 +180,12 @@
             <p class="hint" id="smsSendHint" data-i18n="smsSendLocked">SMS sending is locked on this local server.</p>
           </div>
 
+          <div class="panel ussd-panel">
+            <div class="panel-head"><h2 data-i18n="ussd">USSD</h2></div>
+            <p class="panel-subtitle" data-i18n="ussdDescription">Query a carrier balance or service menu when the SIM and network support USSD.</p>
+            <div class="at-row"><input id="ussdInput" value="*100#" maxlength="32" inputmode="tel" autocomplete="off"><button id="sendUssdBtn" data-ussd data-i18n="query">Query</button></div>
+            <p class="hint" id="ussdHint" data-i18n="ussdEnabled">USSD requests may be billed or unsupported while roaming.</p>
+          </div>
           <div class="panel sms-inbox-panel flat-section">
             <div class="panel-head">
               <div><h2 data-i18n="smsInbox">SMS Inbox</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>

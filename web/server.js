@@ -5,7 +5,8 @@ const fs = require("fs");
 const { spawn } = require("child_process");
 const originalUsb = require("./original-usb");
 
-const root = path.resolve(__dirname, "..");
+const root = path.resolve(process.env.ROAMDOCK_RESOURCE_ROOT || path.resolve(__dirname, ".."));
+const dataRoot = path.resolve(process.env.ROAMDOCK_DATA_ROOT || root);
 const publicDir = path.join(__dirname, "public");
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "0.0.0.0";
@@ -108,7 +109,7 @@ function script(name) {
 }
 
 function saveStockBaseline(value) {
-  const directory = path.join(root, ".local", "baselines");
+  const directory = path.join(dataRoot, ".local", "baselines");
   fs.mkdirSync(directory, { recursive: true });
   const filename = `stock-module-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
   fs.writeFileSync(path.join(directory, filename), JSON.stringify(value, null, 2), "utf8");
@@ -121,6 +122,8 @@ function isTargetUsbConfig(value) {
 
 function findLpac() {
   const candidates = [
+    path.join(dataRoot, "tools", "lpac.exe"),
+    path.join(dataRoot, "tools", "lpac", "lpac.exe"),
     path.join(root, "tools", "lpac.exe"),
     path.join(root, "tools", "lpac", "lpac.exe"),
     path.join(path.dirname(root), "lpac-windows-x86_64-mingw", "lpac.exe"),
@@ -197,7 +200,7 @@ function profileNickname(value) {
 
 function smsRecipient(value) {
   const number = String(value || "").trim();
-  return /^\+[1-9]\d{3,19}$/.test(number) ? number : null;
+  return /^\+?[0-9]{3,20}$/.test(number) ? number : null;
 }
 
 function smsText(value) {
@@ -205,8 +208,75 @@ function smsText(value) {
   return message && message.length <= 480 && !/[\x00-\x08\x0b\x0c\x0e-\x1f]/.test(message) ? message : null;
 }
 
+function byteHex(value) {
+  return Number(value).toString(16).padStart(2, "0").toUpperCase();
+}
+
+function ucs2Hex(value) {
+  let result = "";
+  for (let index = 0; index < value.length; index += 1) {
+    result += value.charCodeAt(index).toString(16).padStart(4, "0");
+  }
+  return result.toUpperCase();
+}
+
+function splitUcs2(value, maxBytes) {
+  const parts = [];
+  let current = "";
+  let currentBytes = 0;
+  for (const character of value) {
+    const bytes = character.length * 2;
+    if (current && currentBytes + bytes > maxBytes) {
+      parts.push(current);
+      current = "";
+      currentBytes = 0;
+    }
+    current += character;
+    currentBytes += bytes;
+  }
+  if (current) parts.push(current);
+  return parts;
+}
+
+function encodeAddress(number) {
+  const international = number.startsWith("+");
+  const digits = number.replace(/^\+/, "");
+  const padded = digits.length % 2 ? `${digits}F` : digits;
+  let swapped = "";
+  for (let index = 0; index < padded.length; index += 2) {
+    swapped += padded[index + 1] + padded[index];
+  }
+  return { digits, swapped, type: international ? "91" : "81" };
+}
+
+function buildSmsPdus(number, message) {
+  const address = encodeAddress(number);
+  const singlePart = ucs2Hex(message).length / 2 <= 140;
+  const chunks = singlePart ? [message] : splitUcs2(message, 134);
+  const reference = Math.floor(Math.random() * 256);
+  return chunks.map((chunk, index) => {
+    const header = chunks.length > 1
+      ? `050003${byteHex(reference)}${byteHex(chunks.length)}${byteHex(index + 1)}`
+      : "";
+    const userData = `${header}${ucs2Hex(chunk)}`;
+    const firstOctet = chunks.length > 1 ? "41" : "01";
+    const tpdu = [
+      firstOctet,
+      "00",
+      byteHex(address.digits.length),
+      address.type,
+      address.swapped,
+      "00",
+      "08",
+      byteHex(userData.length / 2),
+      userData,
+    ].join("");
+    return { pdu: `00${tpdu}`, length: tpdu.length / 2 };
+  });
+}
+
 function sendSms(portName, number, message) {
-  const payload = Buffer.from(JSON.stringify({ number, message }), "utf8").toString("base64");
+  const payload = Buffer.from(JSON.stringify({ pdus: buildSmsPdus(number, message) }), "utf8").toString("base64");
   const ps = `
 $payload = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${payload}')) | ConvertFrom-Json
 $sp = New-Object System.IO.Ports.SerialPort '${portName.replace(/'/g, "''")}',115200,'None',8,'One'
@@ -226,24 +296,57 @@ function Read-Until([string]$pattern, [int]$seconds) {
 try {
   $sp.Open()
   $sp.DiscardInBuffer()
-  $sp.WriteLine('AT+CMGF=1')
+  $sp.WriteLine('AT+CMGF=0')
   $mode = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 8
-  if ($mode -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw 'The modem did not accept SMS text mode.' }
-  $sp.DiscardInBuffer()
-  $sp.WriteLine(('AT+CMGS="{0}"' -f $payload.number))
-  $prompt = Read-Until '>' 10
-  if ($prompt -notmatch '>') { throw 'The modem did not present an SMS prompt.' }
-  $sp.Write($payload.message)
-  $sp.Write([char]26)
-  $sent = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 50
-  if ($sent -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw 'The modem rejected the SMS or did not finish in time.' }
-  'SMS accepted by modem.'
+  if ($mode -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw 'The modem did not accept SMS PDU mode.' }
+  $segment = 0
+  foreach ($item in $payload.pdus) {
+    $segment += 1
+    $sp.DiscardInBuffer()
+    $sp.WriteLine(('AT+CMGS={0}' -f $item.length))
+    $prompt = Read-Until '>' 10
+    if ($prompt -notmatch '>') { throw ('The modem did not present an SMS prompt for segment {0}.' -f $segment) }
+    $sp.Write([string]$item.pdu)
+    $sp.Write([char]26)
+    $sent = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 60
+    if ($sent -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw ('The modem rejected SMS segment {0} or did not finish in time.' -f $segment) }
+    ('SMS segment {0}/{1} accepted by modem.' -f $segment, $payload.pdus.Count)
+  }
 } finally {
   if ($sp.IsOpen) { $sp.Close() }
 }`;
-  return enqueueSerial(() => runPowerShell(["-Command", ps], 75000));
+  return enqueueSerial(() => runPowerShell(["-Command", ps], 90000));
 }
 
+function ussdCode(value) {
+  const code = String(value || "").trim();
+  return /^[0-9*#]{1,32}$/.test(code) ? code : null;
+}
+
+function sendUssd(portName, code) {
+  const ps = `
+$sp = New-Object System.IO.Ports.SerialPort '${portName.replace(/'/g, "''")}',115200,'None',8,'One'
+$sp.ReadTimeout = 1800
+$sp.WriteTimeout = 1800
+$sp.NewLine = "\`r"
+try {
+  $sp.Open()
+  $sp.DiscardInBuffer()
+  $sp.WriteLine('AT+CUSD=1,"${code}",15')
+  $out = ''
+  $deadline = (Get-Date).AddSeconds(35)
+  while ((Get-Date) -lt $deadline) {
+    $out += $sp.ReadExisting()
+    if ($out -match '(\`r|\`n)\+CUSD:') { break }
+    if ($out -match '(\`r|\`n)ERROR(\`r|\`n)') { break }
+    Start-Sleep -Milliseconds 150
+  }
+  ($out -replace "\`r","")
+} finally {
+  if ($sp.IsOpen) { $sp.Close() }
+}`;
+  return enqueueSerial(() => runPowerShell(["-Command", ps], 45000));
+}
 function portArg(url) {
   const value = url.searchParams.get("port") || "COM5";
   return /^[A-Za-z0-9]+$/.test(value) ? value : "COM5";
@@ -343,7 +446,10 @@ async function handleApi(req, res, url) {
       profileDownloadEnabled: process.env.ALLOW_PROFILE_DOWNLOAD === "1",
       profileNicknameEnabled: process.env.ALLOW_PROFILE_NICKNAME === "1",
       profileNotificationsEnabled: process.env.ALLOW_PROFILE_NOTIFICATIONS === "1",
+      profileDeleteEnabled: process.env.ALLOW_PROFILE_DELETE === "1",
       smsSendEnabled: process.env.ALLOW_SMS_SEND === "1",
+      ussdEnabled: process.env.ALLOW_USSD === "1",
+      usbModeEnabled: process.env.ALLOW_USB_MODE === "1",
       stockBootstrapEnabled: process.env.ALLOW_STOCK_BOOTSTRAP === "1",
     });
     return;
@@ -485,6 +591,49 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (url.pathname === "/api/ussd" && req.method === "POST") {
+    if (process.env.ALLOW_USSD !== "1") {
+      sendJson(res, 403, { ok: false, error: "USSD is disabled." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    const code = ussdCode(body.code);
+    if (!code || String(body.confirm || "").toUpperCase() !== "USSD") {
+      sendJson(res, 400, { ok: false, error: "Enter a USSD code such as *100# and confirm USSD." });
+      return;
+    }
+    const result = await sendUssd(portArg(url), code);
+    sendJson(res, result.ok ? 200 : 502, result);
+    return;
+  }
+
+  if (url.pathname === "/api/usbnet-mode" && req.method === "POST") {
+    if (process.env.ALLOW_USB_MODE !== "1") {
+      sendJson(res, 403, { ok: false, error: "USB mode switching is disabled." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    const mode = Number(body.mode);
+    const expected = mode === 0 ? "USBNET0" : mode === 1 ? "USBNET1" : "";
+    if (!expected || String(body.confirm || "").toUpperCase() !== expected) {
+      sendJson(res, 400, { ok: false, error: "Only usbnet modes 0 and 1 are exposed. Confirm the selected mode." });
+      return;
+    }
+    const portName = portArg(url);
+    const baseline = await enqueueAt(portName, ["AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 30000);
+    if (!baseline.ok || !isTargetUsbConfig(baseline.stdout)) {
+      sendJson(res, 409, { ok: false, error: "The connected module is not the verified 2C7C:0125 target. No write was made.", baseline });
+      return;
+    }
+    const write = await enqueueAt(portName, [`AT+QCFG="usbnet",${mode}`], 30000);
+    if (!write.ok || !/(^|\r?\n)OK(\r?\n|$)/i.test(write.stdout)) {
+      sendJson(res, 502, { ok: false, error: "The module rejected the requested USB mode. No reboot command was sent.", write });
+      return;
+    }
+    const reboot = await enqueueAt(portName, ["AT+CFUN=1,1"], 15000);
+    sendJson(res, 200, { ok: true, baseline, write, reboot, message: `usbnet=${mode} was accepted. The module is restarting and will reconnect shortly.` });
+    return;
+  }
   if (url.pathname === "/api/windows-network") {
     const ps = "Get-NetAdapter | Where-Object { $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular' -or $_.Name -match 'Quectel|手机网络|Mobile Broadband|Cellular' } | Select-Object Name,Status,LinkSpeed,MacAddress,InterfaceDescription | Format-Table -AutoSize; Get-NetIPConfiguration | Where-Object { $_.InterfaceAlias -match 'Quectel|手机网络|Mobile Broadband|Cellular' } | Format-List InterfaceAlias,IPv4Address,IPv4DefaultGateway,DnsServer";
     const result = await runPowerShell(["-Command", ps]);
@@ -492,6 +641,32 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (url.pathname === "/api/network-traffic") {
+    const ps = `
+$items = @()
+$adapters = Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Where-Object {
+  $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular|Remote NDIS|USB Ethernet'
+}
+foreach ($adapter in $adapters) {
+  $stats = Get-NetAdapterStatistics -Name $adapter.Name -ErrorAction SilentlyContinue
+  $ip = Get-NetIPConfiguration -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue
+  $items += [pscustomobject]@{
+    name = $adapter.Name
+    description = $adapter.InterfaceDescription
+    status = [string]$adapter.Status
+    linkSpeed = [string]$adapter.LinkSpeed
+    receivedBytes = [int64]($stats.ReceivedBytes)
+    sentBytes = [int64]($stats.SentBytes)
+    ipv4 = [string]($ip.IPv4Address.IPAddress)
+    gateway = [string]($ip.IPv4DefaultGateway.NextHop)
+  }
+}
+$items | ConvertTo-Json -Depth 4 -Compress
+`;
+    const result = await runPowerShell(["-Command", ps]);
+    sendJson(res, 200, result);
+    return;
+  }
   if (url.pathname === "/api/at" && req.method === "POST") {
     const body = JSON.parse(await readBody(req) || "{}");
     const command = String(body.command || "").trim();
@@ -533,7 +708,7 @@ async function handleApi(req, res, url) {
     const action = String(body.action || "").toLowerCase();
     const id = profileId(body.id);
     const confirm = String(body.confirm || "").toUpperCase();
-    if (!['enable', 'disable'].includes(action) || !/^[0-9a-f]+$/i.test(id) || !["ENABLE", "DISABLE"].includes(confirm) || confirm !== action.toUpperCase()) {
+    if (!["enable", "disable", "delete"].includes(action) || !id || !["ENABLE", "DISABLE", "DELETE"].includes(confirm) || confirm !== action.toUpperCase()) {
       sendJson(res, 400, { ok: false, error: "Invalid profile action or confirmation." });
       return;
     }
@@ -544,7 +719,12 @@ async function handleApi(req, res, url) {
       return;
     }
 
-    const result = await runLpac(lpac, portArg(url), ["profile", action, id, "1"], 90000);
+    if (action === "delete" && process.env.ALLOW_PROFILE_DELETE !== "1") {
+      sendJson(res, 403, { ok: false, error: "Profile deletion is disabled." });
+      return;
+    }
+    const args = action === "delete" ? ["profile", "delete", id] : ["profile", action, id, "1"];
+    const result = await runLpac(lpac, portArg(url), args, 90000);
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -654,13 +834,30 @@ const server = http.createServer((req, res) => {
   sendFile(res, resolved);
 });
 
-server.listen(port, host, () => {
-  console.log(`DJI RoamDock Pro for Windows running on http://localhost:${port}`);
-  console.log("");
-  console.log("Open this in any browser on this Windows PC, or from a trusted device on the same LAN:");
-  console.log(primaryConsoleUrl());
-  console.log("");
-  for (const ip of localIps()) {
-    console.log(`LAN: http://${ip}:${port}`);
-  }
-});
+function startServer() {
+  if (server.listening) return Promise.resolve(server);
+  return new Promise((resolve, reject) => {
+    const onError = (error) => reject(error);
+    server.once("error", onError);
+    server.listen(port, host, () => {
+      server.off("error", onError);
+      console.log(`DJI RoamDock running on http://127.0.0.1:${port}`);
+      console.log("");
+      if (host !== "127.0.0.1") {
+        console.log("Open this in any browser on this Windows PC, or from a trusted device on the same LAN:");
+        console.log(primaryConsoleUrl());
+        for (const ip of localIps()) console.log(`LAN: http://${ip}:${port}`);
+      }
+      resolve(server);
+    });
+  });
+}
+
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error(error.stack || error.message);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus };

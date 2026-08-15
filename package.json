@@ -3,10 +3,15 @@
   "version": "0.1.0",
   "private": false,
   "description": "Native Windows hub for DJI Cellular Dongle, Quectel USB LTE modules, eSIM profiles, SMS, and original-module setup.",
-  "main": "web/server.js",
+  "main": "desktop/main.js",
   "scripts": {
     "start": "node web/server.js",
-    "check": "node --check web/server.js && node --check web/original-usb.js && node --check web/public/app.js"
+    "desktop": "electron .",
+    "check": "node --check web/server.js && node --check web/original-usb.js && node --check web/public/app.js && node --check desktop/main.js",
+    "build:portable": "npm run check && electron-builder --win portable",
+    "build:installer": "npm run check && electron-builder --win nsis",
+    "build": "npm run check && electron-builder --win portable nsis",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [
     "dji",
@@ -20,5 +25,56 @@
   "license": "MIT",
   "dependencies": {
     "usb": "2.16.0"
-  }
+  },
+  "devDependencies": {
+    "electron": "^43.4.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.northfish0311.dji.roamdock",
+    "productName": "DJI RoamDock",
+    "asar": true,
+    "files": [
+      "desktop/**/*",
+      "web/**/*",
+      "package.json",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/usb/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts",
+        "to": "scripts"
+      },
+      {
+        "from": "tools",
+        "to": "tools"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "DJI RoamDock",
+      "artifactName": "DJI-RoamDock-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "DJI-RoamDock-Portable-${version}-${arch}.${ext}"
+    }
+  },
+  "author": "Northfish0311",
+  "productName": "DJI RoamDock"
 }

@@ -10,10 +10,10 @@ const connectionBadge = document.querySelector("#connectionBadge");
 
 const copy = {
   en: {
-    title: "DJI RoamDock Pro for Windows", hostLocal: "Local control page for the module connected to this computer.",
+    title: "DJI RoamDock", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
     autoScan: "Auto Scan", switchToChinese: "中文", switchToEnglish: "English",
-    overview: "Overview", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
+    overview: "Overview", networkCenter: "Network", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
     currentDevice: "Current Device", waitingScan: "Waiting for scan", insertScan: "Insert the dongle, then run Auto Scan.",
     csq: "CSQ", usb: "USB", atPort: "AT Port", network: "Network", sim: "SIM", unknown: "Unknown",
     profilesNotLoaded: "Profiles not loaded", profilesSummary: "{count} profiles · {active} active", switchProfile: "Switch to this plan", currentProfile: "In use", inactiveProfile: "Not active", trafficBalance: "Plan balance", trafficUnavailable: "Provider API required", profileClassLabel: "Profile type", iccidLabel: "ICCID", quickActions: "Quick Actions", deviceCheck: "Device Check", findAt: "Find AT", moduleStatus: "Module Status", esimProfiles: "eSIM Profiles",
@@ -26,7 +26,7 @@ const copy = {
     profileNotifications: "Profile Notifications", noNotifications: "No notification data loaded.", noPendingNotifications: "No pending eSIM notifications.", processNotifications: "Process Pending Notifications", profileNotificationsLocked: "Notification processing is locked on this local server.", profileNotificationsEnabled: "Pending notifications can be sent and cleared on this local server.", confirmNotifications: "Send and clear all pending profile notifications?", notificationsParseError: "Notification data could not be parsed: {error}",
     rescueScan: "Rescue Diagnose", rescueDescription: "If another tool changed the module and Windows no longer recognizes it, run Rescue Diagnose first. It only reads USB, ports, drivers, AT and network state.",
     stockSetup: "Original Module Setup", stockSetupDescription: "For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.", stockProbe: "Inspect Original USB", stockConvert: "Convert to Quectel", stockUsbnet: "Finish USB Ethernet", stockSetupLocked: "Original-module setup is available here. Each change needs a separate confirmation.", stockSetupEnabled: "Original-module setup is enabled. Each change needs a separate confirmation.", confirmStockConvert: "This changes a stock module from 2CA3:4006 to 2C7C:0125. Type CONVERT to continue.", confirmStockUsbnet: "This sets usbnet=1 and restarts the converted module. Type USBNET to continue.",
-    smsInbox: "SMS Inbox", readSms: "Read SMS", noSms: "No SMS loaded.", smsUnread: "Unread", smsRead: "Read", smsSent: "Sent", smsUnsent: "Unsent", smsFrom: "From", smsMessageNumber: "Message {value}", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter an international phone number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
+    smsInbox: "SMS Inbox", readSms: "Read SMS", noSms: "No SMS loaded.", smsUnread: "Unread", smsRead: "Read", smsSent: "Sent", smsUnsent: "Unsent", smsFrom: "From", smsMessageNumber: "Message {value}", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter a phone number or service number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
     signal: "Signal", readonlyAtHint: "Read-only AT commands are allowed. Configuration writes remain blocked by default.",
     howWorks: "How It Works", githubPage: "GitHub page:", localConsole: "Local console:", hardwareScope: "Hardware scope:",
     connection: "Connection", consoleToken: "Console Token", ports: "Ports", device: "Device", module: "Module", windowsNetwork: "Windows Network", liveLog: "Live Log", clear: "Clear",
@@ -37,13 +37,17 @@ const copy = {
     tokenRequired: "Console token required.", timedOut: "Timed out. The module or Windows serial driver did not answer.",
     scanTimedOut: "Timed out; continuing with the next check.", atTimedOut: "AT request timed out.",
     scanProgress: "Scan {current}/{total}", locked: "Profile writes are locked on the server.", confirmProfile: "{action} this eSIM profile? The module may briefly lose network service.",
+    networkDescription: "Live Windows adapter status and session traffic.", networkTraffic: "Live Traffic", adapterStatus: "Adapter", downloadSpeed: "Download speed", uploadSpeed: "Upload speed", sessionDownload: "Session download", sessionUpload: "Session upload", gateway: "Gateway", noAdapter: "No compatible USB LTE adapter found.",
+    usbMode: "USB Mode", usbModeDescription: "Mode 0 keeps management interfaces available; mode 1 exposes the verified USB Ethernet mode. The module restarts after a change.", managementMode: "Management mode", ethernetMode: "USB Ethernet mode", usbModeRisk: "Only use this on the verified 2C7C:0125 module. Switching causes a temporary disconnect.", confirmUsbMode: "Switch to usbnet={mode}? Type {confirm} to continue.", usbModeLocked: "USB mode switching is locked.",
+    ussd: "USSD", ussdDescription: "Query a carrier balance or service menu when the SIM and network support USSD.", query: "Query", ussdEnabled: "USSD requests may be billed or unsupported while roaming.", ussdLocked: "USSD is locked.", invalidUssd: "Enter a code such as *100#.", confirmUssd: "Send this USSD request now?",
+    deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
   },
   zh: {
     carrier: "运营商", radio: "无线制式", online: "已联网", registered: "已注册", noNetwork: "暂无网络数据",
-    title: "DJI RoamDock Pro for Windows", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
+    title: "DJI RoamDock", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
     idle: "空闲", running: "运行中", checking: "检查中", starting: "开始扫描", at: "AT 指令",
     autoScan: "自动扫描", switchToChinese: "中文", switchToEnglish: "English",
-    overview: "概览", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
+    overview: "概览", networkCenter: "网络", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
     currentDevice: "当前设备", waitingScan: "等待扫描", insertScan: "插入模块后点击自动扫描。",
     csq: "信号", usb: "USB", atPort: "AT 端口", network: "网络", sim: "SIM", unknown: "未知",
     profilesNotLoaded: "尚未读取套餐", profilesSummary: "共 {count} 个套餐 · {active} 个启用", switchProfile: "切换到此套餐", currentProfile: "正在使用", inactiveProfile: "未启用", trafficBalance: "套餐余量", trafficUnavailable: "eUICC 不提供，需套餐商接口", profileClassLabel: "Profile 类型", iccidLabel: "ICCID", quickActions: "快捷操作", deviceCheck: "检查设备", findAt: "查找 AT 口", moduleStatus: "模块状态", esimProfiles: "eSIM 套餐",
@@ -56,7 +60,7 @@ const copy = {
     profileNotifications: "套餐通知", noNotifications: "尚未读取通知。", noPendingNotifications: "没有待处理的 eSIM 通知。", processNotifications: "处理待发送通知", profileNotificationsLocked: "通知处理已锁定。", profileNotificationsEnabled: "本地服务可发送并清理待处理通知。", confirmNotifications: "确定发送并清理全部待处理通知吗？", notificationsParseError: "通知数据解析失败：{error}",
     rescueScan: "异常设备救援", rescueDescription: "如果模块被其他工具改动后无法识别，请先运行异常设备救援。它只读取 USB、端口、驱动、AT 和网络状态，不会写入模块。",
     stockSetup: "原始模块设置", stockSetupDescription: "适用于原始 2CA3:4006 DJI/Baiwang 模块：先检查，确认后再转换。", stockProbe: "检查原始 USB", stockConvert: "转换为 Quectel", stockUsbnet: "完成 USB 网卡设置", stockSetupLocked: "原始模块设置可在这里进行，每一次改动都需要单独确认。", stockSetupEnabled: "已开放原始模块设置，每一次改动都需要单独确认。", confirmStockConvert: "这会把原始模块从 2CA3:4006 改为 2C7C:0125。输入 CONVERT 继续。", confirmStockUsbnet: "这会设置 usbnet=1 并重启模块。输入 USBNET 继续。",
-    smsInbox: "短信收件箱", readSms: "读取短信", noSms: "尚未读取短信。", smsUnread: "未读", smsRead: "已读", smsSent: "已发送", smsUnsent: "未发送", smsFrom: "来自", smsMessageNumber: "短信 {value}", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入国际格式号码和短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
+    smsInbox: "短信收件箱", readSms: "读取短信", noSms: "尚未读取短信。", smsUnread: "未读", smsRead: "已读", smsSent: "已发送", smsUnsent: "未发送", smsFrom: "来自", smsMessageNumber: "短信 {value}", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入手机号或运营商服务号码，并填写短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
     signal: "信号", readonlyAtHint: "只允许执行只读 AT 指令，配置写入默认保持关闭。",
     howWorks: "工作方式", githubPage: "GitHub 页面：", localConsole: "本地控制台：", hardwareScope: "硬件范围：",
     connection: "连接", consoleToken: "控制台密码", ports: "端口", device: "设备", module: "模块", windowsNetwork: "Windows 网卡", liveLog: "实时日志", clear: "清空",
@@ -67,13 +71,17 @@ const copy = {
     tokenRequired: "需要输入控制台密码。", timedOut: "请求超时，模块或 Windows 串口驱动没有响应。",
     scanTimedOut: "本项超时，继续检查下一项。", atTimedOut: "AT 请求超时。",
     scanProgress: "扫描 {current}/{total}", locked: "服务器已锁定套餐写入。", confirmProfile: "确定要{action}这个 eSIM 套餐吗？模块网络可能短暂中断。",
+    networkDescription: "查看 Windows 网卡状态、实时速度和本次运行流量。", networkTraffic: "实时流量", adapterStatus: "网卡", downloadSpeed: "当前下载", uploadSpeed: "当前上传", sessionDownload: "本次下载", sessionUpload: "本次上传", gateway: "网关", noAdapter: "没有发现兼容的 USB 4G 网卡。",
+    usbMode: "USB 模式", usbModeDescription: "模式 0 保留管理接口；模式 1 使用已验证的 USB 有线网卡。切换后模块会重启。", managementMode: "管理模式", ethernetMode: "USB 网卡模式", usbModeRisk: "只用于已经确认是 2C7C:0125 的模块，切换时网络会短暂中断。", confirmUsbMode: "确定切换到 usbnet={mode} 吗？输入 {confirm} 继续。", usbModeLocked: "USB 模式切换已锁定。",
+    ussd: "USSD 查询", ussdDescription: "当 SIM 和运营商网络支持时，可查询余额或运营商服务菜单。", query: "查询", ussdEnabled: "漫游时 USSD 可能不支持，也可能产生费用。", ussdLocked: "USSD 查询已锁定。", invalidUssd: "请输入类似 *100# 的 USSD 代码。", confirmUssd: "确定现在发送这条 USSD 查询吗？",
+    deleteProfile: "删除", deleteIrreversible: "删除 eSIM 套餐后无法恢复。", confirmDeleteProfile: "确定永久删除这个套餐吗？输入 DELETE 继续。", otpCode: "验证码", copyCode: "复制验证码", copied: "已复制",
   },
 };
 
 const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
-  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, smsSendEnabled: false, stockBootstrapEnabled: false, smsPolling: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", profileText: "", notificationText: "", smsText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registration: "", deviceModel: "", deviceRevision: "",
+  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, smsPolling: false, busy: false, busyKey: "running", busyParams: {},
+  primaryUrl: "", profileText: "", notificationText: "", smsText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registration: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null,
 };
 
 function t(key, params = {}) {
@@ -107,7 +115,10 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
         : button.dataset.profileNickname ? isBusy || !state.profileNicknameEnabled
           : button.dataset.profileNotifications ? isBusy || !state.profileNotificationsEnabled
-            : button.dataset.smsSend ? isBusy || !state.smsSendEnabled : isBusy;
+            : button.dataset.profileDelete ? isBusy || !state.profileDeleteEnabled
+              : button.dataset.smsSend ? isBusy || !state.smsSendEnabled
+                : button.dataset.ussd ? isBusy || !state.ussdEnabled
+                  : button.dataset.usbMode ? isBusy || !state.usbModeEnabled : isBusy;
     if (button.dataset.stockAction) button.disabled = isBusy || !state.stockBootstrapEnabled;
   }
 }
@@ -119,7 +130,7 @@ function append(title, text) {
 }
 
 function actionTitle(action) {
-  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "windows-network": t("windowsNetwork"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
+  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
 }
 
 function apiHeaders(extra = {}) {
@@ -203,12 +214,14 @@ function renderProfiles(text) {
         </div>
         <div class="profile-actions">
           <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
+          ${enabled ? "" : `<button class="profile-action danger" data-profile-delete data-profile-id="${id}" ${state.profileDeleteEnabled ? "" : "disabled"}>${escapeHtml(t("deleteProfile"))}</button>`}
           <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div>
         </div>
       </article>`;
     }).join("");
     for (const button of list.querySelectorAll("button[data-profile-action]")) button.addEventListener("click", () => runProfileAction(button.dataset.profileAction, button.dataset.profileId));
     for (const button of list.querySelectorAll("button[data-profile-nickname]")) button.addEventListener("click", () => renameProfile(button.dataset.profileId));
+    for (const button of list.querySelectorAll("button[data-profile-delete]")) button.addEventListener("click", () => deleteProfile(button.dataset.profileId));
   } catch (error) { list.className = "profile-list empty"; list.textContent = t("profileParseError", { error: error.message }); count.textContent = t("profilesNotLoaded"); }
 }
 
@@ -236,6 +249,80 @@ function decodeSmsBody(value) {
   return /[\p{L}\p{N}\p{P}\p{Z}\r\n]/u.test(decoded) ? decoded : body;
 }
 
+function extractVerificationCode(body) {
+  const patterns = [
+    /(?:验证码|校验码|动态码|验证代码|verification\s*code|security\s*code|one[-\s]?time\s*(?:password|code)|otp|passcode|login\s*code|code)\D{0,12}([0-9]{4,8})/i,
+    /([0-9]{4,8})\D{0,12}(?:验证码|校验码|动态码|verification\s*code|security\s*code|one[-\s]?time\s*(?:password|code)|otp|passcode|login\s*code)/i,
+  ];
+  for (const pattern of patterns) {
+    const match = body.match(pattern);
+    if (match) return match[1];
+  }
+  return "";
+}
+
+function formatBytes(value, perSecond = false) {
+  const bytes = Math.max(0, Number(value) || 0);
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let amount = bytes;
+  let index = 0;
+  while (amount >= 1024 && index < units.length - 1) {
+    amount /= 1024;
+    index += 1;
+  }
+  const digits = amount >= 100 || index === 0 ? 0 : amount >= 10 ? 1 : 2;
+  return `${amount.toFixed(digits)} ${units[index]}${perSecond ? "/s" : ""}`;
+}
+
+function renderTraffic(text) {
+  let adapters = [];
+  try {
+    const parsed = JSON.parse(String(text || "").trim() || "[]");
+    adapters = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
+  } catch {
+    adapters = [];
+  }
+  const adapter = adapters.find((item) => String(item.status).toLowerCase() === "up") || adapters[0];
+  const ids = {
+    adapter: document.querySelector("#trafficAdapter"),
+    rxRate: document.querySelector("#trafficRxRate"),
+    txRate: document.querySelector("#trafficTxRate"),
+    rxSession: document.querySelector("#trafficRxSession"),
+    txSession: document.querySelector("#trafficTxSession"),
+    ipv4: document.querySelector("#trafficIpv4"),
+    gateway: document.querySelector("#trafficGateway"),
+  };
+  if (!adapter) {
+    ids.adapter.textContent = t("noAdapter");
+    for (const key of ["rxRate", "txRate", "rxSession", "txSession", "ipv4", "gateway"]) ids[key].textContent = "--";
+    state.trafficPrevious = null;
+    state.trafficBaseline = null;
+    return;
+  }
+  const now = Date.now();
+  const key = `${adapter.name}|${adapter.description}`;
+  const rx = Number(adapter.receivedBytes) || 0;
+  const tx = Number(adapter.sentBytes) || 0;
+  if (!state.trafficBaseline || state.trafficBaseline.key !== key || rx < state.trafficBaseline.rx || tx < state.trafficBaseline.tx) {
+    state.trafficBaseline = { key, rx, tx };
+    state.trafficPrevious = null;
+  }
+  let rxRate = 0;
+  let txRate = 0;
+  if (state.trafficPrevious?.key === key) {
+    const seconds = Math.max(0.2, (now - state.trafficPrevious.time) / 1000);
+    rxRate = Math.max(0, rx - state.trafficPrevious.rx) / seconds;
+    txRate = Math.max(0, tx - state.trafficPrevious.tx) / seconds;
+  }
+  state.trafficPrevious = { key, rx, tx, time: now };
+  ids.adapter.textContent = `${adapter.name || adapter.description || t("unknown")} · ${adapter.status || "--"}`;
+  ids.rxRate.textContent = formatBytes(rxRate, true);
+  ids.txRate.textContent = formatBytes(txRate, true);
+  ids.rxSession.textContent = formatBytes(rx - state.trafficBaseline.rx);
+  ids.txSession.textContent = formatBytes(tx - state.trafficBaseline.tx);
+  ids.ipv4.textContent = adapter.ipv4 || "--";
+  ids.gateway.textContent = adapter.gateway || "--";
+}
 function smsStatus(status) {
   const normalized = status.toUpperCase();
   if (normalized.includes("UNREAD")) return { label: t("smsUnread"), className: "unread" };
@@ -256,6 +343,7 @@ function renderSms(text) {
     const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]);
     const status = smsStatus(rawStatus || "READ");
     const body = decodeSmsBody(match[2]);
+    const code = extractVerificationCode(body);
     return `<article class="sms-card">
       <div class="sms-card-head">
         <div class="sms-contact"><span>${escapeHtml(t("smsFrom"))}</span><strong>${escapeHtml(sender || t("unknown"))}</strong></div>
@@ -263,9 +351,14 @@ function renderSms(text) {
       </div>
       ${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}
       <p class="sms-body">${escapeHtml(body)}</p>
+      ${code ? `<div class="sms-code"><span>${escapeHtml(t("otpCode"))}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${escapeHtml(t("copyCode"))}</button></div>` : ""}
       <div class="sms-card-foot"><span>${escapeHtml(t("smsMessageNumber", { value: index || "-" }))}</span></div>
     </article>`;
   }).join("");
+  for (const button of list.querySelectorAll("button[data-copy-code]")) button.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(button.dataset.copyCode);
+    button.textContent = t("copied");
+  });
 }
 
 function updateProfileHint() {
@@ -284,12 +377,12 @@ async function fetchJson(path, timeoutMs = 90000) {
 
 async function requestAction(action) {
   const port = encodeURIComponent(portInput.value.trim() || "COM5");
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "stock-module-probe": "/api/stock-module-probe" };
+  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const data = await fetchJson(paths[action]); return { data, text: textFromResult(data) || JSON.stringify(data, null, 2) };
 }
 
 function applyHealth(data) {
-  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.primaryUrl = data.primaryUrl || "";
+  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.primaryUrl = data.primaryUrl || "";
   document.querySelector("#tokenRow").style.display = state.authRequired ? "grid" : "none"; updateProfileHint(); applyLanguage();
 }
 
@@ -301,7 +394,7 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
   catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -328,7 +421,7 @@ async function rescueScan() {
   }
 }
 async function autoScan() {
-  const actions = ["health", "device-check", "find-at", "module-status", "lpac-profiles", "sms-list"];
+  const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "lpac-profiles", "sms-list"];
   setBusy(true, "starting");
   try {
     for (let index = 0; index < actions.length; index += 1) {
@@ -357,6 +450,27 @@ async function runProfileAction(action, id) {
   finally { setBusy(false); }
 }
 
+async function deleteProfile(id) {
+  if (!state.profileDeleteEnabled) { append(t("deleteProfile"), t("locked")); return; }
+  if (!window.confirm(t("deleteIrreversible"))) return;
+  if (window.prompt(t("confirmDeleteProfile")) !== "DELETE") return;
+  setBusy(true, "deleteProfile");
+  try {
+    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const res = await fetch(`/api/lpac-profile-action?port=${port}`, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ action: "delete", id, confirm: "DELETE" }),
+    });
+    const data = await res.json();
+    append(t("deleteProfile"), textFromResult(data) || JSON.stringify(data, null, 2));
+    if (res.ok) {
+      await callApi("lpac-profiles");
+      await callApi("lpac-notifications");
+    }
+  } catch (error) { append(t("deleteProfile"), error.stack || error.message); }
+  finally { setBusy(false); }
+}
 async function downloadProfile() {
   const activationCode = document.querySelector("#activationCodeInput").value.trim();
   if (!state.profileDownloadEnabled) { append(t("profileDownload"), t("profileDownloadLocked")); return; }
@@ -421,7 +535,7 @@ async function sendSmsMessage() {
   const number = document.querySelector("#smsNumberInput").value.trim();
   const message = document.querySelector("#smsMessageInput").value.trim();
   if (!state.smsSendEnabled) { append(t("sendSms"), t("smsSendLocked")); return; }
-  if (!/^\+[1-9]\d{3,19}$/.test(number) || !message || message.length > 480) { append(t("sendSms"), t("invalidSms")); return; }
+  if (!/^\+?[0-9]{3,20}$/.test(number) || !message || message.length > 480) { append(t("sendSms"), t("invalidSms")); return; }
   if (!window.confirm(t("confirmSms"))) return;
   setBusy(true, "sendSms");
   try {
@@ -437,6 +551,58 @@ async function sendSmsMessage() {
   finally { setBusy(false); }
 }
 
+async function sendUssdRequest() {
+  const code = document.querySelector("#ussdInput").value.trim();
+  if (!state.ussdEnabled) { append(t("ussd"), t("ussdLocked")); return; }
+  if (!/^[0-9*#]{1,32}$/.test(code)) { append(t("ussd"), t("invalidUssd")); return; }
+  if (!window.confirm(t("confirmUssd"))) return;
+  setBusy(true, "ussd");
+  try {
+    const found = await requestAction("find-at");
+    updateSummary(found.text);
+    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const res = await fetch(`/api/ussd?port=${port}`, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ code, confirm: "USSD" }),
+    });
+    const data = await res.json();
+    const text = textFromResult(data) || JSON.stringify(data, null, 2);
+    const match = text.match(/\+CUSD:\s*\d+\s*,\s*"([^"]+)"/i);
+    const decoded = match ? decodeSmsBody(match[1]) : "";
+    append(t("ussd"), decoded && decoded !== match[1] ? `${text}\n\n${decoded}` : text);
+  } catch (error) { append(t("ussd"), error.stack || error.message); }
+  finally { setBusy(false); }
+}
+
+async function switchUsbMode(mode) {
+  if (!state.usbModeEnabled) { append(t("usbMode"), t("usbModeLocked")); return; }
+  const confirmWord = `USBNET${mode}`;
+  if (window.prompt(t("confirmUsbMode", { mode, confirm: confirmWord })) !== confirmWord) return;
+  setBusy(true, "usbMode");
+  try {
+    const found = await requestAction("find-at");
+    append(actionTitle("find-at"), found.text);
+    updateSummary(found.text);
+    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const res = await fetch(`/api/usbnet-mode?port=${port}`, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ mode, confirm: confirmWord }),
+    });
+    const data = await res.json();
+    append(t("usbMode"), textFromResult(data) || JSON.stringify(data, null, 2));
+  } catch (error) { append(t("usbMode"), error.stack || error.message); }
+  finally { setBusy(false); }
+}
+
+async function refreshTrafficQuietly() {
+  if (state.busy || document.hidden || !document.querySelector('.nav-btn[data-target="network"]')?.classList.contains("active")) return;
+  try {
+    const { data } = await requestAction("network-traffic");
+    renderTraffic(data.stdout || "");
+  } catch {}
+}
 function toggleSmsPolling() {
   state.smsPolling = !state.smsPolling;
   const button = document.querySelector("#smsPollingBtn");
@@ -445,8 +611,11 @@ function toggleSmsPolling() {
 }
 
 setInterval(() => { if (state.smsPolling && !state.busy) callApi("sms-list"); }, 20000);
+setInterval(refreshTrafficQuietly, 2000);
 
-tokenInput.value = localStorage.getItem("consoleToken") || "";
+const launchToken = new URLSearchParams(location.search).get("token") || "";
+tokenInput.value = launchToken || localStorage.getItem("consoleToken") || "";
+if (launchToken) localStorage.setItem("consoleToken", launchToken);
 tokenInput.addEventListener("change", () => localStorage.setItem("consoleToken", tokenInput.value.trim()));
 languageBtn.addEventListener("click", () => { state.language = state.language === "zh" ? "en" : "zh"; localStorage.setItem("uiLanguage", state.language); applyLanguage(); });
 for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action));
@@ -476,6 +645,8 @@ document.querySelector("#sendAtBtn").addEventListener("click", sendAt);
 document.querySelector("#downloadProfileBtn").addEventListener("click", downloadProfile);
 document.querySelector("#processNotificationsBtn").addEventListener("click", processNotifications);
 document.querySelector("#sendSmsBtn").addEventListener("click", sendSmsMessage);
+document.querySelector("#sendUssdBtn").addEventListener("click", sendUssdRequest);
+for (const button of document.querySelectorAll("button[data-usb-mode]")) button.addEventListener("click", () => switchUsbMode(Number(button.dataset.usbMode)));
 document.querySelector("#smsPollingBtn").addEventListener("click", toggleSmsPolling);
 document.querySelector("#stockConvertBtn").addEventListener("click", () => runStockSetup("/api/stock-module-convert", t("confirmStockConvert"), t("stockConvert")));
 document.querySelector("#stockUsbnetBtn").addEventListener("click", () => runStockSetup("/api/stock-module-usbnet", t("confirmStockUsbnet"), t("stockUsbnet")));
