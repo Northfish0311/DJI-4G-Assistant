@@ -16,7 +16,7 @@ const copy = {
     overview: "Overview", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
     currentDevice: "Current Device", waitingScan: "Waiting for scan", insertScan: "Insert the dongle, then run Auto Scan.",
     csq: "CSQ", usb: "USB", atPort: "AT Port", network: "Network", sim: "SIM", unknown: "Unknown",
-    quickActions: "Quick Actions", deviceCheck: "Device Check", findAt: "Find AT", moduleStatus: "Module Status", esimProfiles: "eSIM Profiles",
+    profilesNotLoaded: "Profiles not loaded", profilesSummary: "{count} profiles · {active} active", switchProfile: "Switch to this plan", currentProfile: "In use", inactiveProfile: "Not active", trafficBalance: "Plan balance", trafficUnavailable: "Provider API required", profileClassLabel: "Profile type", iccidLabel: "ICCID", quickActions: "Quick Actions", deviceCheck: "Device Check", findAt: "Find AT", moduleStatus: "Module Status", esimProfiles: "eSIM Profiles",
     refresh: "Refresh", runScanRefresh: "Run Auto Scan or Refresh.", profileControls: "Profile Controls",
     profileControlDescription: "Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.",
     profileWritesLocked: "Read-only mode: profile writes are locked.", profileWritesEnabled: "Profile writes are enabled on this local server. Confirm each action before it runs.",
@@ -46,7 +46,7 @@ const copy = {
     overview: "概览", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
     currentDevice: "当前设备", waitingScan: "等待扫描", insertScan: "插入模块后点击自动扫描。",
     csq: "信号", usb: "USB", atPort: "AT 端口", network: "网络", sim: "SIM", unknown: "未知",
-    quickActions: "快捷操作", deviceCheck: "检查设备", findAt: "查找 AT 口", moduleStatus: "模块状态", esimProfiles: "eSIM 套餐",
+    profilesNotLoaded: "尚未读取套餐", profilesSummary: "共 {count} 个套餐 · {active} 个启用", switchProfile: "切换到此套餐", currentProfile: "正在使用", inactiveProfile: "未启用", trafficBalance: "套餐余量", trafficUnavailable: "eUICC 不提供，需套餐商接口", profileClassLabel: "Profile 类型", iccidLabel: "ICCID", quickActions: "快捷操作", deviceCheck: "检查设备", findAt: "查找 AT 口", moduleStatus: "模块状态", esimProfiles: "eSIM 套餐",
     refresh: "刷新", runScanRefresh: "请先自动扫描或刷新。", profileControls: "套餐操作",
     profileControlDescription: "启用和停用会真实写入 eSIM 卡，每次操作前都会再次确认。",
     profileWritesLocked: "只读模式：套餐写入已锁定。", profileWritesEnabled: "本地服务已允许套餐写入，每次执行前仍需确认。",
@@ -173,10 +173,13 @@ function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, (cha
 function renderProfiles(text) {
   state.profileText = text;
   const list = document.querySelector("#profilesList");
+  const count = document.querySelector("#profileCount");
   const jsonLine = text.split(/\r?\n/).find((line) => line.trim().startsWith("{"));
-  if (!jsonLine) { list.className = "profile-list empty"; list.textContent = t("noProfileData"); return; }
+  if (!jsonLine) { list.className = "profile-list empty"; list.textContent = t("noProfileData"); count.textContent = t("profilesNotLoaded"); return; }
   try {
     const profiles = JSON.parse(jsonLine)?.payload?.data || [];
+    const activeCount = profiles.filter((profile) => profile.profileState === "enabled").length;
+    count.textContent = t("profilesSummary", { count: profiles.length, active: activeCount });
     if (!profiles.length) { list.className = "profile-list empty"; list.textContent = t("noProfiles"); return; }
     list.className = "profile-list";
     list.innerHTML = profiles.map((profile) => {
@@ -184,11 +187,29 @@ function renderProfiles(text) {
       const id = escapeHtml(profile.iccid || profile.isdpAid || "");
       const action = enabled ? "disable" : "enable";
       const nickname = escapeHtml(profile.profileNickname || profile.profileName || "");
-      return `<article class="profile-card ${enabled ? "active" : ""}"><strong>${escapeHtml(profile.profileName || profile.serviceProviderName || t("unnamed"))} ${enabled ? t("active") : ""}</strong><div>${escapeHtml(profile.serviceProviderName || "")}</div><code>${id}</code><div class="profile-actions"><button class="profile-action" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${t(action)}</button><div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div></div></article>`;
+      const title = escapeHtml(profile.profileNickname || profile.profileName || profile.serviceProviderName || t("unnamed"));
+      const provider = escapeHtml(profile.serviceProviderName || profile.profileName || "");
+      const profileClass = escapeHtml(profile.profileClass || "operational");
+      const actionLabel = enabled ? t("disable") : t("switchProfile");
+      return `<article class="profile-card ${enabled ? "active" : ""}">
+        <div class="profile-card-head">
+          <div class="profile-title"><span>${provider}</span><strong>${title}</strong></div>
+          <span class="profile-state ${enabled ? "active" : "inactive"}">${enabled ? t("currentProfile") : t("inactiveProfile")}</span>
+        </div>
+        <div class="profile-detail-grid">
+          <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${id}</code></div>
+          <div><span>${escapeHtml(t("profileClassLabel"))}</span><strong>${profileClass}</strong></div>
+          <div class="profile-traffic"><span>${escapeHtml(t("trafficBalance"))}</span><strong>${escapeHtml(t("trafficUnavailable"))}</strong></div>
+        </div>
+        <div class="profile-actions">
+          <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
+          <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div>
+        </div>
+      </article>`;
     }).join("");
     for (const button of list.querySelectorAll("button[data-profile-action]")) button.addEventListener("click", () => runProfileAction(button.dataset.profileAction, button.dataset.profileId));
     for (const button of list.querySelectorAll("button[data-profile-nickname]")) button.addEventListener("click", () => renameProfile(button.dataset.profileId));
-  } catch (error) { list.className = "profile-list empty"; list.textContent = t("profileParseError", { error: error.message }); }
+  } catch (error) { list.className = "profile-list empty"; list.textContent = t("profileParseError", { error: error.message }); count.textContent = t("profilesNotLoaded"); }
 }
 
 function renderNotifications(text) {
@@ -325,11 +346,11 @@ async function sendAt() {
 }
 
 async function runProfileAction(action, id) {
-  const label = action === "enable" ? t("enable") : t("disable");
+  const label = action === "enable" ? t("switchProfile") : t("disable");
   if (!state.profileActionsEnabled) { append(label, t("locked")); return; }
   if (!window.confirm(t("confirmProfile", { action: label.toLowerCase() }))) return;
   setBusy(true, action);
-  try { const port = encodeURIComponent(portInput.value.trim() || "COM5"); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
+  try { const found = await requestAction("find-at"); append(actionTitle("find-at"), found.text); updateSummary(found.text); const port = encodeURIComponent(portInput.value.trim() || "COM5"); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
   catch (error) { append(label, error.stack || error.message); }
   finally { setBusy(false); }
 }

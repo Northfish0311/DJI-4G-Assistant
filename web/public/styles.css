@@ -688,3 +688,110 @@ textarea:focus-visible {
   .sms-body { padding: 12px; }
   .sms-card-foot { padding: 7px 12px; }
 }
+
+.panel-subtitle {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.profile-list {
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  align-items: start;
+  padding: 16px;
+  background: #f7f9fa;
+}
+
+.profile-card {
+  padding: 0;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.profile-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px;
+}
+
+.profile-title { min-width: 0; }
+.profile-title span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.profile-title strong {
+  margin: 0;
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.profile-state {
+  flex: 0 0 auto;
+  padding: 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.profile-state.active {
+  border-color: #92d8b0;
+  background: #effaf3;
+  color: var(--ok);
+}
+
+.profile-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--line);
+}
+
+.profile-detail-grid > div {
+  min-width: 0;
+  padding: 12px 14px;
+  background: #fbfcfc;
+}
+
+.profile-detail-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.profile-detail-grid code,
+.profile-detail-grid strong {
+  display: block;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.profile-traffic { grid-column: 1 / -1; }
+.profile-traffic strong { color: var(--warn); }
+
+.profile-card .profile-actions {
+  padding: 13px 14px 14px;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .profile-list { grid-template-columns: 1fr; padding: 10px; }
+  .profile-detail-grid { grid-template-columns: 1fr; }
+  .profile-traffic { grid-column: auto; }
+  .profile-card-head { padding: 13px 12px; }
+  .profile-card .profile-actions { padding: 12px; }
+}
