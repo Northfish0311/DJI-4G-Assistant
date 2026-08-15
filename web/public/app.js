@@ -239,7 +239,13 @@ function applyHealth(data) {
 
 async function callApi(action) {
   setBusy(true, action === "health" ? "checking" : "running");
-  try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); }
+  try {
+    if (action === "sms-list") {
+      const found = await requestAction("find-at");
+      append(actionTitle("find-at"), found.text);
+      updateSummary(found.text);
+    }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); }
   catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -363,6 +369,9 @@ async function sendSmsMessage() {
   if (!window.confirm(t("confirmSms"))) return;
   setBusy(true, "sendSms");
   try {
+    const found = await requestAction("find-at");
+    append(actionTitle("find-at"), found.text);
+    updateSummary(found.text);
     const port = encodeURIComponent(portInput.value.trim() || "COM5");
     const res = await fetch(`/api/sms-send?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ number, message, confirm: "SEND" }) });
     const data = await res.json();
