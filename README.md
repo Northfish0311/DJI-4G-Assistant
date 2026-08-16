@@ -2,15 +2,26 @@
 
 DJI 4G Assistant（大疆 4G 助手）是面向 Windows 的一体化桌面管理工具，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
-这是目前唯一维护的完整版本。普通用户不需要安装 Node.js，也不需要打开黑色命令窗口。
+这是目前唯一维护的完整版本。
 
 ## 普通用户怎么用
 
-1. 打开 [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases)。
-2. 下载 `DJI-4G-Assistant-Setup-...exe`（安装版，推荐），按提示安装。
-3. 把 SIM/eSIM 卡装进模块，再把模块插到 Windows 电脑。
-4. 双击桌面上的 **DJI 4G Assistant**。
-5. 点击右上角“自动扫描”。
+1. 打开 [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases)，找到最上方带 **Latest** 标记的版本。
+2. 只下载 `DJI-4G-Assistant-Setup-版本号-x64.exe`，这是普通用户使用的安装版。
+3. 双击下载的安装包，按提示完成安装。
+4. 把 SIM/eSIM 卡装进模块，再把模块插到 Windows 电脑。
+5. 双击桌面上的 **DJI 4G Assistant** 图标。
+6. 点击右上角“自动扫描”。
+
+Releases 页面中的文件用途如下：
+
+| 文件 | 用途 | 是否需要下载 |
+| --- | --- | --- |
+| `DJI-4G-Assistant-Setup-版本号-x64.exe` | 正式安装版，会创建桌面和开始菜单快捷方式 | **普通用户下载这个** |
+| `DJI-4G-Assistant-Portable-版本号-x64.exe` | 不安装，下载后直接双击运行，适合临时测试或放在 U 盘 | 可选 |
+| `.exe.blockmap`（旧版发布页可能出现） | 打包工具生成的数据文件，不能单独运行；新版不再发布 | **不要下载** |
+| `SHA256SUMS.txt` | 验证安装包是否完整、是否被替换 | 可选 |
+| `Source code (zip)` / `Source code (tar.gz)` | GitHub 自动生成的开发者源码压缩包，不是软件 | **普通用户不要下载** |
 
 看到“已联网”、运营商、信号和模块 IP 后，就可以直接使用：
 
@@ -20,9 +31,15 @@ DJI 4G Assistant（大疆 4G 助手）是面向 Windows 的一体化桌面管理
 - **下载 eSIM：** 展开“下载新套餐”，粘贴套餐商给你的完整 `LPA:1$...` 激活码后确认。
 - **检查 Windows 上网：** 打开“网络”，确认网卡为“已连接”，并看到 IPv4、网关和 DHCP。
 
-程序会自动寻找模块和空闲端口；普通用户不需要安装 Node.js，不需要打开黑色窗口，也不需要手动输入 `http://127.0.0.1:8787`。每个写入动作都会再次确认，不点击就不会修改模块。
+程序会自动寻找模块和空闲端口。每个写入动作都会再次确认，不点击就不会修改模块。
 
-> 首个公开版本尚未购买 Windows 代码签名证书。请只从本仓库 Releases 下载并核对 SHA256；Windows SmartScreen 首次运行时可能显示提示。
+### Edge 和 Windows 安全提醒
+
+项目目前没有购买商业代码签名证书，因此 Edge 下载和 Windows 首次安装时可能显示安全提醒。请先确认下载地址属于本仓库，再按以下步骤操作：
+
+1. Edge 提示文件“不常下载”时，选择“保留”；如果继续询问，选择“显示详细信息”或“仍然保留”。
+2. Windows 显示“Windows 已保护你的电脑”时，选择“更多信息”，再选择“仍要运行”。
+3. 如果文件不是从本仓库 Releases 下载，或者 SHA256 与发布页不一致，请停止安装并删除文件。
 
 [详细中文使用说明](docs/使用说明.md) · [硬件安全说明](docs/safety.md) · [安全策略](SECURITY.md)
 
