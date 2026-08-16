@@ -10,6 +10,7 @@ const connectionBadge = document.querySelector("#connectionBadge");
 
 const copy = {
   en: {
+    advanced: "Advanced", console: "Console",
     title: "DJI RoamDock", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
     autoScan: "Auto Scan", switchToChinese: "中文", switchToEnglish: "English",
@@ -44,6 +45,7 @@ const copy = {
     deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
   },
   zh: {
+    advanced: "\u9ad8\u7ea7\u8bbe\u7f6e", console: "\u63a7\u5236\u53f0",
     carrier: "运营商", radio: "无线制式", online: "已联网", registered: "已注册", noNetwork: "暂无网络数据",
     title: "DJI RoamDock", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
     idle: "空闲", running: "运行中", checking: "检查中", starting: "开始扫描", at: "AT 指令",

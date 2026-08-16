@@ -23,12 +23,12 @@
 
     <main class="shell">
       <nav class="rail" aria-label="Sections">
-        <button class="nav-btn active" data-target="overview" data-i18n="overview">Overview</button>
-        <button class="nav-btn" data-target="network" data-i18n="networkCenter">Network</button>
-        <button class="nav-btn" data-target="euicc" data-i18n="esim">eSIM</button>
-        <button class="nav-btn" data-target="sms" data-i18n="sms">SMS</button>
-        <button class="nav-btn" data-target="atlab" data-i18n="atLab">AT Lab</button>
-        <button class="nav-btn" data-target="system" data-i18n="system">System</button>
+        <button class="nav-btn active" data-target="overview"><span class="nav-title" data-i18n="overview">Overview</span><span class="nav-subtitle" data-i18n="currentDevice">Current Device</span></button>
+        <button class="nav-btn" data-target="sms"><span class="nav-title" data-i18n="sms">SMS</span><span class="nav-subtitle" data-i18n="smsInbox">SMS Inbox</span></button>
+        <button class="nav-btn" data-target="euicc"><span class="nav-title" data-i18n="esim">eSIM</span><span class="nav-subtitle" data-i18n="esimProfiles">eSIM Profiles</span></button>
+        <button class="nav-btn" data-target="network"><span class="nav-title" data-i18n="networkCenter">Network</span><span class="nav-subtitle" data-i18n="networkTraffic">Live Traffic</span></button>
+        <button class="nav-btn" data-target="atlab"><span class="nav-title" data-i18n="atLab">AT Lab</span><span class="nav-subtitle" data-i18n="safeAtConsole">Safe AT Console</span></button>
+        <button class="nav-btn" data-target="system"><span class="nav-title" data-i18n="system">System</span><span class="nav-subtitle" data-i18n="connection">Connection</span></button>
       </nav>
 
       <section class="content">
@@ -73,20 +73,22 @@
             </div>
           </div>
 
-          <div class="panel setup-panel">
-            <div class="panel-head"><h2 data-i18n="stockSetup">Original Module Setup</h2></div>
-            <div class="info-list">
-              <p data-i18n="stockSetupDescription">For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.</p>
+          <details class="panel disclosure-panel setup-panel">
+            <summary><span><span class="summary-kicker">2CA3:4006</span><strong data-i18n="stockSetup">Original Module Setup</strong></span></summary>
+            <div class="disclosure-content">
+              <div class="info-list">
+                <p data-i18n="stockSetupDescription">For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.</p>
+              </div>
+              <div class="panel-actions">
+                <button id="rescueScanBtn" class="secondary" data-i18n="rescueScan">Rescue Diagnose</button>
+                <button data-action="stock-module-probe" class="secondary" data-i18n="stockProbe">Inspect Original USB</button>
+                <button id="stockConvertBtn" data-stock-action data-i18n="stockConvert">Convert to Quectel</button>
+                <button id="stockUsbnetBtn" data-stock-action data-i18n="stockUsbnet">Finish USB Ethernet</button>
+              </div>
+              <p class="hint rescue-hint" data-i18n="rescueDescription">If another tool changed the module and Windows no longer recognizes it, run Rescue Diagnose first. It only reads USB, ports, drivers, AT and network state.</p>
+              <p class="hint" id="stockSetupHint" data-i18n="stockSetupLocked">Original-module setup is available here. Each change needs a separate confirmation.</p>
             </div>
-            <div class="panel-actions">
-              <button id="rescueScanBtn" class="secondary" data-i18n="rescueScan">Rescue Diagnose</button>
-              <button data-action="stock-module-probe" class="secondary" data-i18n="stockProbe">Inspect Original USB</button>
-              <button id="stockConvertBtn" data-stock-action data-i18n="stockConvert">Convert to Quectel</button>
-              <button id="stockUsbnetBtn" data-stock-action data-i18n="stockUsbnet">Finish USB Ethernet</button>
-            </div>
-            <p class="hint rescue-hint" data-i18n="rescueDescription">If another tool changed the module and Windows no longer recognizes it, run Rescue Diagnose first. It only reads USB, ports, drivers, AT and network state.</p>
-            <p class="hint" id="stockSetupHint" data-i18n="stockSetupLocked">Original-module setup is available here. Each change needs a separate confirmation.</p>
-          </div>
+          </details>
         </section>
 
         <section id="network" class="view">
@@ -124,15 +126,17 @@
             </div>
             <p class="hint" id="ecmDriverHint" data-i18n="driverRepairHint">For the verified 2C7C:0125 ECM interface only. Windows will request administrator approval.</p>
           </div>
-          <div class="panel danger-panel">
-            <div class="panel-head"><h2 data-i18n="usbMode">USB Mode</h2></div>
-            <p data-i18n="usbModeDescription">Mode 0 keeps management interfaces available; mode 1 exposes the verified USB Ethernet mode. The module restarts after a change.</p>
-            <div class="panel-actions">
-              <button id="usbMode0Btn" class="secondary" data-usb-mode="0" data-i18n="managementMode">Management mode</button>
-              <button id="usbMode1Btn" data-usb-mode="1" data-i18n="ethernetMode">USB Ethernet mode</button>
+          <details class="panel disclosure-panel danger-panel">
+            <summary><span><span class="summary-kicker" data-i18n="advanced">Advanced</span><strong data-i18n="usbMode">USB Mode</strong></span></summary>
+            <div class="disclosure-content">
+              <p data-i18n="usbModeDescription">Mode 0 keeps management interfaces available; mode 1 exposes the verified USB Ethernet mode. The module restarts after a change.</p>
+              <div class="panel-actions">
+                <button id="usbMode0Btn" class="secondary" data-usb-mode="0" data-i18n="managementMode">Management mode</button>
+                <button id="usbMode1Btn" data-usb-mode="1" data-i18n="ethernetMode">USB Ethernet mode</button>
+              </div>
+              <p class="hint" id="usbModeHint" data-i18n="usbModeRisk">Only use this on the verified 2C7C:0125 module. Switching causes a temporary disconnect.</p>
             </div>
-            <p class="hint" id="usbModeHint" data-i18n="usbModeRisk">Only use this on the verified 2C7C:0125 module. Switching causes a temporary disconnect.</p>
-          </div>
+          </details>
         </section>
         <section id="euicc" class="view">
           <div class="view-heading">
@@ -144,30 +148,37 @@
             <button data-action="lpac-profiles" data-i18n="refresh">Refresh</button>
           </div>
 
-          <div class="panel profile-panel flat-section">
-            <div id="profilesList" class="profile-list empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
-          </div>
-
-          <div class="secondary-grid">
-            <div class="panel danger-panel">
-              <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
-              <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
-              <p class="hint" id="profileActionsHint" data-i18n="profileWritesLocked">Read-only mode: profile writes are locked.</p>
+          <div class="esim-workspace">
+            <div class="panel profile-panel">
+              <div id="profilesList" class="profile-list empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
             </div>
 
-            <div class="panel danger-panel download-panel">
-              <div class="panel-head"><h2 data-i18n="profileDownload">Download New Profile</h2></div>
-              <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
-              <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
-              <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
-            </div>
-          </div>
+            <aside class="tool-stack">
+              <div class="panel danger-panel profile-access-panel">
+                <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
+                <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
+                <p class="hint" id="profileActionsHint" data-i18n="profileWritesLocked">Read-only mode: profile writes are locked.</p>
+              </div>
 
-          <div class="panel">
-            <div class="panel-head"><h2 data-i18n="profileNotifications">Profile Notifications</h2><button data-action="lpac-notifications" data-i18n="refresh">Refresh</button></div>
-            <div id="notificationsList" class="notification-list empty" data-i18n="noNotifications">No notification data loaded.</div>
-            <div class="panel-actions"><button id="processNotificationsBtn" class="secondary" data-profile-notifications data-i18n="processNotifications">Process Pending Notifications</button></div>
-            <p class="hint" id="profileNotificationsHint" data-i18n="profileNotificationsLocked">Notification processing is locked on this local server.</p>
+              <details class="panel disclosure-panel danger-panel download-panel">
+                <summary><span><span class="summary-kicker">LPA</span><strong data-i18n="profileDownload">Download New Profile</strong></span></summary>
+                <div class="disclosure-content">
+                  <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
+                  <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
+                  <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
+                </div>
+              </details>
+
+              <details class="panel disclosure-panel">
+                <summary><span><span class="summary-kicker">eUICC</span><strong data-i18n="profileNotifications">Profile Notifications</strong></span></summary>
+                <div class="disclosure-content">
+                  <div class="panel-actions disclosure-toolbar"><button data-action="lpac-notifications" class="secondary" data-i18n="refresh">Refresh</button></div>
+                  <div id="notificationsList" class="notification-list empty" data-i18n="noNotifications">No notification data loaded.</div>
+                  <div class="panel-actions"><button id="processNotificationsBtn" class="secondary" data-profile-notifications data-i18n="processNotifications">Process Pending Notifications</button></div>
+                  <p class="hint" id="profileNotificationsHint" data-i18n="profileNotificationsLocked">Notification processing is locked on this local server.</p>
+                </div>
+              </details>
+            </aside>
           </div>
         </section>
 
@@ -183,32 +194,46 @@
             </div>
           </div>
 
-          <div class="panel sms-compose-panel">
-            <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2></div>
-            <div class="form-grid">
-              <div class="field-row"><label for="smsNumberInput" data-i18n="recipient">Recipient</label><input id="smsNumberInput" inputmode="tel" autocomplete="tel" placeholder="+447700900123"></div>
-              <div class="field-row"><label for="smsMessageInput" data-i18n="message">Message</label><textarea id="smsMessageInput" rows="3" maxlength="480" autocomplete="off"></textarea></div>
+          <div class="sms-workspace">
+            <div class="panel sms-inbox-panel">
+              <div class="panel-head">
+                <div><h2 data-i18n="smsInbox">SMS Inbox</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
+                <button data-action="sms-list" class="secondary" data-i18n="refresh">Refresh</button>
+              </div>
+              <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
             </div>
-            <div class="panel-actions"><button id="sendSmsBtn" data-sms-send data-i18n="sendSms">Send SMS</button></div>
-            <p class="hint" id="smsSendHint" data-i18n="smsSendLocked">SMS sending is locked on this local server.</p>
-          </div>
 
-          <div class="panel ussd-panel">
-            <div class="panel-head"><h2 data-i18n="ussd">USSD</h2></div>
-            <p class="panel-subtitle" data-i18n="ussdDescription">Query a carrier balance or service menu when the SIM and network support USSD.</p>
-            <div class="at-row"><input id="ussdInput" value="*100#" maxlength="32" inputmode="tel" autocomplete="off"><button id="sendUssdBtn" data-ussd data-i18n="query">Query</button></div>
-            <p class="hint" id="ussdHint" data-i18n="ussdEnabled">USSD requests may be billed or unsupported while roaming.</p>
-          </div>
-          <div class="panel sms-inbox-panel flat-section">
-            <div class="panel-head">
-              <div><h2 data-i18n="smsInbox">SMS Inbox</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
-              <button data-action="sms-list" class="secondary" data-i18n="refresh">Refresh</button>
-            </div>
-            <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
+            <aside class="tool-stack">
+              <div class="panel sms-compose-panel">
+                <div class="panel-head"><h2 data-i18n="sendSms">Send SMS</h2></div>
+                <div class="form-grid">
+                  <div class="field-row"><label for="smsNumberInput" data-i18n="recipient">Recipient</label><input id="smsNumberInput" inputmode="tel" autocomplete="tel" placeholder="+447700900123"></div>
+                  <div class="field-row"><label for="smsMessageInput" data-i18n="message">Message</label><textarea id="smsMessageInput" rows="3" maxlength="480" autocomplete="off"></textarea></div>
+                </div>
+                <div class="panel-actions"><button id="sendSmsBtn" data-sms-send data-i18n="sendSms">Send SMS</button></div>
+                <p class="hint" id="smsSendHint" data-i18n="smsSendLocked">SMS sending is locked on this local server.</p>
+              </div>
+
+              <details class="panel disclosure-panel ussd-panel">
+                <summary><span><span class="summary-kicker">USSD</span><strong data-i18n="ussd">USSD</strong></span></summary>
+                <div class="disclosure-content">
+                  <p class="panel-subtitle" data-i18n="ussdDescription">Query a carrier balance or service menu when the SIM and network support USSD.</p>
+                  <div class="at-row"><input id="ussdInput" value="*100#" maxlength="32" inputmode="tel" autocomplete="off"><button id="sendUssdBtn" data-ussd data-i18n="query">Query</button></div>
+                  <p class="hint" id="ussdHint" data-i18n="ussdEnabled">USSD requests may be billed or unsupported while roaming.</p>
+                </div>
+              </details>
+            </aside>
           </div>
         </section>
 
         <section id="atlab" class="view">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">AT</p>
+              <h2 data-i18n="atLab">AT Lab</h2>
+              <p class="panel-subtitle" data-i18n="readonlyAtHint">Read-only AT commands are allowed. Configuration writes remain blocked by default.</p>
+            </div>
+          </div>
           <div class="panel">
             <div class="panel-head"><h2 data-i18n="safeAtConsole">Safe AT Console</h2><button data-action="baseline" data-i18n="baseline">Baseline</button></div>
             <div class="at-row"><input id="atInput" value="AT+CSQ" autocomplete="off"><button id="sendAtBtn" data-i18n="send">Send</button></div>
@@ -224,6 +249,15 @@
         </section>
 
         <section id="system" class="view">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">RoamDock</p>
+              <h2 data-i18n="system">System</h2>
+              <p class="panel-subtitle" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
+            </div>
+            <button data-action="health" data-i18n="refresh">Refresh</button>
+          </div>
+          <div class="system-grid">
           <div class="panel">
             <div class="panel-head"><h2 data-i18n="howWorks">How It Works</h2></div>
             <div class="info-list">
@@ -234,7 +268,7 @@
           </div>
 
           <div class="panel">
-            <div class="panel-head"><h2 data-i18n="connection">Connection</h2><button data-action="health" data-i18n="refresh">Refresh</button></div>
+            <div class="panel-head"><h2 data-i18n="connection">Connection</h2></div>
             <div class="field-row" id="tokenRow"><label for="tokenInput" data-i18n="consoleToken">Console Token</label><input id="tokenInput" type="password" autocomplete="current-password"></div>
             <div class="field-row"><label for="portInput" data-i18n="atPort">AT Port</label><input id="portInput" value="COM5" autocomplete="off"></div>
             <div class="action-grid">
@@ -244,12 +278,16 @@
               <button data-action="module-status" data-i18n="module">Module</button>
             </div>
           </div>
+          </div>
         </section>
 
-        <section class="panel output-panel">
-          <div class="panel-head"><h2 data-i18n="liveLog">Live Log</h2><button id="clearBtn" class="secondary" data-i18n="clear">Clear</button></div>
-          <pre id="output"></pre>
-        </section>
+        <details class="panel output-panel disclosure-panel">
+          <summary><span><span class="summary-kicker" data-i18n="console">Console</span><strong data-i18n="liveLog">Live Log</strong></span></summary>
+          <div class="disclosure-content">
+            <div class="panel-actions disclosure-toolbar"><button id="clearBtn" class="secondary" data-i18n="clear">Clear</button></div>
+            <pre id="output"></pre>
+          </div>
+        </details>
       </section>
     </main>
 

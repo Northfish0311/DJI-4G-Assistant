@@ -1,6 +1,6 @@
 {
   "name": "dji-roamdock-pro-windows",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": false,
   "description": "Native Windows hub for DJI Cellular Dongle, Quectel USB LTE modules, eSIM profiles, SMS, and original-module setup.",
   "main": "desktop/main.js",
