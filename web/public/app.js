@@ -38,6 +38,7 @@ const copy = {
     scanTimedOut: "Timed out; continuing with the next check.", atTimedOut: "AT request timed out.",
     scanProgress: "Scan {current}/{total}", locked: "Profile writes are locked on the server.", confirmProfile: "{action} this eSIM profile? The module may briefly lose network service.",
     networkDescription: "Live Windows adapter status and session traffic.", networkTraffic: "Live Traffic", adapterStatus: "Adapter", downloadSpeed: "Download speed", uploadSpeed: "Upload speed", sessionDownload: "Session download", sessionUpload: "Session upload", gateway: "Gateway", noAdapter: "No compatible USB LTE adapter found.",
+    driver: "Driver", ecmDriver: "Windows ECM Driver", driverChecking: "Checking", driverNoData: "Run a network refresh to inspect the driver.", driverReady: "Ready", driverOutdated: "Needs repair", driverMissing: "Not detected", driverUnsupportedDetail: "No verified 2C7C:0125 ECM interface is connected.", driverReadyDetail: "Signed Quectel ECM driver {version} · {ip}", driverOutdatedDetail: "Windows is using {name} {version}; install the verified ECM driver.", repairDriver: "Install or repair official driver", driverRepairHint: "For the verified 2C7C:0125 ECM interface only. Windows will request administrator approval.", driverRepairLocked: "Driver repair is available in the Windows desktop app.", confirmDriverRepair: "Download and install the verified Quectel ECM driver? Type ECMDRIVER to continue.", driverRepairSuccess: "The ECM driver is ready and Windows has refreshed the adapter.", driverRepairFailed: "The ECM driver repair did not complete.",
     usbMode: "USB Mode", usbModeDescription: "Mode 0 keeps management interfaces available; mode 1 exposes the verified USB Ethernet mode. The module restarts after a change.", managementMode: "Management mode", ethernetMode: "USB Ethernet mode", usbModeRisk: "Only use this on the verified 2C7C:0125 module. Switching causes a temporary disconnect.", confirmUsbMode: "Switch to usbnet={mode}? Type {confirm} to continue.", usbModeLocked: "USB mode switching is locked.",
     ussd: "USSD", ussdDescription: "Query a carrier balance or service menu when the SIM and network support USSD.", query: "Query", ussdEnabled: "USSD requests may be billed or unsupported while roaming.", ussdLocked: "USSD is locked.", invalidUssd: "Enter a code such as *100#.", confirmUssd: "Send this USSD request now?",
     deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
@@ -72,6 +73,7 @@ const copy = {
     scanTimedOut: "本项超时，继续检查下一项。", atTimedOut: "AT 请求超时。",
     scanProgress: "扫描 {current}/{total}", locked: "服务器已锁定套餐写入。", confirmProfile: "确定要{action}这个 eSIM 套餐吗？模块网络可能短暂中断。",
     networkDescription: "查看 Windows 网卡状态、实时速度和本次运行流量。", networkTraffic: "实时流量", adapterStatus: "网卡", downloadSpeed: "当前下载", uploadSpeed: "当前上传", sessionDownload: "本次下载", sessionUpload: "本次上传", gateway: "网关", noAdapter: "没有发现兼容的 USB 4G 网卡。",
+    driver: "驱动", ecmDriver: "Windows ECM 驱动", driverChecking: "检查中", driverNoData: "刷新网络状态后会自动检查驱动。", driverReady: "已就绪", driverOutdated: "需要修复", driverMissing: "未检测到", driverUnsupportedDetail: "当前没有连接已验证的 2C7C:0125 ECM 接口。", driverReadyDetail: "Quectel ECM 签名驱动 {version} · {ip}", driverOutdatedDetail: "Windows 当前使用 {name} {version}，需要安装已验证的 ECM 驱动。", repairDriver: "安装或修复官方驱动", driverRepairHint: "仅用于已验证的 2C7C:0125 ECM 接口，Windows 会请求管理员授权。", driverRepairLocked: "驱动修复只能在 Windows 桌面版中执行。", confirmDriverRepair: "下载并安装已验证的 Quectel ECM 驱动吗？输入 ECMDRIVER 继续。", driverRepairSuccess: "ECM 驱动已就绪，Windows 网卡已刷新。", driverRepairFailed: "ECM 驱动修复没有完成。",
     usbMode: "USB 模式", usbModeDescription: "模式 0 保留管理接口；模式 1 使用已验证的 USB 有线网卡。切换后模块会重启。", managementMode: "管理模式", ethernetMode: "USB 网卡模式", usbModeRisk: "只用于已经确认是 2C7C:0125 的模块，切换时网络会短暂中断。", confirmUsbMode: "确定切换到 usbnet={mode} 吗？输入 {confirm} 继续。", usbModeLocked: "USB 模式切换已锁定。",
     ussd: "USSD 查询", ussdDescription: "当 SIM 和运营商网络支持时，可查询余额或运营商服务菜单。", query: "查询", ussdEnabled: "漫游时 USSD 可能不支持，也可能产生费用。", ussdLocked: "USSD 查询已锁定。", invalidUssd: "请输入类似 *100# 的 USSD 代码。", confirmUssd: "确定现在发送这条 USSD 查询吗？",
     deleteProfile: "删除", deleteIrreversible: "删除 eSIM 套餐后无法恢复。", confirmDeleteProfile: "确定永久删除这个套餐吗？输入 DELETE 继续。", otpCode: "验证码", copyCode: "复制验证码", copied: "已复制",
@@ -80,8 +82,8 @@ const copy = {
 
 const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
-  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, smsPolling: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", profileText: "", notificationText: "", smsText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registration: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null,
+  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, smsPolling: false, busy: false, busyKey: "running", busyParams: {},
+  primaryUrl: "", profileText: "", notificationText: "", smsText: "", networkText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registration: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null,
 };
 
 function t(key, params = {}) {
@@ -103,6 +105,7 @@ function applyLanguage() {
   if (state.profileText) renderProfiles(state.profileText);
   if (state.notificationText) renderNotifications(state.notificationText);
   if (state.smsText) renderSms(state.smsText);
+  if (state.networkText) renderTraffic(state.networkText);
 }
 
 function setBusy(isBusy, labelKey = "running", params = {}) {
@@ -118,7 +121,8 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
             : button.dataset.profileDelete ? isBusy || !state.profileDeleteEnabled
               : button.dataset.smsSend ? isBusy || !state.smsSendEnabled
                 : button.dataset.ussd ? isBusy || !state.ussdEnabled
-                  : button.dataset.usbMode ? isBusy || !state.usbModeEnabled : isBusy;
+                  : button.dataset.usbMode ? isBusy || !state.usbModeEnabled
+                    : button.dataset.driverInstall ? isBusy || !state.driverInstallEnabled || button.dataset.driverEligible !== "1" || button.dataset.driverReady === "1" : isBusy;
     if (button.dataset.stockAction) button.disabled = isBusy || !state.stockBootstrapEnabled;
   }
 }
@@ -275,6 +279,7 @@ function formatBytes(value, perSecond = false) {
 }
 
 function renderTraffic(text) {
+  state.networkText = text;
   let adapters = [];
   try {
     const parsed = JSON.parse(String(text || "").trim() || "[]");
@@ -291,37 +296,68 @@ function renderTraffic(text) {
     txSession: document.querySelector("#trafficTxSession"),
     ipv4: document.querySelector("#trafficIpv4"),
     gateway: document.querySelector("#trafficGateway"),
+    driver: document.querySelector("#trafficDriver"),
+    dhcp: document.querySelector("#trafficDhcp"),
+    driverBadge: document.querySelector("#ecmDriverBadge"),
+    driverDetail: document.querySelector("#ecmDriverDetail"),
+    repairButton: document.querySelector("#installEcmDriverBtn"),
   };
   if (!adapter) {
     ids.adapter.textContent = t("noAdapter");
-    for (const key of ["rxRate", "txRate", "rxSession", "txSession", "ipv4", "gateway"]) ids[key].textContent = "--";
+    for (const key of ["rxRate", "txRate", "rxSession", "txSession", "ipv4", "gateway", "dhcp"]) ids[key].textContent = "--";
+    ids.driver.textContent = t("driverMissing");
+    ids.driverBadge.textContent = t("driverMissing");
+    ids.driverBadge.className = "driver-badge warning";
+    ids.driverDetail.textContent = t("noAdapter");
+    ids.repairButton.dataset.driverReady = "0";
+    ids.repairButton.dataset.driverEligible = "0";
+    ids.repairButton.textContent = t("repairDriver");
+    ids.repairButton.disabled = true;
     state.trafficPrevious = null;
     state.trafficBaseline = null;
     return;
   }
+  const statisticsReliable = adapter.statisticsReliable !== false;
   const now = Date.now();
   const key = `${adapter.name}|${adapter.description}`;
   const rx = Number(adapter.receivedBytes) || 0;
   const tx = Number(adapter.sentBytes) || 0;
-  if (!state.trafficBaseline || state.trafficBaseline.key !== key || rx < state.trafficBaseline.rx || tx < state.trafficBaseline.tx) {
+  if (statisticsReliable && (!state.trafficBaseline || state.trafficBaseline.key !== key || rx < state.trafficBaseline.rx || tx < state.trafficBaseline.tx)) {
     state.trafficBaseline = { key, rx, tx };
     state.trafficPrevious = null;
   }
   let rxRate = 0;
   let txRate = 0;
-  if (state.trafficPrevious?.key === key) {
+  if (statisticsReliable && state.trafficPrevious?.key === key) {
     const seconds = Math.max(0.2, (now - state.trafficPrevious.time) / 1000);
     rxRate = Math.max(0, rx - state.trafficPrevious.rx) / seconds;
     txRate = Math.max(0, tx - state.trafficPrevious.tx) / seconds;
   }
-  state.trafficPrevious = { key, rx, tx, time: now };
-  ids.adapter.textContent = `${adapter.name || adapter.description || t("unknown")} · ${adapter.status || "--"}`;
-  ids.rxRate.textContent = formatBytes(rxRate, true);
-  ids.txRate.textContent = formatBytes(txRate, true);
-  ids.rxSession.textContent = formatBytes(rx - state.trafficBaseline.rx);
-  ids.txSession.textContent = formatBytes(tx - state.trafficBaseline.tx);
+  state.trafficPrevious = statisticsReliable ? { key, rx, tx, time: now } : null;
+  if (!statisticsReliable) state.trafficBaseline = null;
+  ids.adapter.textContent = `${adapter.description || adapter.name || t("unknown")} | ${adapter.status || "--"}`;
+  ids.rxRate.textContent = statisticsReliable ? formatBytes(rxRate, true) : "--";
+  ids.txRate.textContent = statisticsReliable ? formatBytes(txRate, true) : "--";
+  ids.rxSession.textContent = statisticsReliable ? formatBytes(rx - state.trafficBaseline.rx) : "--";
+  ids.txSession.textContent = statisticsReliable ? formatBytes(tx - state.trafficBaseline.tx) : "--";
   ids.ipv4.textContent = adapter.ipv4 || "--";
   ids.gateway.textContent = adapter.gateway || "--";
+  ids.driver.textContent = adapter.driverVersion || t("driverMissing");
+  ids.dhcp.textContent = adapter.dhcp || "--";
+
+  const driverTargetPresent = Boolean(adapter.driverTargetPresent);
+  const driverReady = Boolean(adapter.driverReady);
+  ids.driverBadge.textContent = driverReady ? t("driverReady") : driverTargetPresent ? t("driverOutdated") : t("driverMissing");
+  ids.driverBadge.className = `driver-badge ${driverReady ? "ready" : "warning"}`;
+  ids.driverDetail.textContent = driverReady
+    ? t("driverReadyDetail", { version: adapter.driverVersion || "--", ip: adapter.ipv4 || "--" })
+    : driverTargetPresent
+      ? t("driverOutdatedDetail", { name: adapter.driverName || adapter.description || t("unknown"), version: adapter.driverVersion || "--" })
+      : t("driverUnsupportedDetail");
+  ids.repairButton.dataset.driverEligible = driverTargetPresent ? "1" : "0";
+  ids.repairButton.dataset.driverReady = driverReady ? "1" : "0";
+  ids.repairButton.textContent = driverReady ? t("driverReady") : t("repairDriver");
+  ids.repairButton.disabled = state.busy || !state.driverInstallEnabled || !driverTargetPresent || driverReady;
 }
 function smsStatus(status) {
   const normalized = status.toUpperCase();
@@ -367,6 +403,7 @@ function updateProfileHint() {
   document.querySelector("#profileNotificationsHint").textContent = state.profileNotificationsEnabled ? t("profileNotificationsEnabled") : t("profileNotificationsLocked");
   document.querySelector("#smsSendHint").textContent = state.smsSendEnabled ? t("smsSendEnabled") : t("smsSendLocked");
   document.querySelector("#stockSetupHint").textContent = state.stockBootstrapEnabled ? t("stockSetupEnabled") : t("stockSetupLocked");
+  document.querySelector("#ecmDriverHint").textContent = state.driverInstallEnabled ? t("driverRepairHint") : t("driverRepairLocked");
 }
 
 async function fetchJson(path, timeoutMs = 90000) {
@@ -382,7 +419,7 @@ async function requestAction(action) {
 }
 
 function applyHealth(data) {
-  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.primaryUrl = data.primaryUrl || "";
+  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.primaryUrl = data.primaryUrl || "";
   document.querySelector("#tokenRow").style.display = state.authRequired ? "grid" : "none"; updateProfileHint(); applyLanguage();
 }
 
@@ -426,7 +463,7 @@ async function autoScan() {
   try {
     for (let index = 0; index < actions.length; index += 1) {
       const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); }
+      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
       catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message); }
     }
   } finally { setBusy(false); }
@@ -596,6 +633,31 @@ async function switchUsbMode(mode) {
   finally { setBusy(false); }
 }
 
+async function installEcmDriver() {
+  const button = document.querySelector("#installEcmDriverBtn");
+  if (!state.driverInstallEnabled) { append(t("ecmDriver"), t("driverRepairLocked")); return; }
+  if (button.dataset.driverReady === "1") return;
+  if (window.prompt(t("confirmDriverRepair")) !== "ECMDRIVER") return;
+
+  setBusy(true, "ecmDriver");
+  try {
+    const res = await fetch("/api/ecm-driver-install", {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ confirm: "ECMDRIVER" }),
+    });
+    const data = await res.json();
+    const detailText = data.detail ? JSON.stringify(data.detail, null, 2) : textFromResult(data) || JSON.stringify(data, null, 2);
+    append(t("ecmDriver"), detailText);
+    if (!res.ok || !data.detail?.ok) throw new Error(data.detail?.error || data.error || t("driverRepairFailed"));
+    append(t("ecmDriver"), t("driverRepairSuccess"));
+  } catch (error) {
+    append(t("ecmDriver"), `${t("driverRepairFailed")}\n${error.message}`);
+  } finally {
+    setBusy(false);
+  }
+  await callApi("network-traffic");
+}
 async function refreshTrafficQuietly() {
   if (state.busy || document.hidden || !document.querySelector('.nav-btn[data-target="network"]')?.classList.contains("active")) return;
   try {
@@ -646,6 +708,7 @@ document.querySelector("#downloadProfileBtn").addEventListener("click", download
 document.querySelector("#processNotificationsBtn").addEventListener("click", processNotifications);
 document.querySelector("#sendSmsBtn").addEventListener("click", sendSmsMessage);
 document.querySelector("#sendUssdBtn").addEventListener("click", sendUssdRequest);
+document.querySelector("#installEcmDriverBtn").addEventListener("click", installEcmDriver);
 for (const button of document.querySelectorAll("button[data-usb-mode]")) button.addEventListener("click", () => switchUsbMode(Number(button.dataset.usbMode)));
 document.querySelector("#smsPollingBtn").addEventListener("click", toggleSmsPolling);
 document.querySelector("#stockConvertBtn").addEventListener("click", () => runStockSetup("/api/stock-module-convert", t("confirmStockConvert"), t("stockConvert")));

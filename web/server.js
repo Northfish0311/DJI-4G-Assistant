@@ -12,6 +12,7 @@ const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || "0.0.0.0";
 const consoleToken = process.env.CONSOLE_TOKEN || "";
 let atQueue = Promise.resolve();
+let driverInstallRunning = false;
 
 function localIps() {
   const result = [];
@@ -73,7 +74,12 @@ function isAuthorized(req, url) {
 
 function runPowerShell(args, timeoutMs = 45000) {
   return new Promise((resolve) => {
-    const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", ...args], {
+    const utf8 = "[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $OutputEncoding = [Console]::OutputEncoding;";
+    const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
+    const command = args[0] === "-File"
+      ? `${utf8}\n& ${quote(args[1])} ${args.slice(2).map(quote).join(" ")}\nexit $LASTEXITCODE`
+      : `${utf8}\n${args[1] || ""}`;
+    const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command], {
       cwd: root,
       windowsHide: true,
     });
@@ -451,6 +457,7 @@ async function handleApi(req, res, url) {
       ussdEnabled: process.env.ALLOW_USSD === "1",
       usbModeEnabled: process.env.ALLOW_USB_MODE === "1",
       stockBootstrapEnabled: process.env.ALLOW_STOCK_BOOTSTRAP === "1",
+      driverInstallEnabled: process.env.ALLOW_DRIVER_INSTALL === "1",
     });
     return;
   }
@@ -643,22 +650,75 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/network-traffic") {
     const ps = `
+$targetDevice = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object {
+  $_.InstanceId -like 'USB\\VID_2C7C&PID_0125&MI_04*'
+} | Select-Object -First 1
+$targetPresent = [bool]$targetDevice
+$driver = Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Where-Object {
+  $_.DeviceID -like 'USB\\VID_2C7C&PID_0125&MI_04*'
+} | Sort-Object DriverDate -Descending | Select-Object -First 1
+$driverVersion = $null
+if ($driver -and $driver.DriverVersion) {
+  try { $driverVersion = [version]$driver.DriverVersion } catch { $driverVersion = $null }
+}
+$driverReady = [bool]($targetPresent -and $driver -and $driver.DeviceName -eq 'Quectel ECM Adapter' -and $driverVersion -and $driverVersion -ge [version]'19.0.33.201')
 $items = @()
-$adapters = Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Where-Object {
+$adapters = @(Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Where-Object {
   $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular|Remote NDIS|USB Ethernet'
+})
+if (-not $targetPresent) {
+  $adapters = @($adapters | Where-Object { $_.InterfaceDescription -ne 'Quectel ECM Adapter' })
 }
 foreach ($adapter in $adapters) {
   $stats = Get-NetAdapterStatistics -Name $adapter.Name -ErrorAction SilentlyContinue
+  $receivedRaw = if ($stats) { [uint64]$stats.ReceivedBytes } else { [uint64]0 }
+  $sentRaw = if ($stats) { [uint64]$stats.SentBytes } else { [uint64]0 }
+  $statisticsReliable = [bool]($receivedRaw -lt [uint64]1PB -and $sentRaw -lt [uint64]1PB)
+  $receivedBytes = if ($statisticsReliable) { [int64]$receivedRaw } else { [int64]0 }
+  $sentBytes = if ($statisticsReliable) { [int64]$sentRaw } else { [int64]0 }
   $ip = Get-NetIPConfiguration -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue
+  $ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
   $items += [pscustomobject]@{
     name = $adapter.Name
     description = $adapter.InterfaceDescription
     status = [string]$adapter.Status
+    mediaState = [string]$adapter.MediaConnectionState
     linkSpeed = [string]$adapter.LinkSpeed
-    receivedBytes = [int64]($stats.ReceivedBytes)
-    sentBytes = [int64]($stats.SentBytes)
+    receivedBytes = $receivedBytes
+    sentBytes = $sentBytes
+    statisticsReliable = $statisticsReliable
     ipv4 = [string]($ip.IPv4Address.IPAddress)
     gateway = [string]($ip.IPv4DefaultGateway.NextHop)
+    dhcp = [string]($ipInterface.Dhcp)
+    driverName = if ($driver) { [string]$driver.DeviceName } else { '' }
+    driverVersion = if ($driver) { [string]$driver.DriverVersion } else { '' }
+    driverDate = if ($driver) { [string]$driver.DriverDate } else { '' }
+    driverInf = if ($driver) { [string]$driver.InfName } else { '' }
+    driverSigned = if ($driver) { [bool]$driver.IsSigned } else { $false }
+    driverTargetPresent = $targetPresent
+    driverReady = $driverReady
+  }
+}
+if ($targetPresent -and $items.Count -eq 0) {
+  $items += [pscustomobject]@{
+    name = [string]$targetDevice.FriendlyName
+    description = if ($driver) { [string]$driver.DeviceName } else { 'Quectel ECM interface' }
+    status = [string]$targetDevice.Status
+    mediaState = ''
+    linkSpeed = ''
+    receivedBytes = 0
+    sentBytes = 0
+    statisticsReliable = $false
+    ipv4 = ''
+    gateway = ''
+    dhcp = ''
+    driverName = if ($driver) { [string]$driver.DeviceName } else { '' }
+    driverVersion = if ($driver) { [string]$driver.DriverVersion } else { '' }
+    driverDate = if ($driver) { [string]$driver.DriverDate } else { '' }
+    driverInf = if ($driver) { [string]$driver.InfName } else { '' }
+    driverSigned = if ($driver) { [bool]$driver.IsSigned } else { $false }
+    driverTargetPresent = $true
+    driverReady = $driverReady
   }
 }
 $items | ConvertTo-Json -Depth 4 -Compress
@@ -667,6 +727,35 @@ $items | ConvertTo-Json -Depth 4 -Compress
     sendJson(res, 200, result);
     return;
   }
+
+  if (url.pathname === "/api/ecm-driver-install" && req.method === "POST") {
+    if (process.env.ALLOW_DRIVER_INSTALL !== "1") {
+      sendJson(res, 403, { ok: false, error: "ECM driver installation is available only in the Windows desktop app." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "ECMDRIVER") {
+      sendJson(res, 400, { ok: false, error: "Confirm ECMDRIVER before installing a Windows driver." });
+      return;
+    }
+    if (driverInstallRunning) {
+      sendJson(res, 409, { ok: false, error: "An ECM driver operation is already running." });
+      return;
+    }
+
+    driverInstallRunning = true;
+    try {
+      const result = await runPowerShell(["-File", script("install-quectel-ecm-driver.ps1")], 600000);
+      let detail = null;
+      try { detail = JSON.parse(String(result.stdout || "").trim()); } catch {}
+      const response = detail ? { ...result, detail } : result;
+      sendJson(res, result.ok && detail?.ok ? 200 : 502, response);
+    } finally {
+      driverInstallRunning = false;
+    }
+    return;
+  }
+
   if (url.pathname === "/api/at" && req.method === "POST") {
     const body = JSON.parse(await readBody(req) || "{}");
     const command = String(body.command || "").trim();

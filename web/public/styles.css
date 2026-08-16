@@ -253,7 +253,7 @@ h2 {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   background: var(--line);
   gap: 1px;
 }
@@ -776,7 +776,7 @@ textarea:focus-visible {
 
 .network-metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1px;
   background: var(--line);
 }
@@ -789,7 +789,7 @@ textarea:focus-visible {
 }
 
 .network-metric:first-child {
-  grid-column: span 2;
+  grid-column: auto;
 }
 
 .network-metric span {
@@ -807,6 +807,41 @@ textarea:focus-visible {
   font-size: 16px;
 }
 
+.driver-panel {
+  border-left: 3px solid #2f6f68;
+}
+
+.driver-detail {
+  margin: 0;
+  padding: 13px 14px;
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.driver-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid #ccd4d8;
+  border-radius: 4px;
+  background: #f5f7f8;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.driver-badge.ready {
+  border-color: #a9d4c8;
+  background: #eaf6f2;
+  color: #1f6658;
+}
+
+.driver-badge.warning {
+  border-color: #e4c78d;
+  background: #fff7e8;
+  color: #805b16;
+}
 .ussd-panel .panel-subtitle {
   padding: 12px 14px 0;
 }
@@ -842,6 +877,10 @@ button.compact {
   .network-metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .network-metric:first-child {
+    grid-column: 1 / -1;
+  }
   .metric-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -873,6 +912,16 @@ button.compact {
 
   .rail {
     top: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    overflow-x: visible;
+  }
+
+  .nav-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0 6px;
   }
 
   .metric-grid {

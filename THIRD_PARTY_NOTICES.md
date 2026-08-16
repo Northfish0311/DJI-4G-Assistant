@@ -20,4 +20,10 @@ DJI RoamDock is MIT licensed. Release packages also contain third-party software
 - MIT license.
 - Used for the Windows desktop package.
 
+## Quectel Windows ECM driver
+
+- Downloaded on demand from Quectel's official website; it is not redistributed in this repository or release package.
+- The installer verifies the expected ZIP SHA-256, target hardware ID, driver metadata, Microsoft WHCP catalog signature, and Quectel driver-binary signature before installation.
+- The driver remains subject to Quectel's terms.
+
 No source code from DJOneHub, VoHive, or NetXD is included; only their published feature sets were reviewed as product references.

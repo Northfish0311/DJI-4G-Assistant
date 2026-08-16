@@ -46,6 +46,7 @@ function configureRuntime(port) {
   process.env.ALLOW_USSD = "1";
   process.env.ALLOW_USB_MODE = "1";
   process.env.ALLOW_STOCK_BOOTSTRAP = "1";
+  process.env.ALLOW_DRIVER_INSTALL = "1";
 }
 
 function isLocalUrl(rawUrl, port) {

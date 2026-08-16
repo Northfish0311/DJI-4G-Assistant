@@ -108,9 +108,22 @@
               <article class="network-metric"><span data-i18n="sessionUpload">Session upload</span><strong id="trafficTxSession">--</strong></article>
               <article class="network-metric"><span>IPv4</span><strong id="trafficIpv4">--</strong></article>
               <article class="network-metric"><span data-i18n="gateway">Gateway</span><strong id="trafficGateway">--</strong></article>
+              <article class="network-metric"><span data-i18n="driver">Driver</span><strong id="trafficDriver">--</strong></article>
+              <article class="network-metric"><span>DHCP</span><strong id="trafficDhcp">--</strong></article>
             </div>
           </div>
 
+          <div class="panel driver-panel">
+            <div class="panel-head">
+              <h2 data-i18n="ecmDriver">Windows ECM Driver</h2>
+              <span id="ecmDriverBadge" class="driver-badge" data-i18n="driverChecking">Checking</span>
+            </div>
+            <p id="ecmDriverDetail" class="driver-detail" data-i18n="driverNoData">Run a network refresh to inspect the driver.</p>
+            <div class="panel-actions">
+              <button id="installEcmDriverBtn" data-driver-install data-i18n="repairDriver">Install or repair official driver</button>
+            </div>
+            <p class="hint" id="ecmDriverHint" data-i18n="driverRepairHint">For the verified 2C7C:0125 ECM interface only. Windows will request administrator approval.</p>
+          </div>
           <div class="panel danger-panel">
             <div class="panel-head"><h2 data-i18n="usbMode">USB Mode</h2></div>
             <p data-i18n="usbModeDescription">Mode 0 keeps management interfaces available; mode 1 exposes the verified USB Ethernet mode. The module restarts after a change.</p>
