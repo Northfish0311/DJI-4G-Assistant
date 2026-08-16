@@ -16,14 +16,16 @@ let driverInstallRunning = false;
 
 function localIps() {
   const result = [];
-  for (const items of Object.values(os.networkInterfaces())) {
+  for (const [name, items] of Object.entries(os.networkInterfaces())) {
     for (const item of items || []) {
-      if (item.family === "IPv4" && !item.internal) {
-        result.push(item.address);
-      }
+      if (item.family !== "IPv4" || item.internal || item.address.startsWith("169.254.")) continue;
+      let score = 0;
+      if (/Wi-?Fi|WLAN|Wireless|无线/i.test(name)) score += 100;
+      if (/^192\.168\.225\./.test(item.address)) score -= 100;
+      result.push({ address: item.address, score });
     }
   }
-  return result;
+  return [...new Set(result.sort((left, right) => right.score - left.score).map((item) => item.address))];
 }
 
 function primaryConsoleUrl() {
@@ -303,8 +305,8 @@ try {
   $sp.Open()
   $sp.DiscardInBuffer()
   $sp.WriteLine('AT+CMGF=0')
-  $mode = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 8
-  if ($mode -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw 'The modem did not accept SMS PDU mode.' }
+  $mode = Read-Until '(\\r|\\n)(OK|ERROR)(\\r|\\n)' 8
+  if ($mode -notmatch '(\\r|\\n)OK(\\r|\\n)') { throw 'The modem did not accept SMS PDU mode.' }
   $segment = 0
   foreach ($item in $payload.pdus) {
     $segment += 1
@@ -314,8 +316,8 @@ try {
     if ($prompt -notmatch '>') { throw ('The modem did not present an SMS prompt for segment {0}.' -f $segment) }
     $sp.Write([string]$item.pdu)
     $sp.Write([char]26)
-    $sent = Read-Until '(\`r|\`n)(OK|ERROR)(\`r|\`n)' 60
-    if ($sent -notmatch '(\`r|\`n)OK(\`r|\`n)') { throw ('The modem rejected SMS segment {0} or did not finish in time.' -f $segment) }
+    $sent = Read-Until '(\\r|\\n)(OK|ERROR)(\\r|\\n)' 60
+    if ($sent -notmatch '(\\r|\\n)OK(\\r|\\n)') { throw ('The modem rejected SMS segment {0} or did not finish in time.' -f $segment) }
     ('SMS segment {0}/{1} accepted by modem.' -f $segment, $payload.pdus.Count)
   }
 } finally {
@@ -441,7 +443,7 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/health") {
     sendJson(res, 200, {
       ok: true,
-      name: "DJI RoamDock Pro for Windows",
+      name: "DJI 4G Assistant for Windows",
       time: new Date().toISOString(),
       host: os.hostname(),
       urls: localIps().map((ip) => `http://${ip}:${port}`),
@@ -773,6 +775,27 @@ $items | ConvertTo-Json -Depth 4 -Compress
     return;
   }
 
+  if (url.pathname === "/api/lpac-chip") {
+    const lpac = findLpac();
+    if (!lpac) {
+      sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
+      return;
+    }
+    const result = await runLpac(lpac, portArg(url), ["chip", "info"]);
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/lpac-discovery") {
+    const lpac = findLpac();
+    if (!lpac) {
+      sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
+      return;
+    }
+    const result = await runLpac(lpac, portArg(url), ["profile", "discovery"], 180000);
+    sendJson(res, 200, result);
+    return;
+  }
   if (url.pathname === "/api/lpac-profiles") {
     const lpac = findLpac();
     if (!lpac) {
@@ -930,7 +953,7 @@ function startServer() {
     server.once("error", onError);
     server.listen(port, host, () => {
       server.off("error", onError);
-      console.log(`DJI RoamDock running on http://127.0.0.1:${port}`);
+      console.log(`DJI 4G Assistant running on http://127.0.0.1:${port}`);
       console.log("");
       if (host !== "127.0.0.1") {
         console.log("Open this in any browser on this Windows PC, or from a trusted device on the same LAN:");

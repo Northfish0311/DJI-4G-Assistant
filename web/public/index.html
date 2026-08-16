@@ -4,14 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="icon" href="data:,">
-    <title>DJI RoamDock</title>
+    <title>DJI 4G Assistant</title>
     <link rel="stylesheet" href="/styles.css">
   </head>
   <body>
     <header class="topbar">
       <div>
         <p class="eyebrow">DJI Cellular Dongle / Quectel / eUICC</p>
-        <h1 data-i18n="title">DJI RoamDock</h1>
+        <h1 data-i18n="title">DJI 4G Assistant</h1>
         <p id="hostLine" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
       </div>
       <div class="top-actions">
@@ -145,8 +145,16 @@
               <h2 data-i18n="esimProfiles">eSIM Profiles</h2>
               <p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p>
             </div>
-            <button data-action="lpac-profiles" data-i18n="refresh">Refresh</button>
+            <div class="view-actions"><button data-action="lpac-chip" class="secondary" data-i18n="euiccInfo">eUICC Info</button><button data-action="lpac-profiles" data-i18n="refresh">Refresh</button></div>
           </div>
+
+          <div class="euicc-summary" aria-live="polite">
+            <div class="euicc-identity"><span data-i18n="eid">EID</span><strong id="eidValue">--</strong></div>
+            <div><span data-i18n="installedProfiles">Stored profiles</span><strong id="installedProfileCount">--</strong></div>
+            <div><span data-i18n="availableMemory">Free memory</span><strong id="euiccMemory">--</strong></div>
+            <div><span data-i18n="pendingProfiles">Pending downloads</span><strong id="pendingProfileCount">--</strong></div>
+          </div>
+          <p class="profile-source-note" data-i18n="profileSourceNote">Enabled and disabled profiles stored on this EID are listed. Provider app orders are not card profiles.</p>
 
           <div class="esim-workspace">
             <div class="panel profile-panel">
@@ -154,6 +162,10 @@
             </div>
 
             <aside class="tool-stack">
+              <div class="panel profile-source-panel">
+                <div class="panel-head"><h2 data-i18n="profileSource">Profile Sources</h2><button data-action="lpac-discovery" class="secondary" data-i18n="checkPendingProfiles">Check Pending</button></div>
+                <p id="discoveryState" data-i18n="discoveryNotChecked">GSMA SM-DS has not been checked.</p>
+              </div>
               <div class="panel danger-panel profile-access-panel">
                 <div class="panel-head"><h2 data-i18n="profileControls">Profile Controls</h2></div>
                 <p data-i18n="profileControlDescription">Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.</p>
@@ -251,7 +263,7 @@
         <section id="system" class="view">
           <div class="view-heading">
             <div>
-              <p class="eyebrow">RoamDock</p>
+              <p class="eyebrow">4G Assistant</p>
               <h2 data-i18n="system">System</h2>
               <p class="panel-subtitle" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
             </div>

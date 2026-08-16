@@ -11,12 +11,14 @@ const connectionBadge = document.querySelector("#connectionBadge");
 const copy = {
   en: {
     advanced: "Advanced", console: "Console",
-    title: "DJI RoamDock", hostLocal: "Local control page for the module connected to this computer.",
+    carrier: "Carrier", radio: "Radio", online: "Online", registered: "Registered", noNetwork: "No network data", registrationHome: "Home network", registrationRoaming: "Roaming", registrationSearching: "Searching", registrationDenied: "Registration denied", registrationUnknown: "Not registered",
+    title: "DJI 4G Assistant", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
     autoScan: "Auto Scan", switchToChinese: "中文", switchToEnglish: "English",
     overview: "Overview", networkCenter: "Network", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
     currentDevice: "Current Device", waitingScan: "Waiting for scan", insertScan: "Insert the dongle, then run Auto Scan.",
     csq: "CSQ", usb: "USB", atPort: "AT Port", network: "Network", sim: "SIM", unknown: "Unknown",
+    euiccInfo: "eUICC Info", eid: "EID", installedProfiles: "Stored profiles", availableMemory: "Free memory", pendingProfiles: "Pending downloads", profileSource: "Profile Sources", profileSourceNote: "Enabled and disabled profiles stored on this EID are listed. Provider app orders are not card profiles.", checkPendingProfiles: "Check Pending", discoveryNotChecked: "GSMA SM-DS has not been checked.", noPendingProfiles: "No pending profiles found on GSMA SM-DS.", pendingProfileSummary: "{count} pending source(s) found", chipInfoUnavailable: "eUICC info unavailable.",
     profilesNotLoaded: "Profiles not loaded", profilesSummary: "{count} profiles · {active} active", switchProfile: "Switch to this plan", currentProfile: "In use", inactiveProfile: "Not active", trafficBalance: "Plan balance", trafficUnavailable: "Provider API required", profileClassLabel: "Profile type", iccidLabel: "ICCID", quickActions: "Quick Actions", deviceCheck: "Device Check", findAt: "Find AT", moduleStatus: "Module Status", esimProfiles: "eSIM Profiles",
     refresh: "Refresh", runScanRefresh: "Run Auto Scan or Refresh.", profileControls: "Profile Controls",
     profileControlDescription: "Enable and disable are real eSIM operations. They are blocked until the local server is started with profile write actions enabled.",
@@ -46,13 +48,14 @@ const copy = {
   },
   zh: {
     advanced: "\u9ad8\u7ea7\u8bbe\u7f6e", console: "\u63a7\u5236\u53f0",
-    carrier: "运营商", radio: "无线制式", online: "已联网", registered: "已注册", noNetwork: "暂无网络数据",
-    title: "DJI RoamDock", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
+    carrier: "运营商", radio: "无线制式", online: "已联网", registered: "已注册", noNetwork: "暂无网络数据", registrationHome: "本地注册", registrationRoaming: "漫游注册", registrationSearching: "正在搜索", registrationDenied: "注册被拒绝", registrationUnknown: "未注册",
+    title: "DJI 4G Assistant", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
     idle: "空闲", running: "运行中", checking: "检查中", starting: "开始扫描", at: "AT 指令",
     autoScan: "自动扫描", switchToChinese: "中文", switchToEnglish: "English",
     overview: "概览", networkCenter: "网络", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
     currentDevice: "当前设备", waitingScan: "等待扫描", insertScan: "插入模块后点击自动扫描。",
     csq: "信号", usb: "USB", atPort: "AT 端口", network: "网络", sim: "SIM", unknown: "未知",
+    euiccInfo: "eUICC 信息", eid: "EID 卡片编号", installedProfiles: "卡内套餐", availableMemory: "剩余空间", pendingProfiles: "待下载套餐", profileSource: "套餐来源", profileSourceNote: "这里只显示当前 EID 卡内已启用和已停用的套餐；套餐商 App 中的订单不会自动变成卡内套餐。", checkPendingProfiles: "检查待下载", discoveryNotChecked: "尚未检查 GSMA SM-DS。", noPendingProfiles: "GSMA SM-DS 没有发现待下载套餐。", pendingProfileSummary: "发现 {count} 个待下载来源", chipInfoUnavailable: "无法读取 eUICC 信息。",
     profilesNotLoaded: "尚未读取套餐", profilesSummary: "共 {count} 个套餐 · {active} 个启用", switchProfile: "切换到此套餐", currentProfile: "正在使用", inactiveProfile: "未启用", trafficBalance: "套餐余量", trafficUnavailable: "eUICC 不提供，需套餐商接口", profileClassLabel: "Profile 类型", iccidLabel: "ICCID", quickActions: "快捷操作", deviceCheck: "检查设备", findAt: "查找 AT 口", moduleStatus: "模块状态", esimProfiles: "eSIM 套餐",
     refresh: "刷新", runScanRefresh: "请先自动扫描或刷新。", profileControls: "套餐操作",
     profileControlDescription: "启用和停用会真实写入 eSIM 卡，每次操作前都会再次确认。",
@@ -85,7 +88,7 @@ const copy = {
 const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
   authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, smsPolling: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", profileText: "", notificationText: "", smsText: "", networkText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registration: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null,
+  primaryUrl: "", chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null,
 };
 
 function t(key, params = {}) {
@@ -104,6 +107,8 @@ function applyLanguage() {
   hostLine.textContent = state.primaryUrl ? t("ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
   updateProfileHint();
   renderSummary();
+  if (state.chipText) renderChip(state.chipText);
+  if (state.discoveryText) renderDiscovery(state.discoveryText);
   if (state.profileText) renderProfiles(state.profileText);
   if (state.notificationText) renderNotifications(state.notificationText);
   if (state.smsText) renderSms(state.smsText);
@@ -136,7 +141,7 @@ function append(title, text) {
 }
 
 function actionTitle(action) {
-  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
+  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
 }
 
 function apiHeaders(extra = {}) {
@@ -146,7 +151,13 @@ function apiHeaders(extra = {}) {
 
 function textFromResult(data) { return [data.stdout, data.stderr, data.error].filter(Boolean).join("\n"); }
 
+function registrationLabel(code) {
+  const key = ({ "1": "registrationHome", "5": "registrationRoaming", "2": "registrationSearching", "3": "registrationDenied", "0": "registrationUnknown", "4": "registrationUnknown" })[String(code || "")];
+  return key ? t(key) : "";
+}
+
 function renderSummary() {
+  const registration = registrationLabel(state.registrationCode);
   document.querySelector("#vidPid").textContent = state.usb || t("unknown");
   document.querySelector("#atPort").textContent = state.atPort || t("unknown");
   document.querySelector("#signalValue").textContent = state.signal || "--";
@@ -155,11 +166,11 @@ function renderSummary() {
   radioValue.textContent = state.radio || t("unknown");
   document.querySelector("#deviceTitle").textContent = state.deviceModel || t("waitingScan");
   document.querySelector("#deviceSubtitle").textContent = state.deviceRevision ? t("revision", { value: state.deviceRevision }) : t("insertScan");
-  document.querySelector("#netState").textContent = state.registration || (state.moduleIp ? `${t("online")} · ${state.moduleIp}` : state.networkKind === "disconnected" ? t("adapterDisconnected") : state.networkKind === "present" ? t("adapterPresent") : t("unknown"));
-  const status = state.moduleIp ? `${t("online")} · ${state.moduleIp}` : state.registration ? `${t("registered")} · ${state.registration}` : t("noNetwork");
+  document.querySelector("#netState").textContent = registration || (state.moduleIp ? `${t("online")} · ${state.moduleIp}` : state.networkKind === "disconnected" ? t("adapterDisconnected") : state.networkKind === "present" ? t("adapterPresent") : t("unknown"));
+  const status = state.moduleIp ? `${t("online")} · ${state.moduleIp}` : registration ? `${t("registered")} · ${registration}` : t("noNetwork");
   connectionBadge.textContent = status;
   connectionBadge.classList.toggle("online", Boolean(state.moduleIp));
-  connectionBadge.classList.toggle("registered", !state.moduleIp && Boolean(state.registration));
+  connectionBadge.classList.toggle("registered", !state.moduleIp && Boolean(registration));
 }
 
 function updateSummary(text) {
@@ -169,7 +180,10 @@ function updateSummary(text) {
   if (/Quectel Wireless Ethernet Adapter/i.test(text)) state.networkKind = /Disconnected/i.test(text) ? "disconnected" : "present";
   const cpin = text.match(/\+CPIN:\s*([^\r\n]+)/), cereg = text.match(/\+CEREG:\s*([^\r\n]+)/), cops = text.match(/\+COPS:\s*([^\r\n]+)/), qnwinfo = text.match(/\+QNWINFO:\s*([^\r\n]+)/);
   if (cpin) state.sim = cpin[1].trim();
-  if (cereg) state.registration = cereg[1].trim();
+  if (cereg) {
+    const registrationFields = cereg[1].split(",").map((field) => field.trim());
+    state.registrationCode = registrationFields.length > 1 ? registrationFields[1] : registrationFields[0];
+  }
   if (cops) {
     const carrier = cops[1].match(/"([^"]+)"/) || cops[1].match(/([^,\s]+)/);
     if (carrier) state.carrier = carrier[1].trim();
@@ -187,6 +201,47 @@ function updateSummary(text) {
 
 function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
 
+function parseLpaData(text) {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter((line) => line.startsWith("{"));
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    try {
+      const message = JSON.parse(lines[index]);
+      if (message?.type === "lpa" && message?.payload) return message.payload.data;
+    } catch (_) {
+      // Ignore progress lines and malformed diagnostic output.
+    }
+  }
+  return null;
+}
+
+function renderChip(text) {
+  state.chipText = text;
+  const data = parseLpaData(text);
+  const eid = document.querySelector("#eidValue");
+  const memory = document.querySelector("#euiccMemory");
+  if (!data || Array.isArray(data)) {
+    eid.textContent = t("chipInfoUnavailable");
+    memory.textContent = "--";
+    return;
+  }
+  eid.textContent = data.eidValue || "--";
+  const bytes = data.EUICCInfo2?.extCardResource?.freeNonVolatileMemory;
+  memory.textContent = Number.isFinite(Number(bytes)) ? formatBytes(bytes) : "--";
+}
+
+function renderDiscovery(text) {
+  state.discoveryText = text;
+  const data = parseLpaData(text);
+  const count = document.querySelector("#pendingProfileCount");
+  const detail = document.querySelector("#discoveryState");
+  if (!Array.isArray(data)) {
+    count.textContent = "--";
+    detail.textContent = t("chipInfoUnavailable");
+    return;
+  }
+  count.textContent = String(data.length);
+  detail.textContent = data.length ? t("pendingProfileSummary", { count: data.length }) : t("noPendingProfiles");
+}
 function renderProfiles(text) {
   state.profileText = text;
   const list = document.querySelector("#profilesList");
@@ -197,6 +252,7 @@ function renderProfiles(text) {
     const profiles = JSON.parse(jsonLine)?.payload?.data || [];
     const activeCount = profiles.filter((profile) => profile.profileState === "enabled").length;
     count.textContent = t("profilesSummary", { count: profiles.length, active: activeCount });
+    document.querySelector("#installedProfileCount").textContent = String(profiles.length);
     if (!profiles.length) { list.className = "profile-list empty"; list.textContent = t("noProfiles"); return; }
     list.className = "profile-list";
     list.innerHTML = profiles.map((profile) => {
@@ -416,7 +472,7 @@ async function fetchJson(path, timeoutMs = 90000) {
 
 async function requestAction(action) {
   const port = encodeURIComponent(portInput.value.trim() || "COM5");
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
+  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}`, "lpac-discovery": `/api/lpac-discovery?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const data = await fetchJson(paths[action]); return { data, text: textFromResult(data) || JSON.stringify(data, null, 2) };
 }
 
@@ -433,7 +489,7 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
   catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -460,12 +516,12 @@ async function rescueScan() {
   }
 }
 async function autoScan() {
-  const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "lpac-profiles", "sms-list"];
+  const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "lpac-chip", "lpac-profiles", "sms-list"];
   setBusy(true, "starting");
   try {
     for (let index = 0; index < actions.length; index += 1) {
       const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
       catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message); }
     }
   } finally { setBusy(false); }

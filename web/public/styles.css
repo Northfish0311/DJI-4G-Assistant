@@ -1,14 +1,14 @@
 :root {
   color-scheme: light;
-  --bg: #f4f6f8;
+  --bg: #f2f4f6;
   --panel: #ffffff;
   --panel-soft: #f8fafb;
-  --ink: #17212b;
-  --muted: #657381;
-  --line: #d8e0e6;
+  --ink: #15212b;
+  --muted: #5f6f7c;
+  --line: #d9e0e5;
   --line-strong: #c4ced6;
-  --accent: #0b7269;
-  --accent-strong: #075b54;
+  --accent: #08766c;
+  --accent-strong: #075f57;
   --accent-soft: #e9f5f3;
   --danger: #b42318;
   --ok: #17733a;
@@ -1260,5 +1260,348 @@ button.compact {
 
   .profile-panel .profile-list {
     padding: 10px;
+  }
+}
+
+/* Interface refinement: DJI 4G Assistant */
+body {
+  font-family: "Segoe UI Variable Text", "Microsoft YaHei UI", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+.nav-title,
+.metric strong,
+.network-metric strong {
+  font-family: "Segoe UI Variable Display", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+}
+
+.topbar {
+  min-height: 82px;
+  padding: 14px max(18px, calc((100vw - 1320px) / 2 + 24px));
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(10px);
+}
+
+.topbar h1 {
+  font-size: 22px;
+  font-weight: 720;
+}
+
+#hostLine {
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+.shell {
+  width: min(1320px, 100%);
+  padding-right: clamp(14px, 2.5vw, 28px);
+  padding-bottom: 42px;
+  padding-left: clamp(14px, 2.5vw, 28px);
+}
+
+.rail {
+  top: 82px;
+  margin-top: 14px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.nav-btn {
+  min-height: 62px;
+  padding: 9px 13px;
+}
+
+.nav-btn.active {
+  background: #edf7f5;
+  box-shadow: inset 0 -3px 0 var(--accent);
+}
+
+.nav-title {
+  font-size: 14px;
+  font-weight: 720;
+}
+
+.nav-subtitle {
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.content {
+  gap: 18px;
+  padding-top: 22px;
+}
+
+.view {
+  gap: 16px;
+}
+
+.view-heading {
+  min-height: 56px;
+  padding: 0 2px 12px;
+}
+
+.view-heading h2 {
+  font-size: 24px;
+  font-weight: 720;
+}
+
+.overview-panel,
+.panel {
+  box-shadow: 0 1px 2px rgba(21, 33, 43, 0.035);
+}
+
+.hero-panel {
+  min-height: 98px;
+  padding: 20px;
+}
+
+.hero-panel h2 {
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.metric {
+  min-height: 86px;
+  padding: 15px 16px;
+}
+
+.metric strong {
+  margin-top: 8px;
+  font-size: 16px;
+  font-weight: 680;
+}
+
+.signal-metric {
+  grid-column: span 2;
+}
+
+.signal-metric strong {
+  font-size: 20px;
+}
+
+button {
+  min-height: 39px;
+  font-weight: 680;
+}
+
+input,
+textarea {
+  font-family: "Segoe UI Variable Text", "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif;
+  box-shadow: inset 0 1px 1px rgba(21, 33, 43, 0.025);
+}
+
+.euicc-summary {
+  display: grid;
+  grid-template-columns: minmax(320px, 2fr) repeat(3, minmax(130px, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.euicc-summary > div {
+  min-width: 0;
+  min-height: 78px;
+  padding: 13px 15px;
+  border-left: 1px solid var(--line);
+}
+
+.euicc-summary > div:first-child {
+  border-left: 0;
+}
+
+.euicc-summary span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+  text-transform: uppercase;
+}
+
+.euicc-summary strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.euicc-identity strong,
+.profile-detail-grid code {
+  font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile-source-note {
+  margin-top: -7px;
+  padding: 0 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.esim-workspace {
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 0.7fr);
+  gap: 18px;
+}
+
+.sms-workspace {
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.72fr);
+  gap: 18px;
+}
+
+.profile-panel,
+.sms-inbox-panel {
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-panel .profile-list {
+  padding: 0;
+}
+
+.profile-card {
+  box-shadow: 0 1px 2px rgba(21, 33, 43, 0.04);
+}
+
+.profile-card.active {
+  border-color: #78bdb2;
+  box-shadow: inset 0 3px 0 var(--accent), 0 1px 2px rgba(21, 33, 43, 0.04);
+}
+
+.profile-card-head {
+  min-height: 72px;
+  padding: 16px;
+}
+
+.profile-title strong {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.profile-source-panel p {
+  padding: 13px 14px 14px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sms-inbox-panel > .panel-head {
+  min-height: 56px;
+  padding: 0 2px 11px;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.sms-list {
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.sms-card,
+.sms-card:first-child,
+.sms-card:last-child,
+.sms-card:only-child {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(21, 33, 43, 0.035);
+}
+
+.sms-card-head {
+  padding: 14px 15px 5px;
+}
+
+.sms-card time {
+  padding: 0 15px 9px;
+}
+
+.sms-body {
+  min-height: 54px;
+  padding: 13px 15px;
+  background: #fbfcfc;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.output-panel pre {
+  font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+@media (max-width: 1000px) {
+  .euicc-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .euicc-identity {
+    grid-column: 1 / -1;
+  }
+
+  .euicc-summary > div:nth-child(n + 2) {
+    border-top: 1px solid var(--line);
+  }
+
+  .euicc-summary > div:nth-child(2),
+  .euicc-summary > div:nth-child(4) {
+    border-left: 0;
+  }
+
+  .euicc-summary > div:nth-child(3) {
+    border-left: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 900px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .signal-metric {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    padding: 15px 16px;
+  }
+
+  .rail {
+    margin-top: 10px;
+  }
+
+  .view-heading h2 {
+    font-size: 21px;
+  }
+}
+
+@media (max-width: 520px) {
+  .euicc-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .euicc-summary > div,
+  .euicc-summary > div:first-child,
+  .euicc-summary > .euicc-identity + div {
+    grid-column: auto;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .euicc-summary > div:first-child {
+    border-top: 0;
   }
 }

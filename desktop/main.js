@@ -66,7 +66,7 @@ function createWindow(port) {
     minHeight: 620,
     show: false,
     backgroundColor: "#f4f6f7",
-    title: "DJI RoamDock",
+    title: "DJI 4G Assistant",
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,
@@ -124,7 +124,7 @@ if (!hasLock) {
   app.whenReady().then(startDesktop).catch((error) => {
     writeSmokeResult({ ok: false, error: error.stack || error.message });
     console.error("DESKTOP_START_ERROR", error.stack || error.message);
-    if (!smokeTest) dialog.showErrorBox("DJI RoamDock could not start", error.stack || error.message);
+    if (!smokeTest) dialog.showErrorBox("DJI 4G Assistant could not start", error.stack || error.message);
     app.quit();
   });
 }

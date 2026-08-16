@@ -19,6 +19,13 @@ function Get-LanUrls {
       $_.IPAddress -notlike "169.254.*" -and
       $_.InterfaceAlias -notmatch "Loopback|Bluetooth|TAP"
     } |
+    ForEach-Object {
+      $score = 0
+      if ($_.InterfaceAlias -match "Wi-?Fi|WLAN|Wireless|无线") { $score += 100 }
+      if ($_.IPAddress -like "192.168.225.*") { $score -= 100 }
+      [pscustomobject]@{ IPAddress = $_.IPAddress; Score = $score }
+    } |
+    Sort-Object -Property @{ Expression = "Score"; Descending = $true }, IPAddress |
     Select-Object -ExpandProperty IPAddress -Unique |
     ForEach-Object { "http://$($_):$port" }
 }
@@ -30,7 +37,7 @@ function Test-Node {
 
 function Show-Intro {
   Clear-Host
-  Write-Host "DJI RoamDock Pro for Windows" -ForegroundColor Cyan
+  Write-Host "DJI 4G Assistant for Windows" -ForegroundColor Cyan
   Write-Host "=================" -ForegroundColor Cyan
   Write-Host ""
   Write-Host "1. Plug the DJI / Quectel dongle into this Windows computer."
@@ -64,7 +71,8 @@ if (-not $urls.Count) {
   $urls = @("http://127.0.0.1:$port")
 }
 
-Write-Host "Windows PC URL: http://127.0.0.1:$port" -ForegroundColor Green`nWrite-Host "Optional LAN URLs:" -ForegroundColor Green
+Write-Host "Windows PC URL: http://127.0.0.1:$port" -ForegroundColor Green
+Write-Host "Optional LAN URLs:" -ForegroundColor Green
 foreach ($url in $urls) {
   Write-Host "  $url" -ForegroundColor Green
 }

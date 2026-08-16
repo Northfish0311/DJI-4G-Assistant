@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-DJI RoamDock is MIT licensed. Release packages also contain third-party software under their own licenses.
+DJI 4G Assistant is MIT licensed. Release packages also contain third-party software under their own licenses.
 
 ## lpac and libeuicc
 

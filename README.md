@@ -1,17 +1,26 @@
-# DJI Cellular Dongle Manager (RoamDock)
+# DJI 4G Assistant（大疆 4G 助手）
 
-DJI RoamDock 是面向 Windows 的一体化桌面管理工具，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
+DJI 4G Assistant（大疆 4G 助手）是面向 Windows 的一体化桌面管理工具，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
 这是目前唯一维护的完整版本。普通用户不需要安装 Node.js，也不需要打开黑色命令窗口。
 
-## 下载与使用
+## 普通用户怎么用
 
-1. 打开 [Releases](https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager/releases)。
-2. 下载 `DJI-RoamDock-Setup-...exe`（安装版，推荐）或 `DJI-RoamDock-Portable-...exe`（免安装版）。
-3. 插入模块，打开 DJI RoamDock。
-4. 点击“自动扫描”。
+1. 打开 [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases)。
+2. 下载 `DJI-4G-Assistant-Setup-...exe`（安装版，推荐），按提示安装。
+3. 把 SIM/eSIM 卡装进模块，再把模块插到 Windows 电脑。
+4. 双击桌面上的 **DJI 4G Assistant**。
+5. 点击右上角“自动扫描”。
 
-程序会自动寻找可用端口；即使 `8787` 已被占用，也会继续尝试其他端口。
+看到“已联网”、运营商、信号和模块 IP 后，就可以直接使用：
+
+- **看短信：** 打开“短信”，点击“刷新”。
+- **发短信：** 在“短信”右侧填写号码和内容，点击“发送短信”并确认。
+- **切换 eSIM：** 打开“eSIM”，在目标套餐上点击“切换到此套餐”并确认，等待网络重新注册。
+- **下载 eSIM：** 展开“下载新套餐”，粘贴套餐商给你的完整 `LPA:1$...` 激活码后确认。
+- **检查 Windows 上网：** 打开“网络”，确认网卡为“已连接”，并看到 IPv4、网关和 DHCP。
+
+程序会自动寻找模块和空闲端口；普通用户不需要安装 Node.js，不需要打开黑色窗口，也不需要手动输入 `http://127.0.0.1:8787`。每个写入动作都会再次确认，不点击就不会修改模块。
 
 > 首个公开版本尚未购买 Windows 代码签名证书。请只从本仓库 Releases 下载并核对 SHA256；Windows SmartScreen 首次运行时可能显示提示。
 
@@ -37,9 +46,22 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 ## 多张 eSIM 和套餐流量
 
-DJI RoamDock 会列出 lpac 从当前 eUICC 实际读取到的全部 Profile，并允许切换。
+eSIM 页会分别显示当前卡的 EID、卡内 Profile 数、剩余存储空间，以及 GSMA SM-DS 中可领取的待下载套餐。Profile 列表包含当前 EID 内标准接口可读到的已启用和已停用套餐。
 
-套餐剩余流量通常保存在套餐商账户服务器中，不在 eUICC Profile 标准字段里。因此仅凭卡片无法可靠显示 Airalo、Roamless、RedteaGO 等套餐余额，后续需要分别接入套餐商官方 API。当前网络面板显示 Windows 实际收发量，不冒充运营商余额。
+如果套餐商 App 显示三份套餐，而这里显示一份，不代表网页漏读。请先比较套餐商 App 与本页 EID；尚未下载到这张卡的订单、属于另一 EID 的套餐，以及厂商没有按标准 Profile 暴露的 bootstrap 身份，都不会出现在卡内 Profile 列表。可点击“检查待下载”查询 SM-DS，或使用套餐商提供的完整 LPA 激活码下载。
+
+套餐剩余流量通常保存在套餐商账户服务器中，不在 eUICC Profile 标准字段里。因此仅凭卡片无法可靠显示 Airalo、Roamless、RedteaGO 等套餐余额，需要分别接入套餐商官方 API。当前网络面板只显示 Windows 实际收发量，不冒充运营商余额。
+
+## Windows 原生模式与 VoHive 模式
+
+| 用途 | 模块模式 | 电脑侧接口 |
+| --- | --- | --- |
+| Windows 直接联网和使用本软件 | `usbnet=1`（ECM） | Quectel ECM 有线网卡 |
+| Linux / VoHive | `usbnet=0`（QMI） | `qmi_wwan` / `cdc-wdm` |
+
+两种网络模式不能同时工作。切换 `usbnet` 会重启并重新枚举模块；Windows 用户保持 `usbnet=1`，只有明确准备把模块交给 Linux/VoHive 时才切到 `usbnet=0`。
+
+排错按固定顺序进行：先看 USB 身份，再看 COM/AT 口，然后检查 SIM、LTE 注册、PDP，最后检查 Windows ECM 网卡、DHCP、IPv4 和网关。前一层未通过时，不要重复写 VID/PID、APN 或 `usbnet`。
 
 ## Windows ECM 驱动修复
 
@@ -58,6 +80,16 @@ DJI RoamDock 会列出 lpac 从当前 eUICC 实际读取到的全部 Profile，�
 - 短信、USSD 和漫游数据最终取决于固件、运营商及套餐权限。
 - 本项目独立实现，没有复制 DJOneHub、VoHive 或 NetXD 的代码。
 
+## 相关路线与致谢
+
+本项目是 Windows 原生桌面方案，不需要 WSL、Hyper-V 或 Linux 虚拟机。需要 VoHive 时，可参考：
+
+- [wlzh/dji-4g-vohive-mac](https://github.com/wlzh/dji-4g-vohive-mac)：macOS + UTM + Linux USB 直通路线。
+- [LeiyuG/dji-vohive-hyperv](https://github.com/LeiyuG/dji-vohive-hyperv)：Windows + Hyper-V + usbipd-win 路线。
+- [estkme-group/lpac](https://github.com/estkme-group/lpac)：本项目 eUICC Profile 读取与管理所使用的开源 LPA。
+
+本项目独立实现，没有复制上述项目或 VoHive 的代码；文档吸收了它们在模式选择、重新枚举和逐层排错方面的公开经验。
+
 ## 从源码运行和构建
 
 只有开发者需要安装 [Node.js LTS](https://nodejs.org/)。
@@ -74,7 +106,7 @@ npm run build
 
 ## English
 
-DJI RoamDock is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager/releases), plug in the device, and select **Auto Scan**.
+DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and select **Auto Scan**.
 
 It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, multi-profile eSIM management, UCS2/PDU SMS, OTP extraction, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Provider data allowance requires a provider API.
 

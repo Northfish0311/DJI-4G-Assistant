@@ -1,6 +1,6 @@
 # Security / 安全说明
 
-DJI RoamDock 可能读取 IMSI、ICCID、短信、APN、运营商状态和本机网络地址。
+DJI 4G Assistant 可能读取 IMSI、ICCID、短信、APN、运营商状态和本机网络地址。
 
 - 只从本仓库 Releases 下载 EXE，并核对 SHA256。
 - 仅在可信局域网使用；桌面版每次启动自动生成临时密码。

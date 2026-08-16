@@ -1,8 +1,8 @@
 {
-  "name": "dji-cellular-dongle-manager",
-  "version": "1.0.0",
+  "name": "dji-4g-assistant",
+  "version": "1.1.0",
   "private": false,
-  "description": "Native Windows hub for DJI Cellular Dongle, Quectel USB LTE modules, eSIM profiles, SMS, and original-module setup.",
+  "description": "Windows desktop assistant for DJI Cellular Dongle and compatible Quectel USB LTE modules, with eSIM, SMS, network diagnostics, and guided setup.",
   "main": "desktop/main.js",
   "scripts": {
     "start": "node web/server.js",
@@ -25,10 +25,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager.git"
+    "url": "https://github.com/Northfish0311/DJI-4G-Assistant.git"
   },
-  "homepage": "https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager#readme",
-  "bugs": "https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager/issues",
+  "homepage": "https://github.com/Northfish0311/DJI-4G-Assistant#readme",
+  "bugs": "https://github.com/Northfish0311/DJI-4G-Assistant/issues",
   "dependencies": {
     "usb": "2.16.0"
   },
@@ -38,7 +38,7 @@
   },
   "build": {
     "appId": "com.northfish0311.dji.roamdock",
-    "productName": "DJI RoamDock",
+    "productName": "DJI 4G Assistant",
     "asar": true,
     "files": [
       "desktop/**/*",
@@ -74,13 +74,13 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "DJI RoamDock",
-      "artifactName": "DJI-RoamDock-Setup-${version}-${arch}.${ext}"
+      "shortcutName": "DJI 4G Assistant",
+      "artifactName": "DJI-4G-Assistant-Setup-${version}-${arch}.${ext}"
     },
     "portable": {
-      "artifactName": "DJI-RoamDock-Portable-${version}-${arch}.${ext}"
+      "artifactName": "DJI-4G-Assistant-Portable-${version}-${arch}.${ext}"
     }
   },
   "author": "Northfish0311",
-  "productName": "DJI RoamDock"
+  "productName": "DJI 4G Assistant"
 }
