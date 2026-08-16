@@ -1,4 +1,4 @@
-# DJI RoamDock
+# DJI Cellular Dongle Manager (RoamDock)
 
 DJI RoamDock 是面向 Windows 的一体化桌面管理工具，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
@@ -6,7 +6,7 @@ DJI RoamDock 是面向 Windows 的一体化桌面管理工具，适用于第一�
 
 ## 下载与使用
 
-1. 打开 [Releases](https://github.com/Northfish0311/DJI_RoamDock-Pro-for-Windows/releases)。
+1. 打开 [Releases](https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager/releases)。
 2. 下载 `DJI-RoamDock-Setup-...exe`（安装版，推荐）或 `DJI-RoamDock-Portable-...exe`（免安装版）。
 3. 插入模块，打开 DJI RoamDock。
 4. 点击“自动扫描”。
@@ -74,7 +74,7 @@ npm run build
 
 ## English
 
-DJI RoamDock is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI_RoamDock-Pro-for-Windows/releases), plug in the device, and select **Auto Scan**.
+DJI RoamDock is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-Cellular-Dongle-Manager/releases), plug in the device, and select **Auto Scan**.
 
 It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, multi-profile eSIM management, UCS2/PDU SMS, OTP extraction, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Provider data allowance requires a provider API.
 
