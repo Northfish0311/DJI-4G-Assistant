@@ -5,7 +5,8 @@ DJI 4G Assistant 可能读取 IMSI、ICCID、短信、APN、运营商状态和�
 - 只从本仓库 Releases 下载 EXE，并核对 SHA256。
 - 仅在可信局域网使用；桌面版和 `Start-Web-Console.cmd` 每次启动都会自动生成临时密码。
 - 不要把端口发布到公网或无认证隧道。
-- 不要在公开 Issue、截图或聊天中泄露激活码、ICCID、IMSI 和短信。
+- 不要在公开 Issue、截图或聊天中泄露激活码、EID、ICCID、IMSI 和短信。
+- EID 本地备注和已验证私有 AID 保存在 `.local`，不要把该目录复制到公开仓库或发给他人。
 - eSIM 删除和模块写入即使经过确认也可能不可恢复。
 - Windows ECM 驱动修复需要管理员权限，只对精确匹配接口开放，并在下载校验、签名验证和旧驱动备份后执行。
 - 危险 AT 默认受限；开发者只有保存基线后才应设置 `ALLOW_DANGEROUS_AT=1`。

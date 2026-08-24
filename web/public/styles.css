@@ -2425,3 +2425,200 @@ button.active-monitor {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Multi-EID library */
+.euicc-library-band,
+.active-euicc-band {
+  border: 1px solid rgba(60, 60, 67, 0.15);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.section-heading-row,
+.active-euicc-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 62px;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(60, 60, 67, 0.12);
+}
+
+.section-heading-row > div,
+.active-euicc-heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.section-heading-row strong,
+.active-euicc-heading h3 {
+  margin: 0;
+  color: #17171a;
+  font-size: 16px;
+  font-weight: 680;
+}
+
+.active-euicc-heading code {
+  overflow-wrap: anywhere;
+  color: #6d6d73;
+  font-family: "SF Mono", "Cascadia Mono", Consolas, monospace;
+  font-size: 11px;
+}
+
+.quiet-state {
+  color: #77777e;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.euicc-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.euicc-slot-grid.empty {
+  display: grid;
+  min-height: 96px;
+  place-items: center;
+  color: #77777e;
+}
+
+.euicc-slot-card {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
+  min-height: 190px;
+  padding: 14px;
+  border: 1px solid rgba(60, 60, 67, 0.15);
+  border-radius: 8px;
+  background: #f8f8fa;
+}
+
+.euicc-slot-card.active {
+  border-color: rgba(0, 122, 255, 0.52);
+  background: #f3f8ff;
+  box-shadow: inset 3px 0 #0a84ff;
+}
+
+.euicc-slot-head,
+.euicc-slot-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.euicc-slot-index {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  background: #17171a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.euicc-slot-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.euicc-slot-copy strong {
+  overflow: hidden;
+  color: #17171a;
+  font-size: 17px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.euicc-slot-copy code {
+  color: #6d6d73;
+  font-family: "SF Mono", "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+.euicc-slot-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid rgba(60, 60, 67, 0.12);
+  border-radius: 6px;
+  background: rgba(60, 60, 67, 0.12);
+}
+
+.euicc-slot-stats span {
+  display: grid;
+  gap: 4px;
+  padding: 8px 9px;
+  background: #fff;
+  color: #77777e;
+  font-size: 10px;
+}
+
+.euicc-slot-stats strong {
+  color: #17171a;
+  font-size: 15px;
+}
+
+.euicc-slot-actions {
+  margin-top: auto;
+}
+
+.euicc-slot-actions button {
+  min-width: 88px;
+}
+
+.active-euicc-band .euicc-summary {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border: 0;
+  border-radius: 0;
+}
+
+.active-euicc-band .euicc-summary > div {
+  min-height: 72px;
+}
+
+@media (max-width: 760px) {
+  .section-heading-row,
+  .active-euicc-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .quiet-state {
+    white-space: normal;
+  }
+
+  .active-euicc-band .euicc-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .euicc-slot-grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  .euicc-slot-card {
+    min-height: 178px;
+  }
+
+  .active-euicc-band .euicc-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .active-euicc-band .euicc-summary > div {
+    border-top: 1px solid rgba(60, 60, 67, 0.13);
+  }
+}

@@ -143,23 +143,42 @@
           <div class="view-heading">
             <div>
               <p class="eyebrow">eUICC</p>
-              <h2 data-i18n="esimProfiles">eSIM Profiles</h2>
-              <p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p>
+              <h2 data-i18n="esimLibrary">eSIM Library</h2>
+              <p id="eidLibraryCount" class="panel-subtitle" data-i18n="eidsNotLoaded">EIDs not loaded</p>
             </div>
-            <div class="view-actions"><button data-action="lpac-chip" class="secondary" data-i18n="euiccInfo">eUICC Info</button><button data-action="lpac-profiles" data-i18n="refresh">Refresh</button></div>
+            <div class="view-actions"><button data-action="euicc-inventory" data-i18n="refreshAllEids">Refresh all EIDs</button></div>
           </div>
 
-          <div class="euicc-summary" aria-live="polite">
-            <div class="euicc-identity"><span data-i18n="eid">EID</span><strong id="eidValue">--</strong></div>
-            <div><span data-i18n="installedProfiles">Stored profiles</span><strong id="installedProfileCount">--</strong></div>
-            <div><span data-i18n="availableMemory">Free memory</span><strong id="euiccMemory">--</strong></div>
-            <div><span data-i18n="pendingProfiles">Pending downloads</span><strong id="pendingProfileCount">--</strong></div>
+          <div class="euicc-library-band" aria-live="polite">
+            <div class="section-heading-row">
+              <div><span class="summary-kicker" data-i18n="detectedSpaces">Detected spaces</span><strong data-i18n="chooseEid">Choose an EID to manage</strong></div>
+              <span id="euiccProbeState" class="quiet-state" data-i18n="automaticDiscovery">Automatic discovery</span>
+            </div>
+            <div id="euiccInventory" class="euicc-slot-grid empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
           </div>
-          <p class="profile-source-note" data-i18n="profileSourceNote">Enabled and disabled profiles stored on this EID are listed. Provider app orders are not card profiles.</p>
+
+          <div class="active-euicc-band">
+            <div class="active-euicc-heading">
+              <div>
+                <span class="summary-kicker" data-i18n="selectedEid">Selected EID</span>
+                <h3 id="activeEuiccLabel" data-i18n="noEidSelected">No EID selected</h3>
+                <code id="eidValue">--</code>
+              </div>
+              <span id="activeEuiccState" class="profile-state inactive" data-i18n="notSelected">Not selected</span>
+            </div>
+            <div class="euicc-summary">
+              <div><span data-i18n="installedProfiles">Stored profiles</span><strong id="installedProfileCount">--</strong></div>
+              <div><span data-i18n="activeProfiles">Active profiles</span><strong id="activeProfileCount">--</strong></div>
+              <div><span data-i18n="availableMemory">Free memory</span><strong id="euiccMemory">--</strong></div>
+              <div><span data-i18n="pendingProfiles">Pending downloads</span><strong id="pendingProfileCount">--</strong></div>
+            </div>
+          </div>
+          <p class="profile-source-note" data-i18n="profileSourceNote">Enabled and disabled profiles stored on the selected EID are listed. Provider app orders are not card profiles.</p>
 
           <div class="esim-workspace">
             <div class="panel profile-panel">
-              <div id="profilesList" class="profile-list empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
+              <div class="panel-head"><div><h2 data-i18n="esimProfiles">eSIM Profiles</h2><p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p></div></div>
+              <div id="profilesList" class="profile-list empty" data-i18n="selectEidFirst">Select an EID first.</div>
             </div>
 
             <aside class="tool-stack">
@@ -176,7 +195,7 @@
               <details class="panel disclosure-panel danger-panel download-panel">
                 <summary><span><span class="summary-kicker">LPA</span><strong data-i18n="profileDownload">Download New Profile</strong></span></summary>
                 <div class="disclosure-content">
-                  <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. This adds a profile; it does not delete existing profiles.</p>
+                  <p data-i18n="profileDownloadDescription">Paste the complete LPA activation code supplied with a plan you own. The profile is added to the selected EID.</p>
                   <div class="at-row"><input id="activationCodeInput" type="password" autocomplete="off" spellcheck="false" data-i18n-placeholder="activationCodePlaceholder" placeholder="LPA:1$sm-dp-plus.example$matching-id"><button id="downloadProfileBtn" data-profile-download data-i18n="download">Download</button></div>
                   <p class="hint" id="profileDownloadHint" data-i18n="profileDownloadLocked">Profile download is locked on this local server.</p>
                 </div>
@@ -189,6 +208,15 @@
                   <div id="notificationsList" class="notification-list empty" data-i18n="noNotifications">No notification data loaded.</div>
                   <div class="panel-actions"><button id="processNotificationsBtn" class="secondary" data-profile-notifications data-i18n="processNotifications">Process Pending Notifications</button></div>
                   <p class="hint" id="profileNotificationsHint" data-i18n="profileNotificationsLocked">Notification processing is locked on this local server.</p>
+                </div>
+              </details>
+
+              <details class="panel disclosure-panel">
+                <summary><span><span class="summary-kicker" data-i18n="advanced">Advanced</span><strong data-i18n="privateAid">Private ISD-R AID</strong></span></summary>
+                <div class="disclosure-content">
+                  <p data-i18n="privateAidDescription">Only use an AID supplied by the card maker when a private eUICC space is not enumerable. It is validated read-only before being remembered.</p>
+                  <div class="at-row"><input id="customAidInput" type="text" autocomplete="off" spellcheck="false" maxlength="32" data-i18n-placeholder="privateAidPlaceholder" placeholder="32-character hexadecimal AID"><button id="addEuiccAidBtn" class="secondary" data-i18n="addAndVerify">Add & Verify</button></div>
+                  <p class="hint" data-i18n="privateAidHint">This does not switch profiles or change USB settings.</p>
                 </div>
               </details>
             </aside>

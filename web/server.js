@@ -15,6 +15,34 @@ const consoleToken = process.env.CONSOLE_TOKEN || "";
 let atQueue = Promise.resolve();
 let driverInstallRunning = false;
 
+const DEFAULT_ISDR_AID = "A0000005591010FFFFFFFF8900000100";
+const KNOWN_ISDR_AIDS = [
+  DEFAULT_ISDR_AID,
+  "A0000005591010FFFFFFFF8900050500",
+  "A0000005591010000000008900000300",
+  "A0000005591010FFFFFFFF8900000177",
+];
+
+function normalizeIsdrAid(value) {
+  const aid = String(value || "").trim().toUpperCase();
+  return aid.length >= 2 && aid.length <= 32 && aid.length % 2 === 0 && /^[0-9A-F]+$/.test(aid) ? aid : null;
+}
+
+function parseLpacData(value) {
+  const lines = String(value || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    try {
+      const message = JSON.parse(lines[index]);
+      if (message?.type === "lpa" && message?.payload?.code === 0) return message.payload.data;
+    } catch {}
+  }
+  return null;
+}
+
+function isEid(value) {
+  return /^89[0-9]{30}$/.test(String(value || ""));
+}
+
 function localIps() {
   const result = [];
   for (const [name, items] of Object.entries(os.networkInterfaces())) {
@@ -141,8 +169,9 @@ function findLpac() {
   return candidates.find((candidate) => fs.existsSync(candidate));
 }
 
-function runLpac(lpac, portName, args, timeoutMs = 60000) {
+function runLpac(lpac, portName, args, timeoutMs = 60000, options = {}) {
   return new Promise((resolve) => {
+    const aid = normalizeIsdrAid(options.aid) || DEFAULT_ISDR_AID;
     const child = spawn(lpac, args, {
       cwd: root,
       windowsHide: true,
@@ -151,6 +180,7 @@ function runLpac(lpac, portName, args, timeoutMs = 60000) {
         LPAC_APDU: "at",
         LPAC_APDU_AT_DEVICE: portName,
         LPAC_CUSTOM_ES10X_MSS: "60",
+        LPAC_CUSTOM_ISD_R_AID: aid,
       },
     });
 
@@ -173,6 +203,108 @@ function runLpac(lpac, portName, args, timeoutMs = 60000) {
     child.on("error", (error) => finish({ ok: false, code: null, stdout, stderr: `${stderr}\n${error.message}`.trim() }));
     child.on("close", (code) => finish({ ok: code === 0, code, stdout, stderr }));
   });
+}
+
+function euiccInventoryPath() {
+  return path.join(dataRoot, ".local", "euicc-inventory.json");
+}
+
+function readEuiccState() {
+  try {
+    const value = JSON.parse(fs.readFileSync(euiccInventoryPath(), "utf8"));
+    return {
+      aids: value?.aids && typeof value.aids === "object" ? value.aids : {},
+      labels: value?.labels && typeof value.labels === "object" ? value.labels : {},
+    };
+  } catch {
+    return { aids: {}, labels: {} };
+  }
+}
+
+function writeEuiccState(value) {
+  const target = euiccInventoryPath();
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  const temporary = `${target}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify({ version: 1, aids: value.aids, labels: value.labels }, null, 2), "utf8");
+  fs.renameSync(temporary, target);
+}
+
+function euiccLabel(value) {
+  const label = String(value || "").trim();
+  return label.length <= 40 && !/[\r\n\x00-\x1f]/.test(label) ? label : null;
+}
+
+function inventoryCandidateAids(savedState = readEuiccState()) {
+  const configured = String(process.env.EUICC_AID_CANDIDATES || "").split(/[,;\s]+/);
+  const saved = Object.values(savedState.aids || {});
+  return [...new Set([...KNOWN_ISDR_AIDS, ...saved, ...configured].map(normalizeIsdrAid).filter(Boolean))];
+}
+
+function mergeEuiccRecords(records, labels = {}) {
+  const eids = [];
+  const byEid = new Map();
+  for (const record of records || []) {
+    const eid = String(record?.eid || "");
+    const aid = normalizeIsdrAid(record?.aid);
+    if (!isEid(eid) || !aid) continue;
+    if (byEid.has(eid)) {
+      const existing = byEid.get(eid);
+      if (!existing.aids.includes(aid)) existing.aids.push(aid);
+      continue;
+    }
+    const profiles = Array.isArray(record.profiles) ? record.profiles : [];
+    const item = {
+      eid,
+      aid,
+      aids: [aid],
+      label: euiccLabel(labels[eid]) || "",
+      profileCount: profiles.length,
+      activeCount: profiles.filter((profile) => String(profile?.profileState).toLowerCase() === "enabled").length,
+      freeMemory: Number(record.freeMemory) || 0,
+      firmware: String(record.firmware || ""),
+      profileVersion: String(record.profileVersion || ""),
+      profiles,
+    };
+    byEid.set(eid, item);
+    eids.push(item);
+  }
+  return eids;
+}
+
+async function discoverEuiccInventory(lpac, portName) {
+  const savedState = readEuiccState();
+  const candidates = inventoryCandidateAids(savedState);
+  const records = [];
+  for (const aid of candidates) {
+    const chipResult = await runLpac(lpac, portName, ["chip", "info"], 30000, { aid });
+    const chip = chipResult.ok ? parseLpacData(chipResult.stdout) : null;
+    if (!chip || !isEid(chip.eidValue)) continue;
+    const profileResult = await runLpac(lpac, portName, ["profile", "list"], 45000, { aid });
+    const profiles = profileResult.ok ? parseLpacData(profileResult.stdout) : [];
+    records.push({
+      eid: chip.eidValue,
+      aid,
+      profiles: Array.isArray(profiles) ? profiles : [],
+      freeMemory: chip.EUICCInfo2?.extCardResource?.freeNonVolatileMemory,
+      firmware: chip.EUICCInfo2?.euiccFirmwareVer,
+      profileVersion: chip.EUICCInfo2?.profileVersion,
+    });
+    savedState.aids[chip.eidValue] = aid;
+  }
+  const eids = mergeEuiccRecords(records, savedState.labels);
+  if (eids.length) writeEuiccState(savedState);
+  return {
+    ok: eids.length > 0,
+    eids,
+    count: eids.length,
+    candidatesChecked: candidates.length,
+    warning: eids.length ? "" : "No accessible eUICC EID was found.",
+  };
+}
+
+function requestedAid(url, body = {}) {
+  const raw = body.aid || url.searchParams.get("aid") || DEFAULT_ISDR_AID;
+  return normalizeIsdrAid(raw);
 }
 
 function activationCode(value) {
@@ -882,13 +1014,67 @@ $items | ConvertTo-Json -Depth 4 -Compress
     return;
   }
 
+  if (url.pathname === "/api/euicc-inventory") {
+    const lpac = findLpac();
+    if (!lpac) {
+      sendJson(res, 200, { ok: false, eids: [], count: 0, error: "lpac.exe not found" });
+      return;
+    }
+    const result = await discoverEuiccInventory(lpac, portArg(url));
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/euicc-label" && req.method === "POST") {
+    const body = JSON.parse(await readBody(req) || "{}");
+    const eid = String(body.eid || "");
+    const label = euiccLabel(body.label);
+    if (!isEid(eid) || label === null) {
+      sendJson(res, 400, { ok: false, error: "Invalid EID or label." });
+      return;
+    }
+    const state = readEuiccState();
+    if (label) state.labels[eid] = label;
+    else delete state.labels[eid];
+    writeEuiccState(state);
+    sendJson(res, 200, { ok: true, eid, label });
+    return;
+  }
+
+  if (url.pathname === "/api/euicc-aid" && req.method === "POST") {
+    const body = JSON.parse(await readBody(req) || "{}");
+    const aid = normalizeIsdrAid(body.aid);
+    if (!aid || String(body.confirm || "").toUpperCase() !== "ADD") {
+      sendJson(res, 400, { ok: false, error: "Enter a valid ISD-R AID and confirm ADD." });
+      return;
+    }
+    const lpac = findLpac();
+    if (!lpac) {
+      sendJson(res, 200, { ok: false, error: "lpac.exe not found" });
+      return;
+    }
+    const chipResult = await runLpac(lpac, portArg(url), ["chip", "info"], 30000, { aid });
+    const chip = chipResult.ok ? parseLpacData(chipResult.stdout) : null;
+    if (!chip || !isEid(chip.eidValue)) {
+      sendJson(res, 422, { ok: false, error: "This AID did not return a valid EID." });
+      return;
+    }
+    const state = readEuiccState();
+    state.aids[chip.eidValue] = aid;
+    writeEuiccState(state);
+    sendJson(res, 200, { ok: true, eid: chip.eidValue, aid });
+    return;
+  }
+
   if (url.pathname === "/api/lpac-chip") {
     const lpac = findLpac();
     if (!lpac) {
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["chip", "info"]);
+    const aid = requestedAid(url);
+    if (!aid) { sendJson(res, 400, { ok: false, error: "Invalid ISD-R AID." }); return; }
+    const result = await runLpac(lpac, portArg(url), ["chip", "info"], 60000, { aid });
     sendJson(res, 200, result);
     return;
   }
@@ -899,7 +1085,9 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["profile", "discovery"], 180000);
+    const aid = requestedAid(url);
+    if (!aid) { sendJson(res, 400, { ok: false, error: "Invalid ISD-R AID." }); return; }
+    const result = await runLpac(lpac, portArg(url), ["profile", "discovery"], 180000, { aid });
     sendJson(res, 200, result);
     return;
   }
@@ -909,7 +1097,9 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["profile", "list"]);
+    const aid = requestedAid(url);
+    if (!aid) { sendJson(res, 400, { ok: false, error: "Invalid ISD-R AID." }); return; }
+    const result = await runLpac(lpac, portArg(url), ["profile", "list"], 60000, { aid });
     sendJson(res, 200, result);
     return;
   }
@@ -925,9 +1115,10 @@ $items | ConvertTo-Json -Depth 4 -Compress
 
     const body = JSON.parse(await readBody(req) || "{}");
     const action = String(body.action || "").toLowerCase();
+    const aid = requestedAid(url, body);
     const id = profileId(body.id);
     const confirm = String(body.confirm || "").toUpperCase();
-    if (!["enable", "disable", "delete"].includes(action) || !id || !["ENABLE", "DISABLE", "DELETE"].includes(confirm) || confirm !== action.toUpperCase()) {
+    if (!aid || !["enable", "disable", "delete"].includes(action) || !id || !["ENABLE", "DISABLE", "DELETE"].includes(confirm) || confirm !== action.toUpperCase()) {
       sendJson(res, 400, { ok: false, error: "Invalid profile action or confirmation." });
       return;
     }
@@ -943,7 +1134,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const args = action === "delete" ? ["profile", "delete", id] : ["profile", action, id, "1"];
-    const result = await runLpac(lpac, portArg(url), args, 90000);
+    const result = await runLpac(lpac, portArg(url), args, 90000, { aid });
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -954,9 +1145,10 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const body = JSON.parse(await readBody(req) || "{}");
+    const aid = requestedAid(url, body);
     const id = profileId(body.id);
     const nickname = profileNickname(body.nickname);
-    if (!id || !nickname || String(body.confirm || "").toUpperCase() !== "RENAME") {
+    if (!aid || !id || !nickname || String(body.confirm || "").toUpperCase() !== "RENAME") {
       sendJson(res, 400, { ok: false, error: "Enter a profile nickname and confirm RENAME." });
       return;
     }
@@ -965,7 +1157,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["profile", "nickname", id, nickname], 90000);
+    const result = await runLpac(lpac, portArg(url), ["profile", "nickname", id, nickname], 90000, { aid });
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -976,7 +1168,9 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["notification", "list"]);
+    const aid = requestedAid(url);
+    if (!aid) { sendJson(res, 400, { ok: false, error: "Invalid ISD-R AID." }); return; }
+    const result = await runLpac(lpac, portArg(url), ["notification", "list"], 60000, { aid });
     sendJson(res, 200, result);
     return;
   }
@@ -987,7 +1181,8 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const body = JSON.parse(await readBody(req) || "{}");
-    if (String(body.confirm || "").toUpperCase() !== "PROCESS") {
+    const aid = requestedAid(url, body);
+    if (!aid || String(body.confirm || "").toUpperCase() !== "PROCESS") {
       sendJson(res, 400, { ok: false, error: "Confirm PROCESS before sending profile notifications." });
       return;
     }
@@ -996,7 +1191,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["notification", "process", "-a", "-r"], 180000);
+    const result = await runLpac(lpac, portArg(url), ["notification", "process", "-a", "-r"], 180000, { aid });
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -1008,8 +1203,9 @@ $items | ConvertTo-Json -Depth 4 -Compress
     }
 
     const body = JSON.parse(await readBody(req) || "{}");
+    const aid = requestedAid(url, body);
     const code = activationCode(body.activationCode);
-    if (!code || String(body.confirm || "").toUpperCase() !== "DOWNLOAD") {
+    if (!aid || !code || String(body.confirm || "").toUpperCase() !== "DOWNLOAD") {
       sendJson(res, 400, { ok: false, error: "Enter a complete LPA:1 activation code and confirm DOWNLOAD." });
       return;
     }
@@ -1021,7 +1217,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
     }
 
     const result = redactResult(
-      await runLpac(lpac, portArg(url), ["profile", "download", "-a", code], 300000),
+      await runLpac(lpac, portArg(url), ["profile", "download", "-a", code], 300000, { aid }),
       code,
     );
     sendJson(res, result.ok ? 200 : 502, result);
@@ -1079,4 +1275,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction };
+module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids };

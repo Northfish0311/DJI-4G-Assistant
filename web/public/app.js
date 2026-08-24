@@ -26,6 +26,7 @@ const copy = {
     confirmDial: "Call {number} now?", confirmAnswer: "Answer this call?", confirmHangup: "End this call?", confirmDtmf: "Send these DTMF digits?", confirmCallerId: "Enable caller ID reporting on the module?", callsMonitoring: "Monitoring", callsPaused: "Paused", callStatus: "Call status", observedAt: "Observed {time}",
     currentDevice: "Current Device", waitingScan: "Waiting for scan", insertScan: "Insert the dongle, then run Auto Scan.",
     csq: "CSQ", usb: "USB", atPort: "AT Port", network: "Network", sim: "SIM", unknown: "Unknown",
+    esimLibrary: "eSIM Library", eidsNotLoaded: "EIDs not loaded", eidsSummary: "{count} EID space(s) found", detectedSpaces: "Detected spaces", chooseEid: "Choose an EID to manage", automaticDiscovery: "Automatic discovery", probeSummary: "{count} EID(s) · {checked} AID(s) checked", refreshAllEids: "Refresh all EIDs", selectedEid: "Selected EID", noEidSelected: "No EID selected", notSelected: "Not selected", manageEid: "Manage", selected: "Selected", activeProfiles: "Active profiles", selectEidFirst: "Select an EID first.", defaultEidLabel: "eUICC space {index}", eidSpaceLabel: "Local label", renameEid: "Rename", eidLabelPrompt: "Enter a local label for this EID, or leave blank to clear it.", eidLabelSaved: "EID label saved.", privateAid: "Private ISD-R AID", privateAidDescription: "Only use an AID supplied by the card maker when a private eUICC space is not enumerable. It is validated read-only before being remembered.", privateAidPlaceholder: "32-character hexadecimal AID", addAndVerify: "Add & Verify", privateAidHint: "This does not switch profiles or change USB settings.", invalidAid: "Enter a valid hexadecimal ISD-R AID.", confirmAddAid: "Validate this private AID with a read-only EID query?", aidAdded: "Private AID verified and remembered.", targetEid: "Target: {label}",
     euiccInfo: "eUICC Info", eid: "EID", installedProfiles: "Stored profiles", availableMemory: "Free memory", pendingProfiles: "Pending downloads", profileSource: "Profile Sources", profileSourceNote: "Enabled and disabled profiles stored on this EID are listed. Provider app orders are not card profiles.", checkPendingProfiles: "Check Pending", discoveryNotChecked: "GSMA SM-DS has not been checked.", noPendingProfiles: "No pending profiles found on GSMA SM-DS.", pendingProfileSummary: "{count} pending source(s) found", chipInfoUnavailable: "eUICC info unavailable.",
     profilesNotLoaded: "Profiles not loaded", profilesSummary: "{count} profiles · {active} active", switchProfile: "Switch to this plan", currentProfile: "In use", inactiveProfile: "Not active", trafficBalance: "Plan balance", trafficUnavailable: "Provider API required", profileClassLabel: "Profile type", iccidLabel: "ICCID", quickActions: "Quick Actions", deviceCheck: "Device Check", findAt: "Find AT", moduleStatus: "Module Status", esimProfiles: "eSIM Profiles",
     refresh: "Refresh", runScanRefresh: "Run Auto Scan or Refresh.", profileControls: "Profile Controls",
@@ -71,6 +72,7 @@ const copy = {
     confirmDial: "现在拨打 {number} 吗？", confirmAnswer: "接听这个电话吗？", confirmHangup: "结束这个电话吗？", confirmDtmf: "发送这些 DTMF 按键吗？", confirmCallerId: "启用模块的来电号码上报吗？", callsMonitoring: "正在监听", callsPaused: "已暂停", callStatus: "通话状态", observedAt: "记录于 {time}",
     currentDevice: "当前设备", waitingScan: "等待扫描", insertScan: "插入模块后点击自动扫描。",
     csq: "信号", usb: "USB", atPort: "AT 端口", network: "网络", sim: "SIM", unknown: "未知",
+    esimLibrary: "eSIM 卡库", eidsNotLoaded: "尚未读取 EID", eidsSummary: "自动发现 {count} 个 EID 空间", detectedSpaces: "已发现的存储空间", chooseEid: "选择一个 EID 进行管理", automaticDiscovery: "自动识别", probeSummary: "发现 {count} 个 EID · 已检查 {checked} 个 AID", refreshAllEids: "刷新全部 EID", selectedEid: "当前管理的 EID", noEidSelected: "尚未选择 EID", notSelected: "未选择", manageEid: "管理", selected: "已选择", activeProfiles: "已启用套餐", selectEidFirst: "请先选择一个 EID。", defaultEidLabel: "eUICC 空间 {index}", eidSpaceLabel: "本地分类名称", renameEid: "改名", eidLabelPrompt: "输入这个 EID 的本地分类名称，留空可清除。", eidLabelSaved: "EID 分类名称已保存。", privateAid: "私有 ISD-R AID", privateAidDescription: "只有卡商明确提供私有 AID、且该空间无法自动枚举时才使用。程序会先做只读 EID 验证，再记住它。", privateAidPlaceholder: "32 位十六进制 AID", addAndVerify: "添加并验证", privateAidHint: "此操作不会切换套餐，也不会修改 USB 设置。", invalidAid: "请输入有效的十六进制 ISD-R AID。", confirmAddAid: "现在用只读 EID 查询验证这个私有 AID 吗？", aidAdded: "私有 AID 已验证并记住。", targetEid: "目标：{label}",
     euiccInfo: "eUICC 信息", eid: "EID 卡片编号", installedProfiles: "卡内套餐", availableMemory: "剩余空间", pendingProfiles: "待下载套餐", profileSource: "套餐来源", profileSourceNote: "这里只显示当前 EID 卡内已启用和已停用的套餐；套餐商 App 中的订单不会自动变成卡内套餐。", checkPendingProfiles: "检查待下载", discoveryNotChecked: "尚未检查 GSMA SM-DS。", noPendingProfiles: "GSMA SM-DS 没有发现待下载套餐。", pendingProfileSummary: "发现 {count} 个待下载来源", chipInfoUnavailable: "无法读取 eUICC 信息。",
     profilesNotLoaded: "尚未读取套餐", profilesSummary: "共 {count} 个套餐 · {active} 个启用", switchProfile: "切换到此套餐", currentProfile: "正在使用", inactiveProfile: "未启用", trafficBalance: "套餐余量", trafficUnavailable: "eUICC 不提供，需套餐商接口", profileClassLabel: "Profile 类型", iccidLabel: "ICCID", quickActions: "快捷操作", deviceCheck: "检查设备", findAt: "查找 AT 口", moduleStatus: "模块状态", esimProfiles: "eSIM 套餐",
     refresh: "刷新", runScanRefresh: "请先自动扫描或刷新。", profileControls: "套餐操作",
@@ -104,7 +106,7 @@ const copy = {
 const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
   authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
+  primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
 
 function t(key, params = {}) {
@@ -123,9 +125,10 @@ function applyLanguage() {
   hostLine.textContent = state.primaryUrl ? t("ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
   updateProfileHint();
   renderSummary();
-  if (state.chipText) renderChip(state.chipText);
+  if (state.inventoryLoaded) renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
+  else if (state.chipText) renderChip(state.chipText);
   if (state.discoveryText) renderDiscovery(state.discoveryText);
-  if (state.profileText) renderProfiles(state.profileText);
+  if (state.profileText && !state.inventoryLoaded) renderProfiles(state.profileText);
   if (state.notificationText) renderNotifications(state.notificationText);
   if (state.smsText) renderSms(state.smsText);
   if (state.networkText) renderTraffic(state.networkText);
@@ -149,7 +152,8 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
                 : button.dataset.callAction ? isBusy || !state.callActionsEnabled
                   : button.dataset.ussd ? isBusy || !state.ussdEnabled
                   : button.dataset.usbMode ? isBusy || !state.usbModeEnabled
-                    : button.dataset.driverInstall ? isBusy || !state.driverInstallEnabled || button.dataset.driverEligible !== "1" || button.dataset.driverReady === "1" : isBusy;
+                    : button.dataset.driverInstall ? isBusy || !state.driverInstallEnabled || button.dataset.driverEligible !== "1" || button.dataset.driverReady === "1"
+                      : button.dataset.euiccSelect ? isBusy || button.dataset.euiccSelect === state.activeEid : isBusy;
     if (button.dataset.stockAction) button.disabled = isBusy || !state.stockBootstrapEnabled;
   }
   syncCallButtons();
@@ -162,7 +166,7 @@ function append(title, text) {
 }
 
 function actionTitle(action) {
-  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "call-status": t("callStatus"), "call-capabilities": t("callCapabilities"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
+  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "euicc-inventory": t("esimLibrary"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "call-status": t("callStatus"), "call-capabilities": t("callCapabilities"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
 }
 
 function apiHeaders(extra = {}) {
@@ -235,6 +239,120 @@ function parseLpaData(text) {
   return null;
 }
 
+function euiccDisplayLabel(item, index = 0) {
+  return item?.label || t("defaultEidLabel", { index: index + 1 });
+}
+
+function shortEid(value) {
+  const eid = String(value || "");
+  return eid.length > 12 ? `${eid.slice(0, 6)}...${eid.slice(-6)}` : eid || "--";
+}
+
+function activeEuicc() {
+  return state.euiccInventory.find((item) => item.eid === state.activeEid) || null;
+}
+
+function renderActiveEuicc() {
+  const item = activeEuicc();
+  const label = document.querySelector("#activeEuiccLabel");
+  const eid = document.querySelector("#eidValue");
+  const status = document.querySelector("#activeEuiccState");
+  const installed = document.querySelector("#installedProfileCount");
+  const active = document.querySelector("#activeProfileCount");
+  const memory = document.querySelector("#euiccMemory");
+  if (!item) {
+    label.textContent = t("noEidSelected");
+    eid.textContent = "--";
+    status.className = "profile-state inactive";
+    status.textContent = t("notSelected");
+    installed.textContent = "--";
+    active.textContent = "--";
+    memory.textContent = "--";
+    renderProfileItems(null);
+    return;
+  }
+  const index = state.euiccInventory.indexOf(item);
+  label.textContent = euiccDisplayLabel(item, index);
+  eid.textContent = item.eid;
+  status.className = "profile-state active";
+  status.textContent = t("selected");
+  installed.textContent = String(item.profileCount ?? item.profiles?.length ?? 0);
+  active.textContent = String(item.activeCount ?? item.profiles?.filter((profile) => profile.profileState === "enabled").length ?? 0);
+  memory.textContent = item.freeMemory ? formatBytes(item.freeMemory) : "--";
+  renderProfileItems(Array.isArray(item.profiles) ? item.profiles : []);
+}
+
+function selectEuicc(eid) {
+  const item = state.euiccInventory.find((entry) => entry.eid === eid);
+  if (!item || item.eid === state.activeEid) return;
+  state.activeEid = item.eid;
+  state.activeAid = item.aid;
+  state.profileText = "";
+  state.discoveryText = "";
+  state.notificationText = "";
+  document.querySelector("#pendingProfileCount").textContent = "--";
+  document.querySelector("#discoveryState").textContent = t("discoveryNotChecked");
+  const notifications = document.querySelector("#notificationsList");
+  notifications.className = "notification-list empty";
+  notifications.textContent = t("noNotifications");
+  renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
+}
+
+async function renameEuicc(eid) {
+  const item = state.euiccInventory.find((entry) => entry.eid === eid);
+  if (!item) return;
+  const next = window.prompt(t("eidLabelPrompt"), item.label || "");
+  if (next === null || next.trim().length > 40) return;
+  try {
+    const res = await fetch("/api/euicc-label", {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ eid, label: next.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Could not save EID label.");
+    item.label = data.label || "";
+    append(t("eidSpaceLabel"), t("eidLabelSaved"));
+    renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
+  } catch (error) { append(t("eidSpaceLabel"), error.stack || error.message); }
+}
+
+function renderEuiccInventory(data) {
+  const items = Array.isArray(data?.eids) ? data.eids : [];
+  state.euiccInventory = items;
+  state.euiccCandidatesChecked = Number(data?.candidatesChecked) || state.euiccCandidatesChecked || 0;
+  state.inventoryLoaded = true;
+  if (!items.some((item) => item.eid === state.activeEid)) {
+    state.activeEid = items[0]?.eid || "";
+    state.activeAid = items[0]?.aid || "";
+  } else {
+    state.activeAid = items.find((item) => item.eid === state.activeEid)?.aid || "";
+  }
+  document.querySelector("#eidLibraryCount").textContent = t("eidsSummary", { count: items.length });
+  document.querySelector("#euiccProbeState").textContent = t("probeSummary", { count: items.length, checked: state.euiccCandidatesChecked });
+  const inventory = document.querySelector("#euiccInventory");
+  if (!items.length) {
+    inventory.className = "euicc-slot-grid empty";
+    inventory.textContent = t("chipInfoUnavailable");
+    renderActiveEuicc();
+    return;
+  }
+  inventory.className = "euicc-slot-grid";
+  inventory.innerHTML = items.map((item, index) => {
+    const selected = item.eid === state.activeEid;
+    const label = euiccDisplayLabel(item, index);
+    return `<article class="euicc-slot-card ${selected ? "active" : ""}">
+      <div class="euicc-slot-head"><span class="euicc-slot-index">${index + 1}</span><span class="profile-state ${selected ? "active" : "inactive"}">${escapeHtml(selected ? t("selected") : t("notSelected"))}</span></div>
+      <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code title="${escapeHtml(item.eid)}">${escapeHtml(shortEid(item.eid))}</code></div>
+      <div class="euicc-slot-stats"><span>${escapeHtml(t("installedProfiles"))}<strong>${Number(item.profileCount) || 0}</strong></span><span>${escapeHtml(t("activeProfiles"))}<strong>${Number(item.activeCount) || 0}</strong></span></div>
+      <div class="euicc-slot-actions"><button data-euicc-select="${escapeHtml(item.eid)}" ${selected ? "disabled" : ""}>${escapeHtml(selected ? t("selected") : t("manageEid"))}</button><button class="secondary" data-euicc-label="${escapeHtml(item.eid)}">${escapeHtml(t("renameEid"))}</button></div>
+    </article>`;
+  }).join("");
+  for (const button of inventory.querySelectorAll("[data-euicc-select]")) button.addEventListener("click", () => selectEuicc(button.dataset.euiccSelect));
+  for (const button of inventory.querySelectorAll("[data-euicc-label]")) button.addEventListener("click", () => renameEuicc(button.dataset.euiccLabel));
+  renderActiveEuicc();
+}
+
 function renderChip(text) {
   state.chipText = text;
   const data = parseLpaData(text);
@@ -265,47 +383,70 @@ function renderDiscovery(text) {
 }
 function renderProfiles(text) {
   state.profileText = text;
+  const profiles = parseLpaData(text);
+  if (!Array.isArray(profiles)) {
+    renderProfileItems(null);
+    return;
+  }
+  const item = activeEuicc();
+  if (item) {
+    item.profiles = profiles;
+    item.profileCount = profiles.length;
+    item.activeCount = profiles.filter((profile) => profile.profileState === "enabled").length;
+    renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
+    return;
+  }
+  renderProfileItems(profiles);
+}
+
+function renderProfileItems(profiles) {
   const list = document.querySelector("#profilesList");
   const count = document.querySelector("#profileCount");
-  const jsonLine = text.split(/\r?\n/).find((line) => line.trim().startsWith("{"));
-  if (!jsonLine) { list.className = "profile-list empty"; list.textContent = t("noProfileData"); count.textContent = t("profilesNotLoaded"); return; }
-  try {
-    const profiles = JSON.parse(jsonLine)?.payload?.data || [];
-    const activeCount = profiles.filter((profile) => profile.profileState === "enabled").length;
-    count.textContent = t("profilesSummary", { count: profiles.length, active: activeCount });
-    document.querySelector("#installedProfileCount").textContent = String(profiles.length);
-    if (!profiles.length) { list.className = "profile-list empty"; list.textContent = t("noProfiles"); return; }
-    list.className = "profile-list";
-    list.innerHTML = profiles.map((profile) => {
-      const enabled = profile.profileState === "enabled";
-      const id = escapeHtml(profile.iccid || profile.isdpAid || "");
-      const action = enabled ? "disable" : "enable";
-      const nickname = escapeHtml(profile.profileNickname || profile.profileName || "");
-      const title = escapeHtml(profile.profileNickname || profile.profileName || profile.serviceProviderName || t("unnamed"));
-      const provider = escapeHtml(profile.serviceProviderName || profile.profileName || "");
-      const profileClass = escapeHtml(profile.profileClass || "operational");
-      const actionLabel = enabled ? t("disable") : t("switchProfile");
-      return `<article class="profile-card ${enabled ? "active" : ""}">
-        <div class="profile-card-head">
-          <div class="profile-title"><span>${provider}</span><strong>${title}</strong></div>
-          <span class="profile-state ${enabled ? "active" : "inactive"}">${enabled ? t("currentProfile") : t("inactiveProfile")}</span>
-        </div>
-        <div class="profile-detail-grid">
-          <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${id}</code></div>
-          <div><span>${escapeHtml(t("profileClassLabel"))}</span><strong>${profileClass}</strong></div>
-          <div class="profile-traffic"><span>${escapeHtml(t("trafficBalance"))}</span><strong>${escapeHtml(t("trafficUnavailable"))}</strong></div>
-        </div>
-        <div class="profile-actions">
-          <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
-          ${enabled ? "" : `<button class="profile-action danger" data-profile-delete data-profile-id="${id}" ${state.profileDeleteEnabled ? "" : "disabled"}>${escapeHtml(t("deleteProfile"))}</button>`}
-          <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div>
-        </div>
-      </article>`;
-    }).join("");
-    for (const button of list.querySelectorAll("button[data-profile-action]")) button.addEventListener("click", () => runProfileAction(button.dataset.profileAction, button.dataset.profileId));
-    for (const button of list.querySelectorAll("button[data-profile-nickname]")) button.addEventListener("click", () => renameProfile(button.dataset.profileId));
-    for (const button of list.querySelectorAll("button[data-profile-delete]")) button.addEventListener("click", () => deleteProfile(button.dataset.profileId));
-  } catch (error) { list.className = "profile-list empty"; list.textContent = t("profileParseError", { error: error.message }); count.textContent = t("profilesNotLoaded"); }
+  if (!Array.isArray(profiles)) {
+    list.className = "profile-list empty";
+    list.textContent = state.activeEid ? t("noProfileData") : t("selectEidFirst");
+    count.textContent = t("profilesNotLoaded");
+    return;
+  }
+  const activeCount = profiles.filter((profile) => profile.profileState === "enabled").length;
+  count.textContent = t("profilesSummary", { count: profiles.length, active: activeCount });
+  document.querySelector("#installedProfileCount").textContent = String(profiles.length);
+  document.querySelector("#activeProfileCount").textContent = String(activeCount);
+  if (!profiles.length) {
+    list.className = "profile-list empty";
+    list.textContent = t("noProfiles");
+    return;
+  }
+  list.className = "profile-list";
+  list.innerHTML = profiles.map((profile) => {
+    const enabled = profile.profileState === "enabled";
+    const id = escapeHtml(profile.iccid || profile.isdpAid || "");
+    const action = enabled ? "disable" : "enable";
+    const nickname = escapeHtml(profile.profileNickname || profile.profileName || "");
+    const title = escapeHtml(profile.profileNickname || profile.profileName || profile.serviceProviderName || t("unnamed"));
+    const provider = escapeHtml(profile.serviceProviderName || profile.profileName || "");
+    const profileClass = escapeHtml(profile.profileClass || "operational");
+    const actionLabel = enabled ? t("disable") : t("switchProfile");
+    return `<article class="profile-card ${enabled ? "active" : ""}">
+      <div class="profile-card-head">
+        <div class="profile-title"><span>${provider}</span><strong>${title}</strong></div>
+        <span class="profile-state ${enabled ? "active" : "inactive"}">${enabled ? t("currentProfile") : t("inactiveProfile")}</span>
+      </div>
+      <div class="profile-detail-grid">
+        <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${id}</code></div>
+        <div><span>${escapeHtml(t("profileClassLabel"))}</span><strong>${profileClass}</strong></div>
+        <div class="profile-traffic"><span>${escapeHtml(t("trafficBalance"))}</span><strong>${escapeHtml(t("trafficUnavailable"))}</strong></div>
+      </div>
+      <div class="profile-actions">
+        <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
+        ${enabled ? "" : `<button class="profile-action danger" data-profile-delete data-profile-id="${id}" ${state.profileDeleteEnabled ? "" : "disabled"}>${escapeHtml(t("deleteProfile"))}</button>`}
+        <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div>
+      </div>
+    </article>`;
+  }).join("");
+  for (const button of list.querySelectorAll("button[data-profile-action]")) button.addEventListener("click", () => runProfileAction(button.dataset.profileAction, button.dataset.profileId));
+  for (const button of list.querySelectorAll("button[data-profile-nickname]")) button.addEventListener("click", () => renameProfile(button.dataset.profileId));
+  for (const button of list.querySelectorAll("button[data-profile-delete]")) button.addEventListener("click", () => deleteProfile(button.dataset.profileId));
 }
 
 function renderNotifications(text) {
@@ -813,7 +954,8 @@ async function fetchJson(path, timeoutMs = 90000) {
 
 async function requestAction(action) {
   const port = encodeURIComponent(portInput.value.trim());
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}`, "lpac-discovery": `/api/lpac-discovery?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
+  const aid = encodeURIComponent(state.activeAid || "");
+  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const data = await fetchJson(paths[action]); return { data, text: textFromResult(data) || JSON.stringify(data, null, 2) };
 }
 
@@ -830,7 +972,7 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
   catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -857,12 +999,12 @@ async function rescueScan() {
   }
 }
 async function autoScan() {
-  const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "lpac-chip", "lpac-profiles", "sms-list"];
+  const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "euicc-inventory", "sms-list"];
   setBusy(true, "starting");
   try {
     for (let index = 0; index < actions.length; index += 1) {
       const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
       catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message); }
     }
   } finally { setBusy(false); }
@@ -884,15 +1026,17 @@ async function sendAt() {
 
 async function runProfileAction(action, id) {
   const label = action === "enable" ? t("switchProfile") : t("disable");
+  if (!state.activeAid) { append(label, t("selectEidFirst")); return; }
   if (!state.profileActionsEnabled) { append(label, t("locked")); return; }
   if (!window.confirm(t("confirmProfile", { action: label.toLowerCase() }))) return;
   setBusy(true, action);
-  try { const found = await requestAction("find-at"); append(actionTitle("find-at"), found.text); updateSummary(found.text); const port = encodeURIComponent(portInput.value.trim()); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
+  try { const found = await requestAction("find-at"); append(actionTitle("find-at"), found.text); updateSummary(found.text); const port = encodeURIComponent(portInput.value.trim()); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, aid: state.activeAid, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
   catch (error) { append(label, error.stack || error.message); }
   finally { setBusy(false); }
 }
 
 async function deleteProfile(id) {
+  if (!state.activeAid) { append(t("deleteProfile"), t("selectEidFirst")); return; }
   if (!state.profileDeleteEnabled) { append(t("deleteProfile"), t("locked")); return; }
   if (!window.confirm(t("deleteIrreversible"))) return;
   if (window.prompt(t("confirmDeleteProfile")) !== "DELETE") return;
@@ -902,7 +1046,7 @@ async function deleteProfile(id) {
     const res = await fetch(`/api/lpac-profile-action?port=${port}`, {
       method: "POST",
       headers: apiHeaders({ "content-type": "application/json" }),
-      body: JSON.stringify({ action: "delete", id, confirm: "DELETE" }),
+      body: JSON.stringify({ action: "delete", id, aid: state.activeAid, confirm: "DELETE" }),
     });
     const data = await res.json();
     append(t("deleteProfile"), textFromResult(data) || JSON.stringify(data, null, 2));
@@ -915,17 +1059,42 @@ async function deleteProfile(id) {
 }
 async function downloadProfile() {
   const activationCode = document.querySelector("#activationCodeInput").value.trim();
+  if (!state.activeAid) { append(t("profileDownload"), t("selectEidFirst")); return; }
   if (!state.profileDownloadEnabled) { append(t("profileDownload"), t("profileDownloadLocked")); return; }
   if (!activationCode.startsWith("LPA:1$") || activationCode.split("$").length < 3) { append(t("profileDownload"), t("invalidActivationCode")); return; }
-  if (!window.confirm(t("confirmDownload"))) return;
+  const target = activeEuicc();
+  const targetLabel = target ? euiccDisplayLabel(target, state.euiccInventory.indexOf(target)) : shortEid(state.activeEid);
+  if (!window.confirm(`${t("confirmDownload")}\n${t("targetEid", { label: targetLabel })}`)) return;
   setBusy(true, "profileDownload");
   try {
     const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-profile-download?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ activationCode, confirm: "DOWNLOAD" }) });
+    const res = await fetch(`/api/lpac-profile-download?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ activationCode, aid: state.activeAid, confirm: "DOWNLOAD" }) });
     const data = await res.json();
     append(t("profileDownload"), textFromResult(data) || JSON.stringify(data, null, 2));
     if (res.ok) { document.querySelector("#activationCodeInput").value = ""; await callApi("lpac-profiles"); }
   } catch (error) { append(t("profileDownload"), error.stack || error.message); }
+  finally { setBusy(false); }
+}
+
+async function addEuiccAid() {
+  const input = document.querySelector("#customAidInput");
+  const aid = input.value.trim().toUpperCase();
+  if (!/^[0-9A-F]{2,32}$/.test(aid) || aid.length % 2 !== 0) { append(t("privateAid"), t("invalidAid")); return; }
+  if (!window.confirm(t("confirmAddAid"))) return;
+  setBusy(true, "running");
+  try {
+    const port = encodeURIComponent(portInput.value.trim());
+    const res = await fetch(`/api/euicc-aid?port=${port}`, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ aid, confirm: "ADD" }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "The private AID could not be verified.");
+    input.value = "";
+    append(t("privateAid"), t("aidAdded"));
+    await callApi("euicc-inventory");
+  } catch (error) { append(t("privateAid"), error.stack || error.message); }
   finally { setBusy(false); }
 }
 
@@ -945,13 +1114,14 @@ async function runStockSetup(endpoint, confirmation, title) {
 async function renameProfile(id) {
   const input = document.querySelector(`[data-profile-nickname-input="${CSS.escape(id)}"]`);
   const nickname = input?.value.trim() || "";
+  if (!state.activeAid) { append(t("profileNickname"), t("selectEidFirst")); return; }
   if (!state.profileNicknameEnabled) { append(t("profileNickname"), t("nicknameLocked")); return; }
   if (!nickname || nickname.length > 64) { append(t("profileNickname"), t("invalidNickname")); return; }
   if (!window.confirm(t("confirmNickname"))) return;
   setBusy(true, "profileNickname");
   try {
     const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-profile-nickname?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ id, nickname, confirm: "RENAME" }) });
+    const res = await fetch(`/api/lpac-profile-nickname?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ id, nickname, aid: state.activeAid, confirm: "RENAME" }) });
     const data = await res.json();
     append(t("profileNickname"), textFromResult(data) || JSON.stringify(data, null, 2));
     if (res.ok) await callApi("lpac-profiles");
@@ -960,12 +1130,13 @@ async function renameProfile(id) {
 }
 
 async function processNotifications() {
+  if (!state.activeAid) { append(t("profileNotifications"), t("selectEidFirst")); return; }
   if (!state.profileNotificationsEnabled) { append(t("profileNotifications"), t("profileNotificationsLocked")); return; }
   if (!window.confirm(t("confirmNotifications"))) return;
   setBusy(true, "profileNotifications");
   try {
     const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-notifications-process?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ confirm: "PROCESS" }) });
+    const res = await fetch(`/api/lpac-notifications-process?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ aid: state.activeAid, confirm: "PROCESS" }) });
     const data = await res.json();
     append(t("profileNotifications"), textFromResult(data) || JSON.stringify(data, null, 2));
     if (res.ok) await callApi("lpac-notifications");
@@ -1102,7 +1273,7 @@ function selectView(target, updateHash = false) {
     state.autoLoadedViews.add(target);
     if (target === "sms") callApi("sms-list");
     if (target === "network") callApi("network-traffic");
-    if (target === "esim") callApi("lpac-chip").then(() => callApi("lpac-profiles"));
+    if (target === "esim") callApi("euicc-inventory");
   }
 }
 
@@ -1120,6 +1291,7 @@ document.querySelector("#autoScanBtn").addEventListener("click", autoScan);
 document.querySelector("#rescueScanBtn").addEventListener("click", rescueScan);
 document.querySelector("#sendAtBtn").addEventListener("click", sendAt);
 document.querySelector("#downloadProfileBtn").addEventListener("click", downloadProfile);
+document.querySelector("#addEuiccAidBtn").addEventListener("click", addEuiccAid);
 document.querySelector("#processNotificationsBtn").addEventListener("click", processNotifications);
 document.querySelector("#sendSmsBtn").addEventListener("click", sendSmsMessage);
 document.querySelector("#callMonitorBtn")?.addEventListener("click", () => toggleCallMonitoring());

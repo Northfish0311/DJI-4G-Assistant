@@ -48,7 +48,7 @@ Releases 页面中的文件用途如下：
 
 - **设备发现**：USB 身份、COM 口、模块型号、SIM、运营商、信号、注册状态、APN、PDP 和模块 IP。
 - **网络面板**：Windows 网卡状态、IPv4、网关、DHCP、驱动版本和本次运行的收发流量；可修复已验证设备的 Windows ECM 驱动。
-- **eSIM 管理**：列出多张 Profile，启用、停用、改昵称、下载、处理通知，以及双重确认后删除未启用的 Profile。
+- **eSIM 管理**：自动发现并按 EID 去重多个 eUICC 空间，支持本地分类备注；在所选 EID 内列出 Profile、启用、停用、改昵称、下载、处理通知，并在双重确认后删除未启用 Profile。
 - **短信**：读取收件箱、发送 UCS2/PDU 中文和长短信，并提取常见 4–8 位验证码。
 - **电话**：进入页面后自动监控来电并检查能力，可一键拨号、接听、挂断、查看来电号码和发送 DTMF；技术信息默认折叠，检测到模块的标准 USB 音频端点时才开放 Windows 本机声音桥接。
 - **USSD**：发送余额或运营商服务代码。
@@ -63,14 +63,15 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 `127.0.0.1` 永远表示当前设备自己，不能把电脑上的 `http://127.0.0.1:8787` 原样输入手机。不要把管理端口映射到公网或无认证隧道。
 
-## 多张 eSIM 和套餐流量
+## 多张 EID、eSIM 套餐和流量
 
-eSIM 页会分别显示当前卡的 EID、卡内 Profile 数、剩余存储空间，以及 GSMA SM-DS 中可领取的待下载套餐。Profile 列表包含当前 EID 内标准接口可读到的已启用和已停用套餐。
+eSIM 页会自动扫描这张实体卡中**当前接口能够访问的全部 eUICC 空间**，不把数量写死。识别到 1 个、2 个、3 个或更多 EID 时都会逐个显示，并按完整 EID 去重。每个 EID 都有独立的 Profile 数、启用数量和剩余存储空间；先选择 EID，再读取、启用、停用、改昵称或下载套餐，操作不会串到另一个 EID。
 
-如果套餐商 App 显示三份套餐，而这里显示一份，不代表网页漏读。请先比较套餐商 App 与本页 EID；尚未下载到这张卡的订单、属于另一 EID 的套餐，以及厂商没有按标准 Profile 暴露的 bootstrap 身份，都不会出现在卡内 Profile 列表。可点击“检查待下载”查询 SM-DS，或使用套餐商提供的完整 LPA 激活码下载。
+可给每个 EID 设置本地备注，例如“长期卡”“测试卡”“备用卡”。备注只保存在本机 `.local` 目录，不会写入 eSIM 卡。程序会自动检查标准 ISD-R、已知兼容入口和本机曾验证过的私有 AID；如果卡商提供了私有 ISD-R AID，可在高级区域添加，程序会先做只读验证，验证成功后以后自动扫描。
+
+需要注意：多 SE/eUICC 卡的其他空间如果被厂商私有切换器隐藏，Windows 模块只暴露一个入口时，软件不能安全地靠猜测找出其余 EID。此时页面会如实显示已访问数量，不会执行来源不明的切卡写指令。套餐商 App 中的订单、尚未下载的套餐和 bootstrap 身份也不等于可管理的 EID/Profile。
 
 套餐剩余流量通常保存在套餐商账户服务器中，不在 eUICC Profile 标准字段里。因此仅凭卡片无法可靠显示 Airalo、Roamless、RedteaGO 等套餐余额，需要分别接入套餐商官方 API。当前网络面板只显示 Windows 实际收发量，不冒充运营商余额。
-
 ## Windows 原生模式与 VoHive 模式
 
 | 用途 | 模块模式 | 电脑侧接口 |
@@ -129,7 +130,7 @@ npm run build
 
 DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, multi-profile eSIM management, UCS2/PDU SMS, OTP extraction, one-click call control (dial, answer, hang up, caller ID and DTMF), an optional local USB-audio bridge, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Routine call actions run immediately and show inline feedback; destructive eSIM and modem changes remain guarded. Voice service depends on the SIM, carrier and modem firmware; audio bridging is enabled only when matching standard USB audio endpoints are present. Provider data allowance requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, a dynamic multi-EID eSIM library with per-EID profile scoping and local labels, UCS2/PDU SMS, OTP extraction, one-click call control (dial, answer, hang up, caller ID and DTMF), an optional local USB-audio bridge, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Routine call actions run immediately and show inline feedback; destructive eSIM and modem changes remain guarded. Voice service depends on the SIM, carrier and modem firmware; audio bridging is enabled only when matching standard USB audio endpoints are present. Provider data allowance requires a provider API.
 
 ## License
 

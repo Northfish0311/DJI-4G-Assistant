@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
-const { buildSmsPdus, localIps, parseClcc, buildCallAction } = require("../web/server");
+const { buildSmsPdus, localIps, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids } = require("../web/server");
 
 test("encodes Chinese SMS in UCS2 PDU mode", () => {
   const [part] = buildSmsPdus("+447700900123", "\u6d4b\u8bd5\u77ed\u4fe1");
@@ -79,4 +79,44 @@ test("matches PowerShell SMS responses with regex newline escapes", () => {
   const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
   const responsePattern = "Read-Until '(\\\\r|\\\\n)(OK|ERROR)(\\\\r|\\\\n)'";
   assert.equal(source.split(responsePattern).length - 1, 2);
+});
+
+
+test("validates ISD-R AIDs without accepting shell input", () => {
+  assert.equal(normalizeIsdrAid("a0000005591010ffffffff8900000100"), "A0000005591010FFFFFFFF8900000100");
+  assert.equal(normalizeIsdrAid("A0000;SET"), null);
+  assert.equal(normalizeIsdrAid("ABC"), null);
+  assert.equal(normalizeIsdrAid("AA".repeat(17)), null);
+});
+
+test("parses the last successful lpac payload", () => {
+  const output = [
+    JSON.stringify({ type: "progress", payload: { step: 1 } }),
+    JSON.stringify({ type: "lpa", payload: { code: 0, data: { eidValue: "ok" } } }),
+  ].join("\r\n");
+  assert.deepEqual(parseLpacData(output), { eidValue: "ok" });
+});
+
+test("discovers any number of unique EIDs and deduplicates alternate AIDs", () => {
+  const eid = (value) => `89${String(value).padStart(30, "0")}`;
+  const aid = (value) => `A0000005591010FFFFFFFF890000${String(value).padStart(4, "0")}`;
+  const records = [
+    { eid: eid(1), aid: aid(100), profiles: [{ profileState: "enabled" }], freeMemory: 1000 },
+    { eid: eid(2), aid: aid(200), profiles: [], freeMemory: 2000 },
+    { eid: eid(3), aid: aid(300), profiles: [{ profileState: "disabled" }, { profileState: "enabled" }], freeMemory: 3000 },
+    { eid: eid(1), aid: aid(101), profiles: [{ profileState: "enabled" }] },
+  ];
+  const result = mergeEuiccRecords(records, { [eid(1)]: "Long term" });
+  assert.equal(result.length, 3);
+  assert.equal(result[0].label, "Long term");
+  assert.deepEqual(result[0].aids, [aid(100), aid(101)]);
+  assert.equal(result[2].profileCount, 2);
+  assert.equal(result[2].activeCount, 1);
+});
+
+test("keeps remembered private AIDs in automatic discovery candidates", () => {
+  const privateAid = "A0000005591010FFFFFFFF8900000199";
+  const candidates = inventoryCandidateAids({ aids: { local: privateAid }, labels: {} });
+  assert.ok(candidates.includes(privateAid));
+  assert.equal(new Set(candidates).size, candidates.length);
 });
