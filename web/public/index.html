@@ -241,6 +241,7 @@
                 <div><h2 data-i18n="smsInbox">SMS Inbox</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
                 <button data-action="sms-list" class="secondary" data-i18n="refresh">Refresh</button>
               </div>
+              <div id="smsStorageWarning" class="sms-storage-banner" hidden></div>
               <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
             </div>
 
@@ -296,7 +297,7 @@
                 <input id="dtmfInput" inputmode="tel" maxlength="32" data-i18n-placeholder="dtmfPlaceholder" placeholder="DTMF 0-9 * #">
                 <button id="sendDtmfBtn" class="secondary" data-call-action data-i18n="sendDtmf">Send DTMF</button>
               </div>
-              <div class="call-audio-actions" hidden>
+              <div class="call-audio-actions">
                 <button id="startAudioBridgeBtn" class="secondary" data-i18n="startAudio">Start Audio</button>
                 <button id="stopAudioBridgeBtn" class="secondary" data-i18n="stopAudio" disabled>Stop Audio</button>
               </div>
@@ -333,12 +334,68 @@
                 </div>
                 <div class="audio-status">
                   <div><span data-i18n="audioBridge">Audio bridge</span><strong id="audioBridgeState" data-i18n="audioNotConnected">Not connected</strong></div>
-                  <div><span data-i18n="rawPcm">Raw PCM</span><strong id="rawPcmState" data-i18n="notChecked">Not checked</strong></div>
+                  <div><span data-i18n="moduleVoiceRuntime">QDC507 runtime</span><strong id="rawPcmState" data-i18n="notChecked">Not checked</strong></div>
                   <div><span data-i18n="windowsAudio">Windows audio</span><strong id="windowsAudioState" data-i18n="notChecked">Not checked</strong></div>
                 </div>
               </details>
             </aside>
           </div>
+
+          <section class="panel voice-setup-panel" id="voiceSetupPanel">
+            <div class="panel-head">
+              <div>
+                <h2 data-i18n="voiceSetupTitle">Call Audio Setup</h2>
+                <p class="panel-subtitle" data-i18n="voiceSetupSubtitle">One-time module setup, then audio starts after a call connects.</p>
+              </div>
+              <button id="refreshVoiceSetupBtn" class="secondary" data-i18n="refreshVoiceSetup">Refresh status</button>
+            </div>
+            <div class="voice-setup-steps">
+              <div class="voice-setup-row" id="voiceRuntimeStep" data-state="pending">
+                <span class="voice-step-index">1</span>
+                <div class="voice-step-copy">
+                  <strong data-i18n="voiceStepRuntime">Verified runtime</strong>
+                  <p data-i18n="voiceStepRuntimeHint">Download the pinned QDC507 runtime and verify every SHA-256.</p>
+                </div>
+                <div class="voice-step-action">
+                  <span id="voiceRuntimeState" data-i18n="statusPending">Not checked</span>
+                  <button id="downloadVoiceRuntimeBtn" data-i18n="downloadVoiceRuntime">Download runtime</button>
+                </div>
+              </div>
+              <div class="voice-setup-row" id="voiceUsbStep" data-state="pending">
+                <span class="voice-step-index">2</span>
+                <div class="voice-step-copy">
+                  <strong data-i18n="voiceStepUsb">Module audio interfaces</strong>
+                  <p data-i18n="voiceStepUsbHint">Preserve VID/PID and existing functions; enable only ADB and UAC with a local backup.</p>
+                </div>
+                <div class="voice-step-action">
+                  <span id="voiceUsbState" data-i18n="statusPending">Not checked</span>
+                  <button id="enableVoiceUsbBtn" data-i18n="enableVoiceUsb">Enable ADB + audio</button>
+                </div>
+              </div>
+              <div class="voice-setup-row" id="voicePrepareStep" data-state="pending">
+                <span class="voice-step-index">3</span>
+                <div class="voice-step-copy">
+                  <strong data-i18n="voiceStepPrepare">Temporary voice route</strong>
+                  <p data-i18n="voiceStepPrepareHint">Load the matched driver into module memory. A module restart clears it.</p>
+                </div>
+                <div class="voice-step-action">
+                  <span id="voicePrepareState" data-i18n="statusPending">Not checked</span>
+                  <button id="prepareVoiceRuntimeBtn" data-i18n="prepareVoiceRuntime">Prepare calls</button>
+                </div>
+              </div>
+            </div>
+            <div id="voiceDriverNote" class="voice-driver-note" hidden>
+              <div>
+                <strong data-i18n="adbDriverNeeded">ADB driver needed</strong>
+                <p data-i18n="zadigNote">Use Zadig only on the QDC507 ADB MI_06 child interface. Never replace the composite parent, ECM, AT, NMEA, modem or audio interfaces.</p>
+              </div>
+              <a class="button-link" href="https://zadig.akeo.ie/" target="_blank" rel="noreferrer" data-i18n="openZadig">Open official Zadig page</a>
+            </div>
+            <div class="voice-setup-footer">
+              <p id="voiceSetupMessage" data-i18n="voiceSetupWaiting">Run a status check to begin.</p>
+              <button id="restoreVoiceUsbBtn" class="secondary danger-text" data-i18n="restoreVoiceUsb">Restore latest USB backup</button>
+            </div>
+          </section>
 
           <div class="panel call-history-panel">
             <div class="panel-head"><div><h2 data-i18n="recentCalls">Recent Calls</h2><p class="panel-subtitle" data-i18n="thisSession">This session</p></div></div>

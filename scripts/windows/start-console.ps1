@@ -3,8 +3,14 @@ param(
   [switch]$EnableProfileDownload,
   [switch]$EnableProfileNickname,
   [switch]$EnableProfileNotifications,
+  [switch]$EnableProfileDelete,
   [switch]$EnableSmsSend,
+  [switch]$EnableSmsDelete,
   [switch]$EnableCallActions,
+  [switch]$EnableUssd,
+  [switch]$EnableUsbMode,
+  [switch]$EnableDriverInstall,
+  [switch]$EnableVoiceRuntime,
   [switch]$EnableStockBootstrap
 )
 
@@ -116,6 +122,13 @@ if ($EnableProfileNotifications) {
 else {
   $env:ALLOW_PROFILE_NOTIFICATIONS = "0"
 }
+if ($EnableProfileDelete) {
+  Write-Host "Profile deletion / 删除套餐: ENABLED (confirmation required)" -ForegroundColor Yellow
+  $env:ALLOW_PROFILE_DELETE = "1"
+}
+else {
+  $env:ALLOW_PROFILE_DELETE = "0"
+}
 if ($EnableSmsSend) {
   Write-Host "SMS sending: ENABLED" -ForegroundColor Yellow
   $env:ALLOW_SMS_SEND = "1"
@@ -123,12 +136,47 @@ if ($EnableSmsSend) {
 else {
   $env:ALLOW_SMS_SEND = "0"
 }
+if ($EnableSmsDelete) {
+  Write-Host "SMS deletion / 删除短信: ENABLED (per-message confirmation)" -ForegroundColor Yellow
+  $env:ALLOW_SMS_DELETE = "1"
+}
+else {
+  $env:ALLOW_SMS_DELETE = "0"
+}
 if ($EnableCallActions) {
   Write-Host "Call controls: ENABLED" -ForegroundColor Yellow
   $env:ALLOW_CALL_ACTIONS = "1"
 }
 else {
   $env:ALLOW_CALL_ACTIONS = "0"
+}
+if ($EnableUssd) {
+  Write-Host "USSD: ENABLED" -ForegroundColor Yellow
+  $env:ALLOW_USSD = "1"
+}
+else {
+  $env:ALLOW_USSD = "0"
+}
+if ($EnableUsbMode) {
+  Write-Host "USB network mode / USB 网卡模式: ENABLED (confirmation required)" -ForegroundColor Yellow
+  $env:ALLOW_USB_MODE = "1"
+}
+else {
+  $env:ALLOW_USB_MODE = "0"
+}
+if ($EnableDriverInstall) {
+  Write-Host "ECM driver repair / 网卡驱动修复: ENABLED (administrator confirmation required)" -ForegroundColor Yellow
+  $env:ALLOW_DRIVER_INSTALL = "1"
+}
+else {
+  $env:ALLOW_DRIVER_INSTALL = "0"
+}
+if ($EnableVoiceRuntime) {
+  Write-Host "QDC507 call audio / 通话声音设置: ENABLED (persistent writes require confirmation)" -ForegroundColor Yellow
+  $env:ALLOW_VOICE_RUNTIME = "1"
+}
+else {
+  $env:ALLOW_VOICE_RUNTIME = "0"
 }
 if ($EnableStockBootstrap) {
   Write-Host "Original-module setup: ENABLED" -ForegroundColor Yellow

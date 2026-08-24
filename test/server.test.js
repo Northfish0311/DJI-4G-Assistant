@@ -3,7 +3,20 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
-const { buildSmsPdus, localIps, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids } = require("../web/server");
+const {
+  buildSmsPdus,
+  localIps,
+  parseClcc,
+  buildCallAction,
+  normalizeIsdrAid,
+  parseLpacData,
+  mergeEuiccRecords,
+  inventoryCandidateAids,
+  sameUsbComposition,
+  parseVoiceIdentity,
+  parseSmsStorage,
+  redactModemIdentifiers,
+} = require("../web/server");
 
 test("encodes Chinese SMS in UCS2 PDU mode", () => {
   const [part] = buildSmsPdus("+447700900123", "\u6d4b\u8bd5\u77ed\u4fe1");
@@ -119,4 +132,54 @@ test("keeps remembered private AIDs in automatic discovery candidates", () => {
   const candidates = inventoryCandidateAids({ aids: { local: privateAid }, labels: {} });
   assert.ok(candidates.includes(privateAid));
   assert.equal(new Set(candidates).size, candidates.length);
+});
+
+
+test("reports a full SMS storage without guessing", () => {
+  const storage = parseSmsStorage('+CPMS: "MT",23,23,"MT",23,23,"MT",23,23');
+  assert.deepEqual(storage, { used: 23, total: 23, percent: 100, full: true });
+  assert.equal(parseSmsStorage("ERROR"), null);
+});
+
+test("compares every USB composition field", () => {
+  const baseline = { vendorId: 0x2c7c, productId: 0x0125, flags: [1, 1, 1, 1, 1, 0, 0] };
+  assert.equal(sameUsbComposition(baseline, { ...baseline, flags: [...baseline.flags] }), true);
+  assert.equal(sameUsbComposition(baseline, { ...baseline, flags: [1, 1, 1, 1, 1, 1, 0] }), false);
+});
+
+test("accepts only the verified QDC507 voice identity", () => {
+  const identity = parseVoiceIdentity([
+    "Baiwang",
+    "QDC507",
+    "Revision: QDC507GLEFM21",
+    "867530912345678",
+  ].join("\r\n"));
+  assert.equal(identity.model, "QDC507");
+  assert.equal(identity.revision, "QDC507GLEFM21");
+  assert.equal(identity.imei, "867530912345678");
+  assert.throws(
+    () => parseVoiceIdentity("EC25\r\nRevision: EC25EFAR06A01"),
+    /verified QDC507/,
+  );
+});
+
+
+test("returns the queued serial operation to API callers", () => {
+  const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
+  assert.match(
+    source,
+    /function enqueueSerial\(task\)\s*\{\s*const queued = atQueue\.then\(task\);\s*atQueue = queued\.catch\(\(\) => \{\}\);\s*return queued;\s*\}/,
+  );
+});
+
+
+test("redacts full modem identifiers from setup errors", () => {
+  const redacted = redactModemIdentifiers({
+    ok: false,
+    stdout: "----- AT+CGSN -----\r\n867530912345678\r\nERROR\r\n",
+    stderr: "device 867530912345678 failed",
+  });
+  assert.equal(redacted.stdout.includes("867530912345678"), false);
+  assert.equal(redacted.stderr.includes("867530912345678"), false);
+  assert.match(redacted.stdout, /\[redacted\]/);
 });

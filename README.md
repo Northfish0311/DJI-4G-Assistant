@@ -27,7 +27,7 @@ Releases 页面中的文件用途如下：
 
 - **看短信：** 打开“短信”，点击“刷新”。
 - **发短信：** 在“短信”右侧填写号码和内容，点击“发送短信”并确认。
-- **接打电话：** 打开“电话”，输入真实号码后点一次“拨打”；来电时点“接听”。执行结果会直接显示在拨号盘下方，声音是否可用见下方说明。
+- **接打电话：** 打开“电话”，输入真实号码后点“拨打”；来电时点“接听”。精确匹配的 QDC507 可按页面完成一次性声音设置，以后接通后点“启动声音”。
 - **切换 eSIM：** 打开“eSIM”，在目标套餐上点击“切换到此套餐”并确认，等待网络重新注册。
 - **下载 eSIM：** 展开“下载新套餐”，粘贴套餐商给你的完整 `LPA:1$...` 激活码后确认。
 - **检查 Windows 上网：** 打开“网络”，确认网卡为“已连接”，并看到 IPv4、网关和 DHCP。
@@ -49,8 +49,8 @@ Releases 页面中的文件用途如下：
 - **设备发现**：USB 身份、COM 口、模块型号、SIM、运营商、信号、注册状态、APN、PDP 和模块 IP。
 - **网络面板**：Windows 网卡状态、IPv4、网关、DHCP、驱动版本和本次运行的收发流量；可修复已验证设备的 Windows ECM 驱动。
 - **eSIM 管理**：自动发现并按 EID 去重多个 eUICC 空间，支持本地分类备注；在所选 EID 内列出 Profile、启用、停用、改昵称、下载、处理通知，并在双重确认后删除未启用 Profile。
-- **短信**：读取收件箱、发送 UCS2/PDU 中文和长短信，并提取常见 4–8 位验证码。
-- **电话**：进入页面后自动监控来电并检查能力，可一键拨号、接听、挂断、查看来电号码和发送 DTMF；技术信息默认折叠，检测到模块的标准 USB 音频端点时才开放 Windows 本机声音桥接。
+- **短信**：读取收件箱、发送 UCS2/PDU 中文和长短信、提取常见 4–8 位验证码，并显示存储容量；满仓时可逐条确认删除。
+- **电话**：监控来电、拨号、接听、挂断、来电号码和 DTMF；为精确匹配的 QDC507GLEFM21 提供带备份、读回和固定哈希验证的一次性 ADB/UAC 声音向导。
 - **USSD**：发送余额或运营商服务代码。
 - **AT 工具**：执行诊断指令，危险写入默认受限制。
 - **USB 网卡模式**：对已验证的兼容设备切换 `usbnet=0/1`。
@@ -89,6 +89,22 @@ eSIM 页会自动扫描这张实体卡中**当前接口能够访问的全部 eUI
 
 确认后，程序会请求 Windows 管理员授权，从 Quectel 官方地址下载 ECM V1.0 驱动包，核对内置 SHA256 和数字签名，备份当前 Quectel 驱动，再安装已验证的 `Quectel ECM Adapter 19.0.33.201`。项目仓库和安装包不内置该驱动。驱动已正确安装时按钮只检查状态，不重复修改；目标接口不存在、校验失败或签名无效时立即停止。
 
+
+## QDC507 接打电话和声音
+
+拨号、接听、挂断、来电号码和 DTMF 仍使用 AT 指令，不需要开启 ADB。双向声音是另一条链路，本版本为已验证的 `QDC507 / QDC507GLEFM21` 增加了引导式实验功能。
+
+第一次使用声音时，在“电话”页按顺序操作：
+
+1. 点击“下载运行时”。程序只把固定 MaVo commit 的 6 个文件下载到本机，并逐个核对大小和 SHA-256，不会改模块。
+2. 点击“打开 ADB 和声音”。程序重新读取型号、固件、IMEI 和七位 `usbcfg`，保存本地备份，保留 VID/PID 与已有 DIAG、NMEA、AT、Modem、ECM 功能，只把 ADB、UAC 两位设为 1。这个持久写入会再次确认并重启模块。
+3. 如果页面显示“需要驱动”，从 [Zadig 官网](https://zadig.akeo.ie/) 打开工具，只给 `QDC507 ADB MI_06` 子接口绑定 WinUSB。不要替换复合设备本体、ECM 网卡、AT、NMEA、Modem 或音频接口。
+4. 可点“准备通话声音”提前检查，也可以直接拨号。以后每次模块重启后，通话接通再点“启动声音”，程序会自动把匹配驱动临时加载到内存并建立 Windows 麦克风、扬声器和模块 UAC 之间的桥接。
+
+“恢复最近 USB 备份”只对同一 IMEI 和 VID/PID 开放，会把七位 USB 配置恢复到写入前的精确值并重启模块。QADBKEY 授权本身可能是持久的，恢复 USB 位不能撤销它。
+
+这个流程只对精确匹配的固件开放，不会套到未知模块。内核模块只临时加载，不写 boot、MTD、DIAG 或 EDL；模块重启后会清除。声音链路仍取决于运营商语音/VoLTE、模块 DSP 固件、Windows 音频设备和麦克风权限，首次请用短通话验证。局域网手机和平板能控制电话，但声音必须在插着模块的 Windows 电脑上启动。
+
 ## 原始模块与风险
 
 `2CA3:4006` 不是所有 DJI 模块必然相同的出厂身份。初始化功能先读取设备自己的 `ATI`、固件、`usbnet` 和 `usbcfg`，不会把网上固定参数盲写到未知设备。已经能够正常联网的模块不要执行初始化或恢复写入。
@@ -98,7 +114,7 @@ eSIM 页会自动扫描这张实体卡中**当前接口能够访问的全部 eUI
 - 当前以一台 Windows 电脑管理一个活动模块为主，多模块并发调度仍在计划中。
 - VoHive 的代理池、Linux 网络命名空间和 VoWiFi/IMS 实验依赖 Linux 驱动及网络栈，当前 Windows 版不提供虚假按钮。
 - 短信、USSD 和漫游数据最终取决于固件、运营商及套餐权限。
-- 电话控制需要 SIM/套餐支持语音或 VoLTE；能拨号不等于一定有声音。只有 Windows 检测到模块的标准 USB 音频输入和输出时，桌面程序才会开放音频桥接。本版本不会为了声音自动修改 `usbcfg`、启用 ADB/UAC 或加载第三方内核模块。
+- 电话控制需要 SIM/套餐支持语音或 VoLTE；能拨号不等于一定有声音。QDC507 声音向导只在用户确认后修改 ADB/UAC，并按需临时加载固定哈希运行时；未知固件不会开放。该声音路线仍属实验功能。
 - 局域网中的手机和平板可以控制插在 Windows 上的模块，但声音桥接只能在 Windows 本机桌面程序中启动。把模块直接插到 iPad 并管理 AT/eSIM/电话，需要另做带 USB 驱动扩展的原生 iPadOS App。
 - 本项目独立实现，没有复制 DJOneHub、VoHive 或 NetXD 的代码。
 
@@ -109,6 +125,9 @@ eSIM 页会自动扫描这张实体卡中**当前接口能够访问的全部 eUI
 - [wlzh/dji-4g-vohive-mac](https://github.com/wlzh/dji-4g-vohive-mac)：macOS + UTM + Linux USB 直通路线。
 - [LeiyuG/dji-vohive-hyperv](https://github.com/LeiyuG/dji-vohive-hyperv)：Windows + Hyper-V + usbipd-win 路线。
 - [estkme-group/lpac](https://github.com/estkme-group/lpac)：本项目 eUICC Profile 读取与管理所使用的开源 LPA。
+- [cr-zhichen/DJOneHubNative](https://github.com/cr-zhichen/DJOneHubNative)：QDC507 模块研究与公开行为参考。
+- [moluncn/mavo](https://github.com/moluncn/mavo)：按固定 commit 下载并校验的可选 QDC507 语音运行时来源。
+- [Zadig](https://zadig.akeo.ie/) / [libwdi](https://github.com/pbatard/libwdi)：Windows ADB 子接口的 WinUSB 工具。
 
 本项目独立实现，没有复制上述项目或 VoHive 的代码；文档吸收了它们在模式选择、重新枚举和逐层排错方面的公开经验。
 
@@ -130,7 +149,7 @@ npm run build
 
 DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, a dynamic multi-EID eSIM library with per-EID profile scoping and local labels, UCS2/PDU SMS, OTP extraction, one-click call control (dial, answer, hang up, caller ID and DTMF), an optional local USB-audio bridge, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Routine call actions run immediately and show inline feedback; destructive eSIM and modem changes remain guarded. Voice service depends on the SIM, carrier and modem firmware; audio bridging is enabled only when matching standard USB audio endpoints are present. Provider data allowance requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. Phones and tablets on the LAN can control calls, but the Windows host carries USB audio. Provider data allowance still requires a provider API.
 
 ## License
 

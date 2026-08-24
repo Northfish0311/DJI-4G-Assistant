@@ -23,7 +23,9 @@ const copy = {
     recentCalls: "Recent Calls", thisSession: "This session", noCallHistory: "No call activity yet.", callActive: "Connected", callHeld: "On hold", callDialing: "Dialing", callAlerting: "Ringing", callIncoming: "Incoming call", callWaiting: "Call waiting", callDisconnected: "Ended",
     incomingCall: "Incoming", outgoingCall: "Outgoing", callId: "Call {id}", numberUnavailable: "Number unavailable", callerIdOn: "Enabled", callerIdOff: "Disabled", supported: "Supported", unsupported: "Unavailable", audioDeviceFound: "Audio device found", noStandardAudio: "No USB audio device",
     rawPcmReady: "QPCMV available", callControlsLocked: "Call controls are locked on this local server.", invalidCallNumber: "Enter a phone number using digits and an optional leading +.", invalidDtmf: "Enter DTMF digits using 0-9, * or #.",
-    confirmDial: "Call {number} now?", confirmAnswer: "Answer this call?", confirmHangup: "End this call?", confirmDtmf: "Send these DTMF digits?", confirmCallerId: "Enable caller ID reporting on the module?", callsMonitoring: "Monitoring", callsPaused: "Paused", callStatus: "Call status", observedAt: "Observed {time}",
+    confirmDial: "Call {number} now?",
+    moduleVoiceRuntime: "QDC507 runtime", qpcmvBlocked: "AT route blocked by firmware", voiceSetupTitle: "Call Audio Setup", voiceSetupSubtitle: "One-time module setup, then audio starts after a call connects.", voiceStepRuntime: "Verified runtime", voiceStepRuntimeHint: "Download the pinned QDC507 runtime and verify every SHA-256.", voiceStepUsb: "Module audio interfaces", voiceStepUsbHint: "Preserve VID/PID and existing functions; enable only ADB and UAC with a local backup.", voiceStepPrepare: "Temporary voice route", voiceStepPrepareHint: "Optionally prepare now; Start Audio also does this automatically. A module restart clears it.", statusPending: "Not checked", downloadVoiceRuntime: "Download runtime", enableVoiceUsb: "Enable ADB + audio", prepareVoiceRuntime: "Prepare calls", restoreVoiceUsb: "Restore latest USB backup", refreshVoiceSetup: "Refresh status", runtimeMissing: "Not downloaded", runtimeDownloaded: "Verified", usbSetupNeeded: "Not enabled", usbDriverNeeded: "Driver needed", usbReady: "Ready", runtimePrepared: "Prepared", runtimeNotPrepared: "Not prepared", adbDriverNeeded: "ADB driver needed", openZadig: "Open official Zadig page", zadigNote: "Use Zadig only on the QDC507 ADB MI_06 child interface. Never replace the composite parent, ECM, AT, NMEA, modem or audio interfaces.", voiceSetupWaiting: "Run a status check to begin.", voiceSetupReady: "Call audio is ready on this Windows computer.", voiceSetupLocalOnly: "Call audio runs on this Windows computer. Phones and tablets on the LAN can control calls but cannot carry the Windows USB audio.", voiceSetupUnsupported: "This automatic audio setup only supports the verified QDC507GLEFM21 firmware.", confirmVoiceDownload: "Download the pinned MaVo QDC507 runtime and verify its SHA-256 files?", confirmVoiceUsb: "This permanently authorizes module ADB, preserves VID/PID and existing USB functions, enables only ADB/UAC, saves a local backup and restarts the module. Restoring USB flags cannot revoke QADBKEY authorization. Continue?", confirmVoicePrepare: "Load the verified temporary voice drivers into module memory? A module restart clears them.", confirmVoiceRestore: "Restore the latest local USB backup for this exact module IMEI and VID/PID? The module will restart; persistent QADBKEY authorization may remain.", voiceActionFailed: "Voice setup failed.", voiceActionDone: "Voice setup step completed.", audioRouteFailed: "The module voice route could not start.",
+ confirmAnswer: "Answer this call?", confirmHangup: "End this call?", confirmDtmf: "Send these DTMF digits?", confirmCallerId: "Enable caller ID reporting on the module?", callsMonitoring: "Monitoring", callsPaused: "Paused", callStatus: "Call status", observedAt: "Observed {time}",
     currentDevice: "Current Device", waitingScan: "Waiting for scan", insertScan: "Insert the dongle, then run Auto Scan.",
     csq: "CSQ", usb: "USB", atPort: "AT Port", network: "Network", sim: "SIM", unknown: "Unknown",
     esimLibrary: "eSIM Library", eidsNotLoaded: "EIDs not loaded", eidsSummary: "{count} EID space(s) found", detectedSpaces: "Detected spaces", chooseEid: "Choose an EID to manage", automaticDiscovery: "Automatic discovery", probeSummary: "{count} EID(s) · {checked} AID(s) checked", refreshAllEids: "Refresh all EIDs", selectedEid: "Selected EID", noEidSelected: "No EID selected", notSelected: "Not selected", manageEid: "Manage", selected: "Selected", activeProfiles: "Active profiles", selectEidFirst: "Select an EID first.", defaultEidLabel: "eUICC space {index}", eidSpaceLabel: "Local label", renameEid: "Rename", eidLabelPrompt: "Enter a local label for this EID, or leave blank to clear it.", eidLabelSaved: "EID label saved.", privateAid: "Private ISD-R AID", privateAidDescription: "Only use an AID supplied by the card maker when a private eUICC space is not enumerable. It is validated read-only before being remembered.", privateAidPlaceholder: "32-character hexadecimal AID", addAndVerify: "Add & Verify", privateAidHint: "This does not switch profiles or change USB settings.", invalidAid: "Enter a valid hexadecimal ISD-R AID.", confirmAddAid: "Validate this private AID with a read-only EID query?", aidAdded: "Private AID verified and remembered.", targetEid: "Target: {label}",
@@ -38,7 +40,9 @@ const copy = {
     profileNotifications: "Profile Notifications", noNotifications: "No notification data loaded.", noPendingNotifications: "No pending eSIM notifications.", processNotifications: "Process Pending Notifications", profileNotificationsLocked: "Notification processing is locked on this local server.", profileNotificationsEnabled: "Pending notifications can be sent and cleared on this local server.", confirmNotifications: "Send and clear all pending profile notifications?", notificationsParseError: "Notification data could not be parsed: {error}",
     rescueScan: "Rescue Diagnose", rescueDescription: "If another tool changed the module and Windows no longer recognizes it, run Rescue Diagnose first. It only reads USB, ports, drivers, AT and network state.",
     stockSetup: "Original Module Setup", stockSetupDescription: "For a new 2CA3:4006 DJI/Baiwang module: inspect first, then convert only after confirmation.", stockProbe: "Inspect Original USB", stockConvert: "Convert to Quectel", stockUsbnet: "Finish USB Ethernet", stockSetupLocked: "Original-module setup is available here. Each change needs a separate confirmation.", stockSetupEnabled: "Original-module setup is enabled. Each change needs a separate confirmation.", confirmStockConvert: "This changes a stock module from 2CA3:4006 to 2C7C:0125. Type CONVERT to continue.", confirmStockUsbnet: "This sets usbnet=1 and restarts the converted module. Type USBNET to continue.",
-    smsInbox: "SMS Inbox", readSms: "Read SMS", noSms: "No SMS loaded.", smsUnread: "Unread", smsRead: "Read", smsSent: "Sent", smsUnsent: "Unsent", smsFrom: "From", smsMessageNumber: "Message {value}", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter a phone number or service number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
+    smsInbox: "SMS Inbox",
+    smsStorageUsage: "Module storage {used}/{total}", smsStorageFull: "SMS storage is full ({used}/{total}). New messages may be dropped. Delete an old message you no longer need.", smsStorageNearFull: "SMS storage is nearly full ({used}/{total}).", deleteSms: "Delete", confirmDeleteSms: "Delete message {index} from module storage? This cannot be undone.", smsDeleted: "Message deleted. Inbox capacity has been refreshed.", smsDeleteLocked: "SMS deletion is locked on this local server.",
+ readSms: "Read SMS", noSms: "No SMS loaded.", smsUnread: "Unread", smsRead: "Read", smsSent: "Sent", smsUnsent: "Unsent", smsFrom: "From", smsMessageNumber: "Message {value}", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter a phone number or service number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
     signal: "Signal", readonlyAtHint: "Read-only AT commands are allowed. Configuration writes remain blocked by default.",
     howWorks: "How It Works", githubPage: "GitHub page:", localConsole: "Local console:", hardwareScope: "Hardware scope:",
     connection: "Connection", consoleToken: "Console Token", ports: "Ports", device: "Device", module: "Module", windowsNetwork: "Windows Network", liveLog: "Live Log", clear: "Clear",
@@ -69,7 +73,9 @@ const copy = {
     recentCalls: "最近通话", thisSession: "仅本次运行", noCallHistory: "还没有通话记录。", callActive: "通话中", callHeld: "已保持", callDialing: "正在拨号", callAlerting: "对方振铃", callIncoming: "有来电", callWaiting: "来电等待", callDisconnected: "已结束",
     incomingCall: "来电", outgoingCall: "去电", callId: "通话 {id}", numberUnavailable: "号码未知", callerIdOn: "已启用", callerIdOff: "未启用", supported: "支持", unsupported: "不可用", audioDeviceFound: "发现音频设备", noStandardAudio: "没有 USB 声卡",
     rawPcmReady: "QPCMV 可用", callControlsLocked: "本地服务没有开放电话控制。", invalidCallNumber: "请输入数字组成的电话号码，可以在开头使用 +。", invalidDtmf: "按键只能包含 0-9、* 或 #。",
-    confirmDial: "现在拨打 {number} 吗？", confirmAnswer: "接听这个电话吗？", confirmHangup: "结束这个电话吗？", confirmDtmf: "发送这些 DTMF 按键吗？", confirmCallerId: "启用模块的来电号码上报吗？", callsMonitoring: "正在监听", callsPaused: "已暂停", callStatus: "通话状态", observedAt: "记录于 {time}",
+    confirmDial: "现在拨打 {number} 吗？",
+    moduleVoiceRuntime: "QDC507 语音运行时", qpcmvBlocked: "固件已裁剪 AT 音频路由", voiceSetupTitle: "通话声音设置", voiceSetupSubtitle: "第一次完成模块准备，以后电话接通后点“启动声音”即可。", voiceStepRuntime: "校验语音文件", voiceStepRuntimeHint: "下载固定版本的 QDC507 运行时，并逐个核对 SHA-256。", voiceStepUsb: "打开模块音频接口", voiceStepUsbHint: "保留 VID/PID 和已有功能，只打开 ADB、UAC，并先保存本地备份。", voiceStepPrepare: "准备临时语音路由", voiceStepPrepareHint: "可提前准备；点“启动声音”时也会自动完成。模块重启后会自动清除。", statusPending: "尚未检查", downloadVoiceRuntime: "下载语音文件", enableVoiceUsb: "打开 ADB 和声音", prepareVoiceRuntime: "准备通话声音", restoreVoiceUsb: "恢复最近 USB 备份", refreshVoiceSetup: "刷新状态", runtimeMissing: "尚未下载", runtimeDownloaded: "校验通过", usbSetupNeeded: "尚未打开", usbDriverNeeded: "需要驱动", usbReady: "已经就绪", runtimePrepared: "准备完成", runtimeNotPrepared: "尚未准备", adbDriverNeeded: "需要安装 ADB 驱动", openZadig: "打开 Zadig 官网", zadigNote: "Zadig 只能选择 QDC507 ADB MI_06 子接口。绝对不要替换复合设备本体、ECM 网卡、AT、NMEA、Modem 或音频接口。", voiceSetupWaiting: "先点“刷新状态”开始检查。", voiceSetupReady: "这台 Windows 电脑已经可以桥接通话声音。", voiceSetupLocalOnly: "声音在连接模块的 Windows 电脑上处理；同一局域网的手机和平板可以控制电话，但不能直接承载 Windows 的 USB 声音。", voiceSetupUnsupported: "自动声音设置只支持已经验证的 QDC507GLEFM21 固件。", confirmVoiceDownload: "下载固定版本的 MaVo QDC507 语音文件，并核对每个文件的 SHA-256 吗？", confirmVoiceUsb: "这会永久授权模块 ADB；程序会保留 VID/PID 和已有 USB 功能，只打开 ADB/UAC，先保存本地备份，再重启模块。恢复 USB 位不能撤销 QADBKEY 持久授权。确定继续吗？", confirmVoicePrepare: "把已校验的语音驱动临时加载到模块内存吗？模块重启后会自动清除。", confirmVoiceRestore: "为当前相同 IMEI 和 VID/PID 的模块恢复最近一份 USB 备份吗？模块会重启，QADBKEY 持久授权可能仍然保留。", voiceActionFailed: "语音设置失败。", voiceActionDone: "这一步已经完成。", audioRouteFailed: "模块通话声音路由启动失败。",
+ confirmAnswer: "接听这个电话吗？", confirmHangup: "结束这个电话吗？", confirmDtmf: "发送这些 DTMF 按键吗？", confirmCallerId: "启用模块的来电号码上报吗？", callsMonitoring: "正在监听", callsPaused: "已暂停", callStatus: "通话状态", observedAt: "记录于 {time}",
     currentDevice: "当前设备", waitingScan: "等待扫描", insertScan: "插入模块后点击自动扫描。",
     csq: "信号", usb: "USB", atPort: "AT 端口", network: "网络", sim: "SIM", unknown: "未知",
     esimLibrary: "eSIM 卡库", eidsNotLoaded: "尚未读取 EID", eidsSummary: "自动发现 {count} 个 EID 空间", detectedSpaces: "已发现的存储空间", chooseEid: "选择一个 EID 进行管理", automaticDiscovery: "自动识别", probeSummary: "发现 {count} 个 EID · 已检查 {checked} 个 AID", refreshAllEids: "刷新全部 EID", selectedEid: "当前管理的 EID", noEidSelected: "尚未选择 EID", notSelected: "未选择", manageEid: "管理", selected: "已选择", activeProfiles: "已启用套餐", selectEidFirst: "请先选择一个 EID。", defaultEidLabel: "eUICC 空间 {index}", eidSpaceLabel: "本地分类名称", renameEid: "改名", eidLabelPrompt: "输入这个 EID 的本地分类名称，留空可清除。", eidLabelSaved: "EID 分类名称已保存。", privateAid: "私有 ISD-R AID", privateAidDescription: "只有卡商明确提供私有 AID、且该空间无法自动枚举时才使用。程序会先做只读 EID 验证，再记住它。", privateAidPlaceholder: "32 位十六进制 AID", addAndVerify: "添加并验证", privateAidHint: "此操作不会切换套餐，也不会修改 USB 设置。", invalidAid: "请输入有效的十六进制 ISD-R AID。", confirmAddAid: "现在用只读 EID 查询验证这个私有 AID 吗？", aidAdded: "私有 AID 已验证并记住。", targetEid: "目标：{label}",
@@ -84,7 +90,9 @@ const copy = {
     profileNotifications: "套餐通知", noNotifications: "尚未读取通知。", noPendingNotifications: "没有待处理的 eSIM 通知。", processNotifications: "处理待发送通知", profileNotificationsLocked: "通知处理已锁定。", profileNotificationsEnabled: "本地服务可发送并清理待处理通知。", confirmNotifications: "确定发送并清理全部待处理通知吗？", notificationsParseError: "通知数据解析失败：{error}",
     rescueScan: "异常设备救援", rescueDescription: "如果模块被其他工具改动后无法识别，请先运行异常设备救援。它只读取 USB、端口、驱动、AT 和网络状态，不会写入模块。",
     stockSetup: "原始模块设置", stockSetupDescription: "适用于原始 2CA3:4006 DJI/Baiwang 模块：先检查，确认后再转换。", stockProbe: "检查原始 USB", stockConvert: "转换为 Quectel", stockUsbnet: "完成 USB 网卡设置", stockSetupLocked: "原始模块设置可在这里进行，每一次改动都需要单独确认。", stockSetupEnabled: "已开放原始模块设置，每一次改动都需要单独确认。", confirmStockConvert: "这会把原始模块从 2CA3:4006 改为 2C7C:0125。输入 CONVERT 继续。", confirmStockUsbnet: "这会设置 usbnet=1 并重启模块。输入 USBNET 继续。",
-    smsInbox: "短信收件箱", readSms: "读取短信", noSms: "尚未读取短信。", smsUnread: "未读", smsRead: "已读", smsSent: "已发送", smsUnsent: "未发送", smsFrom: "来自", smsMessageNumber: "短信 {value}", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入手机号或运营商服务号码，并填写短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
+    smsInbox: "短信收件箱",
+    smsStorageUsage: "模块短信容量 {used}/{total}", smsStorageFull: "模块短信仓库已满（{used}/{total}），新短信可能无法写入。请确认后删除一条不再需要的旧短信。", smsStorageNearFull: "模块短信仓库快满了（{used}/{total}）。", deleteSms: "删除", confirmDeleteSms: "确定从模块中删除第 {index} 条短信吗？删除后无法恢复。", smsDeleted: "短信已删除，收件箱容量已经刷新。", smsDeleteLocked: "本地服务没有开放短信删除。",
+ readSms: "读取短信", noSms: "尚未读取短信。", smsUnread: "未读", smsRead: "已读", smsSent: "已发送", smsUnsent: "未发送", smsFrom: "来自", smsMessageNumber: "短信 {value}", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入手机号或运营商服务号码，并填写短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
     signal: "信号", readonlyAtHint: "只允许执行只读 AT 指令，配置写入默认保持关闭。",
     howWorks: "工作方式", githubPage: "GitHub 页面：", localConsole: "本地控制台：", hardwareScope: "硬件范围：",
     connection: "连接", consoleToken: "控制台密码", ports: "端口", device: "设备", module: "模块", windowsNetwork: "Windows 网卡", liveLog: "实时日志", clear: "清空",
@@ -105,8 +113,8 @@ const copy = {
 
 const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
-  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
+  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, smsDeleteEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, voiceRuntimeEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
+  primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, voiceRuntimeStatus: null, voiceSetupBusy: false, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
 
 function t(key, params = {}) {
@@ -134,6 +142,7 @@ function applyLanguage() {
   if (state.networkText) renderTraffic(state.networkText);
   if (state.callStatusData) renderCallStatus(state.callStatusData);
   if (state.callCapabilityData) renderCallCapabilities(state.callCapabilityData);
+  if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
   renderCallHistory();
 }
 
@@ -149,7 +158,8 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
           : button.dataset.profileNotifications ? isBusy || !state.profileNotificationsEnabled
             : button.dataset.profileDelete ? isBusy || !state.profileDeleteEnabled
               : button.dataset.smsSend ? isBusy || !state.smsSendEnabled
-                : button.dataset.callAction ? isBusy || !state.callActionsEnabled
+                : button.dataset.smsDelete ? isBusy || !state.smsDeleteEnabled
+                  : button.dataset.callAction ? isBusy || !state.callActionsEnabled
                   : button.dataset.ussd ? isBusy || !state.ussdEnabled
                   : button.dataset.usbMode ? isBusy || !state.usbModeEnabled
                     : button.dataset.driverInstall ? isBusy || !state.driverInstallEnabled || button.dataset.driverEligible !== "1" || button.dataset.driverReady === "1"
@@ -587,10 +597,59 @@ function smsStatus(status) {
   return { label: t("smsRead"), className: "read" };
 }
 
-function renderSms(text) {
+function parseSmsStorageText(text) {
+  const matches = [...String(text || "").matchAll(/\+CPMS:\s*(?:"[^"]+"\s*,\s*)?(\d+)\s*,\s*(\d+)/gi)];
+  const values = matches.map((match) => ({ used: Number(match[1]), total: Number(match[2]) })).filter((item) => item.total > 0 && item.used >= 0 && item.used <= item.total);
+  if (!values.length) return null;
+  const storage = values[values.length - 1];
+  return { ...storage, full: storage.used >= storage.total, percent: Math.round((storage.used / storage.total) * 100) };
+}
+
+function renderSmsStorage(storage) {
+  const banner = document.querySelector("#smsStorageWarning");
+  if (!banner) return;
+  if (!storage?.total) {
+    banner.hidden = true;
+    banner.textContent = "";
+    return;
+  }
+  banner.hidden = false;
+  banner.className = "sms-storage-banner " + (storage.full ? "full" : storage.percent >= 80 ? "warning" : "healthy");
+  banner.textContent = storage.full
+    ? t("smsStorageFull", storage)
+    : storage.percent >= 80
+      ? t("smsStorageNearFull", storage)
+      : t("smsStorageUsage", storage);
+}
+
+async function deleteSmsMessage(index) {
+  if (!state.smsDeleteEnabled) {
+    append(t("smsInbox"), t("smsDeleteLocked"));
+    return;
+  }
+  if (!window.confirm(t("confirmDeleteSms", { index }))) return;
+  const port = encodeURIComponent(portInput.value.trim());
+  try {
+    const res = await fetch("/api/sms-delete?port=" + port, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ index, confirm: "DELETE" }),
+    });
+    const data = await res.json();
+    append(t("deleteSms"), textFromResult(data) || JSON.stringify(data, null, 2));
+    if (!res.ok) throw new Error(data.error || t("smsDeleteLocked"));
+    append(t("smsInbox"), t("smsDeleted"));
+    await callApi("sms-list");
+  } catch (error) {
+    append(t("deleteSms"), error.message || String(error));
+  }
+}
+
+function renderSms(text, data = {}) {
   state.smsText = text;
   const list = document.querySelector("#smsList");
   const count = document.querySelector("#smsCount");
+  renderSmsStorage(data.storage || parseSmsStorageText(text));
   const matches = [...text.matchAll(/\+CMGL:\s*([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n\+CMGL:|\r?\nOK|$)/g)];
   count.textContent = String(matches.length);
   if (!matches.length) { list.className = "sms-list empty"; list.textContent = text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"); return; }
@@ -609,13 +668,16 @@ function renderSms(text) {
       ${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}
       <p class="sms-body">${escapeHtml(body)}</p>
       ${code ? `<div class="sms-code"><span>${escapeHtml(t("otpCode"))}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${escapeHtml(t("copyCode"))}</button></div>` : ""}
-      <div class="sms-card-foot"><span>${escapeHtml(t("smsMessageNumber", { value: index || "-" }))}</span></div>
+      <div class="sms-card-foot"><span>${escapeHtml(t("smsMessageNumber", { value: index || "-" }))}</span><button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index || "")}"${state.smsDeleteEnabled ? "" : " disabled"}>${escapeHtml(t("deleteSms"))}</button></div>
     </article>`;
   }).join("");
   for (const button of list.querySelectorAll("button[data-copy-code]")) button.addEventListener("click", async () => {
     await navigator.clipboard.writeText(button.dataset.copyCode);
     button.textContent = t("copied");
   });
+  for (const button of list.querySelectorAll("button[data-sms-delete]")) {
+    button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
+  }
 }
 
 function callStateText(call) {
@@ -652,6 +714,111 @@ function renderCallHistory() {
   }).join("");
 }
 
+function setVoiceStep(rowId, labelId, labelKey, status) {
+  const row = document.querySelector("#" + rowId);
+  const label = document.querySelector("#" + labelId);
+  if (row) row.dataset.state = status;
+  if (label) label.textContent = t(labelKey);
+}
+
+function renderVoiceSetup(data) {
+  state.voiceRuntimeStatus = data;
+  const runtime = data?.runtime || {};
+  const pnp = data?.voiceUsb || {};
+  const downloaded = Boolean(runtime.local?.downloaded);
+  const usbConfigured = Boolean(pnp.adbInterfacePresent || pnp.audioInputPresent || pnp.audioOutputPresent);
+  const usbReady = Boolean(pnp.adbWinUsb && pnp.standardUsbAudio);
+  const prepared = Boolean(runtime.prepared && runtime.adb?.root && runtime.adb?.kernelCompatible);
+
+  setVoiceStep("voiceRuntimeStep", "voiceRuntimeState", downloaded ? "runtimeDownloaded" : "runtimeMissing", downloaded ? "ready" : "pending");
+  setVoiceStep(
+    "voiceUsbStep",
+    "voiceUsbState",
+    usbReady ? "usbReady" : usbConfigured ? "usbDriverNeeded" : "usbSetupNeeded",
+    usbReady ? "ready" : usbConfigured ? "warning" : "pending",
+  );
+  setVoiceStep("voicePrepareStep", "voicePrepareState", prepared ? "runtimePrepared" : "runtimeNotPrepared", prepared ? "ready" : "pending");
+
+  const driverNote = document.querySelector("#voiceDriverNote");
+  if (driverNote) driverNote.hidden = !(pnp.adbInterfacePresent && !pnp.adbWinUsb);
+
+  const downloadButton = document.querySelector("#downloadVoiceRuntimeBtn");
+  const enableButton = document.querySelector("#enableVoiceUsbBtn");
+  const prepareButton = document.querySelector("#prepareVoiceRuntimeBtn");
+  const restoreButton = document.querySelector("#restoreVoiceUsbBtn");
+  if (downloadButton) downloadButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || downloaded;
+  if (enableButton) enableButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !downloaded || (pnp.adbInterfacePresent && pnp.standardUsbAudio);
+  if (prepareButton) prepareButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !downloaded || !pnp.adbWinUsb || !pnp.standardUsbAudio || prepared;
+  if (restoreButton) restoreButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled;
+
+  const supported = state.callCapabilityData ? Boolean(state.callCapabilityData.voiceSetupSupported) : true;
+  const message = document.querySelector("#voiceSetupMessage");
+  if (message) {
+    message.textContent = !supported
+      ? t("voiceSetupUnsupported")
+      : prepared && usbReady
+        ? t(localAudioBridgeHost ? "voiceSetupReady" : "voiceSetupLocalOnly")
+        : t("voiceSetupWaiting");
+  }
+  syncCallButtons();
+}
+
+async function refreshVoiceSetup() {
+  if (state.voiceSetupBusy) return;
+  state.voiceSetupBusy = true;
+  if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
+  try {
+    const port = encodeURIComponent(portInput.value.trim());
+    const capabilities = await fetchJson("/api/call-capabilities?port=" + port, 60000);
+    renderCallCapabilities(capabilities);
+    const status = await fetchJson("/api/voice-runtime-status", 45000);
+    renderVoiceSetup({ ...status, voiceSetupSupported: capabilities.voiceSetupSupported });
+  } catch (error) {
+    append(t("voiceSetupTitle"), error.message || String(error));
+  } finally {
+    state.voiceSetupBusy = false;
+    if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
+  }
+}
+
+async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs = 360000) {
+  if (!state.voiceRuntimeEnabled) {
+    append(t("voiceSetupTitle"), t("voiceActionFailed"));
+    return;
+  }
+  if (!window.confirm(t(promptKey))) return;
+  state.voiceSetupBusy = true;
+  if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const port = encodeURIComponent(portInput.value.trim());
+    const response = await fetch(pathname + "?port=" + port, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ confirm: confirmation }),
+      signal: controller.signal,
+    });
+    const data = await response.json();
+    append(t("voiceSetupTitle"), textFromResult(data) || JSON.stringify(data, null, 2));
+    if (!response.ok) throw new Error(data.error || t("voiceActionFailed"));
+    const message = document.querySelector("#voiceSetupMessage");
+    if (message) message.textContent = data.message || t("voiceActionDone");
+    if (data.rebootRequested) {
+      setTimeout(() => refreshVoiceSetup(), 15000);
+    } else {
+      state.voiceSetupBusy = false;
+      await refreshVoiceSetup();
+    }
+  } catch (error) {
+    append(t("voiceSetupTitle"), error.name === "AbortError" ? t("timedOut") : (error.message || String(error)));
+  } finally {
+    clearTimeout(timer);
+    state.voiceSetupBusy = false;
+    if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
+  }
+}
+
 const moduleAudioPattern = /(quectel|qdc507|baiwang|ac interface|as interface)/i;
 const localAudioBridgeHost = ["127.0.0.1", "localhost", "::1"].includes(location.hostname);
 
@@ -669,7 +836,16 @@ function stopAudioElement(element) {
   element.srcObject = null;
 }
 
-function stopAudioBridge(messageKey = "audioNotConnected") {
+function stopModuleVoiceRoute(keepalive = false) {
+  return fetch("/api/voice-route-stop", {
+    method: "POST",
+    headers: apiHeaders({ "content-type": "application/json" }),
+    body: "{}",
+    keepalive,
+  }).catch(() => null);
+}
+
+function stopAudioBridge(messageKey = "audioNotConnected", notifyServer = true) {
   const bridge = state.audioBridge;
   stopStream(bridge?.moduleDownlink);
   stopStream(bridge?.microphoneStream);
@@ -677,6 +853,7 @@ function stopAudioBridge(messageKey = "audioNotConnected") {
   stopAudioElement(bridge?.uplinkAudio);
   state.audioBridge = null;
   state.audioBridgeStarting = false;
+  if (notifyServer && bridge?.moduleRouteStarted) stopModuleVoiceRoute();
   const label = document.querySelector("#audioBridgeState");
   if (label) label.textContent = t(messageKey);
   syncCallButtons();
@@ -692,13 +869,14 @@ async function startAudioBridge() {
     append(t("audioBridge"), t("audioBridgeUnavailable"));
     return;
   }
-  if (!state.callCapabilityData?.standardUsbAudio) {
+  if (!state.callCapabilityData?.standardUsbAudio || !state.voiceRuntimeStatus?.runtime?.local?.downloaded) {
     append(t("audioBridge"), t("audioEndpointMissing"));
     return;
   }
 
   state.audioBridgeStarting = true;
   syncCallButtons();
+  let moduleRouteStarted = false;
   let permissionStream = null;
   let moduleDownlink = null;
   let microphoneStream = null;
@@ -706,6 +884,16 @@ async function startAudioBridge() {
   let uplinkAudio = null;
 
   try {
+    const port = encodeURIComponent(portInput.value.trim());
+    const routeResponse = await fetch("/api/voice-route-start?port=" + port, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ confirm: "AUDIO" }),
+    });
+    const routeData = await routeResponse.json();
+    if (!routeResponse.ok) throw new Error(routeData.error || t("audioRouteFailed"));
+    moduleRouteStarted = true;
+
     permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const devices = await navigator.mediaDevices.enumerateDevices();
     stopStream(permissionStream);
@@ -751,7 +939,7 @@ async function startAudioBridge() {
     await uplinkAudio.setSinkId(moduleOutput.deviceId);
     await Promise.all([downlinkAudio.play(), uplinkAudio.play()]);
 
-    state.audioBridge = { moduleDownlink, microphoneStream, downlinkAudio, uplinkAudio };
+    state.audioBridge = { moduleDownlink, microphoneStream, downlinkAudio, uplinkAudio, moduleRouteStarted };
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeActive");
   } catch (error) {
     stopStream(permissionStream);
@@ -759,8 +947,9 @@ async function startAudioBridge() {
     stopStream(microphoneStream);
     stopAudioElement(downlinkAudio);
     stopAudioElement(uplinkAudio);
+    if (moduleRouteStarted) await stopModuleVoiceRoute();
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeUnavailable");
-    append(t("audioBridge"), `${t("audioPermissionFailed")} ${error.message || ""}`.trim());
+    append(t("audioBridge"), t("audioPermissionFailed") + " " + (error.message || ""));
   } finally {
     state.audioBridgeStarting = false;
     syncCallButtons();
@@ -779,14 +968,20 @@ function syncCallButtons() {
   const callerId = document.querySelector("#enableCallerIdBtn");
   const startAudio = document.querySelector("#startAudioBridgeBtn");
   const stopAudio = document.querySelector("#stopAudioBridgeBtn");
-  const audioReady = localAudioBridgeHost && state.callCapabilityData?.standardUsbAudio === true;
+  const refreshSetup = document.querySelector("#refreshVoiceSetupBtn");
+  const audioReady = Boolean(
+    localAudioBridgeHost &&
+    state.callCapabilityData?.standardUsbAudio === true &&
+    state.voiceRuntimeStatus?.runtime?.local?.downloaded === true,
+  );
   if (answer) answer.disabled = locked || !incoming;
   if (hangup) hangup.disabled = locked || !call;
   if (dial) dial.disabled = locked || Boolean(call);
   if (dtmf) dtmf.disabled = locked || !connected;
   if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
   if (startAudio) startAudio.disabled = state.audioBridgeStarting || Boolean(state.audioBridge) || !connected || !audioReady;
-  if (stopAudio) stopAudio.disabled = !state.audioBridge;
+  if (stopAudio) stopAudio.disabled = !state.audioBridge && !state.callStatusData?.voiceRouteActive;
+  if (refreshSetup) refreshSetup.disabled = state.voiceSetupBusy;
 }
 
 function renderCallStatus(data) {
@@ -823,17 +1018,29 @@ function renderCallStatus(data) {
 
 function renderCallCapabilities(data) {
   state.callCapabilityData = data;
-  const rawPcmState = document.querySelector("#rawPcmState");
+  const runtime = data?.runtime || {};
+  const pnp = data?.voiceUsb || {};
+  const runtimeState = document.querySelector("#rawPcmState");
   const windowsAudioState = document.querySelector("#windowsAudioState");
-  if (rawPcmState) rawPcmState.textContent = data?.rawPcmSupported ? t("rawPcmReady") : t("unsupported");
+  if (runtimeState) {
+    runtimeState.textContent = runtime.prepared
+      ? t("runtimePrepared")
+      : runtime.local?.downloaded
+        ? t("runtimeDownloaded")
+        : data?.qpcmvKnownBlocked
+          ? t("qpcmvBlocked")
+          : t("runtimeMissing");
+  }
   if (windowsAudioState) windowsAudioState.textContent = data?.standardUsbAudio ? t("audioDeviceFound") : t("noStandardAudio");
-  const audioActions = document.querySelector(".call-audio-actions");
-  if (audioActions) audioActions.hidden = !data?.standardUsbAudio;
   document.querySelector("#callerIdState").textContent = data?.callerIdSupported ? (state.callStatusData?.callerIdEnabled ? t("callerIdOn") : t("supported")) : t("unsupported");
   document.querySelector("#atCallState").textContent = data?.ok ? t("available") : t("unsupported");
-  document.querySelector("#voiceBridgeState").textContent = data?.standardUsbAudio ? t("audioBridgeReady") : data?.rawPcmSupported ? t("pcmInterfaceOnly") : t("unsupported");
+  document.querySelector("#voiceBridgeState").textContent = data?.standardUsbAudio && runtime.local?.downloaded
+    ? t("audioBridgeReady")
+    : data?.voiceSetupSupported
+      ? t("runtimeNotPrepared")
+      : t("unsupported");
   if (!state.audioBridge) document.querySelector("#audioBridgeState").textContent = t("audioNotConnected");
-  syncCallButtons();
+  renderVoiceSetup({ ok: true, runtime, voiceUsb: pnp, voiceSetupSupported: data?.voiceSetupSupported });
 }
 
 async function refreshCallStatusQuietly(force = false) {
@@ -960,7 +1167,7 @@ async function requestAction(action) {
 }
 
 function applyHealth(data) {
-  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.callActionsEnabled = Boolean(data.callActionsEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.primaryUrl = data.primaryUrl || "";
+  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.smsDeleteEnabled = Boolean(data.smsDeleteEnabled); state.callActionsEnabled = Boolean(data.callActionsEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.voiceRuntimeEnabled = Boolean(data.voiceRuntimeEnabled); state.primaryUrl = data.primaryUrl || "";
   document.querySelector("#tokenRow").style.display = state.authRequired ? "grid" : "none"; updateProfileHint(); applyLanguage();
 }
 
@@ -972,7 +1179,7 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text, data); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
   catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -1004,7 +1211,7 @@ async function autoScan() {
   try {
     for (let index = 0; index < actions.length; index += 1) {
       const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text, data); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
       catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message); }
     }
   } finally { setBusy(false); }
@@ -1268,7 +1475,7 @@ function selectView(target, updateHash = false) {
   view.classList.add("active");
   if (updateHash) history.replaceState(null, "", `#${target}`);
   if (target === "calls" && !state.callMonitoring) toggleCallMonitoring(true);
-  if (target === "calls" && !state.callCapabilityData) callApi("call-capabilities");
+  if (target === "calls" && !state.callCapabilityData) refreshVoiceSetup();
   if (!state.autoLoadedViews.has(target)) {
     state.autoLoadedViews.add(target);
     if (target === "sms") callApi("sms-list");
@@ -1283,7 +1490,7 @@ function resetViewScroll() {
 
 for (const button of document.querySelectorAll(".nav-btn")) button.addEventListener("click", () => selectView(button.dataset.target, true));
 window.addEventListener("hashchange", () => { selectView(location.hash.slice(1)); resetViewScroll(); });
-window.addEventListener("beforeunload", () => stopAudioBridge());
+window.addEventListener("beforeunload", () => { stopAudioBridge("audioNotConnected", false); stopModuleVoiceRoute(true); });
 selectView(location.hash.slice(1) || "overview");
 if (location.hash) window.addEventListener("load", resetViewScroll, { once: true });
 for (const button of document.querySelectorAll(".preset")) button.addEventListener("click", () => { document.querySelector("#atInput").value = button.dataset.command; sendAt(); });
@@ -1302,6 +1509,11 @@ document.querySelector("#sendDtmfBtn").addEventListener("click", () => runCallAc
 document.querySelector("#enableCallerIdBtn")?.addEventListener("click", () => runCallAction("caller-id"));
 document.querySelector("#startAudioBridgeBtn").addEventListener("click", startAudioBridge);
 document.querySelector("#stopAudioBridgeBtn").addEventListener("click", () => stopAudioBridge());
+document.querySelector("#refreshVoiceSetupBtn").addEventListener("click", refreshVoiceSetup);
+document.querySelector("#downloadVoiceRuntimeBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-runtime-download", "DOWNLOADVOICE", "confirmVoiceDownload"));
+document.querySelector("#enableVoiceUsbBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-usb-enable", "VOICEUSB", "confirmVoiceUsb"));
+document.querySelector("#prepareVoiceRuntimeBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-runtime-prepare", "PREPAREVOICE", "confirmVoicePrepare"));
+document.querySelector("#restoreVoiceUsbBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-usb-restore", "RESTOREVOICE", "confirmVoiceRestore"));
 for (const button of document.querySelectorAll("[data-dial-key]")) button.addEventListener("click", () => {
   const activeCall = state.callStatusData?.voiceCalls?.[0];
   const target = activeCall ? document.querySelector("#dtmfInput") : document.querySelector("#callNumberInput");

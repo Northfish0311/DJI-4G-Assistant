@@ -43,11 +43,13 @@ function configureRuntime(port) {
   process.env.ALLOW_PROFILE_NOTIFICATIONS = "1";
   process.env.ALLOW_PROFILE_DELETE = "1";
   process.env.ALLOW_SMS_SEND = "1";
+  process.env.ALLOW_SMS_DELETE = "1";
   process.env.ALLOW_CALL_ACTIONS = "1";
   process.env.ALLOW_USSD = "1";
   process.env.ALLOW_USB_MODE = "1";
   process.env.ALLOW_STOCK_BOOTSTRAP = "1";
   process.env.ALLOW_DRIVER_INSTALL = "1";
+  process.env.ALLOW_VOICE_RUNTIME = "1";
 }
 
 function isLocalUrl(rawUrl, port) {

@@ -4,6 +4,14 @@ const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
 const originalUsb = require("./original-usb");
+const {
+  VoiceRuntimeManager,
+  parseUsbComposition,
+  usbCompositionCommand,
+  voiceUsbTarget,
+  parseQadbChallenge,
+  legacyQadbPassword,
+} = require("./voice-runtime");
 
 const root = path.resolve(process.env.ROAMDOCK_RESOURCE_ROOT || path.resolve(__dirname, ".."));
 const dataRoot = path.resolve(process.env.ROAMDOCK_DATA_ROOT || root);
@@ -14,6 +22,8 @@ const host = process.env.HOST || "0.0.0.0";
 const consoleToken = process.env.CONSOLE_TOKEN || "";
 let atQueue = Promise.resolve();
 let driverInstallRunning = false;
+const voiceRuntime = new VoiceRuntimeManager(dataRoot);
+let voiceQueue = Promise.resolve();
 
 const DEFAULT_ISDR_AID = "A0000005591010FFFFFFFF8900000100";
 const KNOWN_ISDR_AIDS = [
@@ -551,9 +561,150 @@ function portArg(url) {
   return /^COM\d+$/i.test(value) ? value.toUpperCase() : (detectedAtPort || "COM5");
 }
 
+function atAccepted(result) {
+  return Boolean(result?.ok && /(^|\r?\n)OK(\r?\n|$)/i.test(result.stdout || "") && !/(^|\r?\n)ERROR(\r?\n|$)/i.test(result.stdout || ""));
+}
+
+function enqueueVoice(task) {
+  const queued = voiceQueue.then(task);
+  voiceQueue = queued.catch(() => {});
+  return queued;
+}
+
+function redactAtResult(result, values = []) {
+  const redact = (value) => values.reduce(
+    (text, secret) => secret ? String(text || "").split(String(secret)).join("[redacted]") : String(text || ""),
+    value,
+  );
+  return { ...result, stdout: redact(result?.stdout), stderr: redact(result?.stderr) };
+}
+
+function redactModemIdentifiers(result) {
+  const redact = (value) => String(value || "").replace(
+    /\b[0-9]{14,16}\b/g,
+    "[redacted]",
+  );
+  return { ...result, stdout: redact(result?.stdout), stderr: redact(result?.stderr) };
+}
+
+function sameUsbComposition(left, right) {
+  return Boolean(
+    left && right &&
+    Number(left.vendorId) === Number(right.vendorId) &&
+    Number(left.productId) === Number(right.productId) &&
+    Array.isArray(left.flags) &&
+    Array.isArray(right.flags) &&
+    left.flags.length === 7 &&
+    right.flags.length === 7 &&
+    left.flags.every((flag, index) => Number(flag) === Number(right.flags[index])),
+  );
+}
+
+function parseVoiceIdentity(text) {
+  const value = String(text || "");
+  const imeiMatches = [...value.matchAll(/(?:^|\n)\s*([0-9]{15})\s*(?:\n|$)/g)].map((match) => match[1]);
+  const imei = imeiMatches.find((candidate) => /^[0-9]{15}$/.test(candidate)) || "";
+  const revision = (value.match(/\bQDC507GLEFM21[A-Z0-9._-]*\b/i) || [])[0] || "";
+  if (!/\bQDC507\b/i.test(value) || !revision || !imei) {
+    throw new Error("Voice USB setup is limited to the verified QDC507 / QDC507GLEFM21 firmware with a readable IMEI.");
+  }
+  return { model: "QDC507", revision, imei };
+}
+
+function voiceBackupDirectory() {
+  return path.join(dataRoot, ".local", "voice-usb-backups");
+}
+
+function saveVoiceUsbBackup(reason, identity, composition) {
+  const directory = voiceBackupDirectory();
+  fs.mkdirSync(directory, { recursive: true });
+  const createdAt = new Date().toISOString();
+  const filename = "voice-usb-" + createdAt.replace(/[:.]/g, "-") + ".json";
+  const backup = {
+    schemaVersion: 2,
+    createdAt,
+    reason,
+    module: { model: identity.model, revision: identity.revision, imei: identity.imei },
+    usb: { vendorId: Number(composition.vendorId), productId: Number(composition.productId), flags: composition.flags.map(Number) },
+    restoreCommand: usbCompositionCommand(composition),
+    note: "QADBKEY authorization is persistent and is not reversed by restoring USB flags.",
+  };
+  fs.writeFileSync(path.join(directory, filename), JSON.stringify(backup, null, 2), { encoding: "utf8", flag: "wx" });
+  return { filename, relativePath: path.join(".local", "voice-usb-backups", filename), backup };
+}
+
+function voiceBackupSummary(saved) {
+  const backup = saved.backup || saved;
+  return {
+    filename: saved.filename || "",
+    relativePath: saved.relativePath || "",
+    createdAt: backup.createdAt,
+    reason: backup.reason,
+    imeiSuffix: String(backup.module?.imei || "").slice(-4),
+    vendorId: backup.usb?.vendorId,
+    productId: backup.usb?.productId,
+    flags: backup.usb?.flags,
+  };
+}
+
+function latestVoiceUsbBackup(identity, currentComposition) {
+  const directory = voiceBackupDirectory();
+  let names = [];
+  try {
+    names = fs.readdirSync(directory).filter((name) => /^voice-usb-[0-9T-]+Z\.json$/i.test(name)).sort().reverse();
+  } catch {
+    return null;
+  }
+  for (const filename of names.slice(0, 100)) {
+    try {
+      const backup = JSON.parse(fs.readFileSync(path.join(directory, filename), "utf8"));
+      const usb = backup?.usb;
+      if (
+        backup?.schemaVersion === 2 &&
+        backup?.module?.imei === identity.imei &&
+        Number(usb?.vendorId) === Number(currentComposition.vendorId) &&
+        Number(usb?.productId) === Number(currentComposition.productId) &&
+        Array.isArray(usb?.flags) &&
+        usb.flags.length === 7 &&
+        usb.flags.every((flag) => flag === 0 || flag === 1)
+      ) {
+        return { filename, relativePath: path.join(".local", "voice-usb-backups", filename), backup };
+      }
+    } catch {}
+  }
+  return null;
+}
+
+async function voicePnpStatus() {
+  const command = [
+    "$devices = @(Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue)",
+    "$adb = @($devices | Where-Object { $_.InstanceId -like 'USB\\VID_2C7C&PID_0125&MI_06*' -or $_.InstanceId -like 'USB\\VID_2CA3&PID_4006&MI_06*' })",
+    "$services = @($adb | ForEach-Object { (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_Service' -ErrorAction SilentlyContinue).Data })",
+    "$audio = @($devices | Where-Object { ($_.Class -eq 'AudioEndpoint' -or $_.Class -eq 'MEDIA') -and $_.FriendlyName -match 'AC Interface|AS Interface' })",
+    "$ac = @($audio | Where-Object { $_.FriendlyName -match 'AC Interface' })",
+    "$as = @($audio | Where-Object { $_.FriendlyName -match 'AS Interface' })",
+    "[PSCustomObject]@{ adbInterfacePresent = [bool]$adb.Count; adbWinUsb = [bool]($services -contains 'WinUSB'); audioInputPresent = [bool]$ac.Count; audioOutputPresent = [bool]$as.Count; adbInterfaces = @($adb | Select-Object Status,Class,FriendlyName,InstanceId); audioDevices = @($audio | Select-Object Status,Class,FriendlyName,InstanceId) } | ConvertTo-Json -Depth 5 -Compress",
+  ].join("; ");
+  const result = await runPowerShell(["-Command", command], 20000);
+  let details = {};
+  try { details = JSON.parse(String(result.stdout || "").trim() || "{}"); } catch {}
+  return {
+    ok: result.ok,
+    adbInterfacePresent: Boolean(details.adbInterfacePresent),
+    adbWinUsb: Boolean(details.adbWinUsb),
+    audioInputPresent: Boolean(details.audioInputPresent),
+    audioOutputPresent: Boolean(details.audioOutputPresent),
+    standardUsbAudio: Boolean(details.audioInputPresent && details.audioOutputPresent),
+    adbInterfaces: details.adbInterfaces || [],
+    audioDevices: details.audioDevices || [],
+    error: result.ok ? "" : (result.stderr || "Windows device inspection failed."),
+  };
+}
+
 function isSafeAt(command) {
   const normalized = command.trim().toUpperCase();
   if (!normalized.startsWith("AT")) return false;
+  if (/^AT\+QCFG="[^"]+"\??$/.test(normalized)) return true;
 
   const dangerous = [
     "AT+QCFG=",
@@ -616,6 +767,14 @@ function enqueueAt(portName, commands, timeoutMs = 60000) {
   return enqueueSerial(() => runAtCommands(portName, commands, timeoutMs));
 }
 
+function parseSmsStorage(text) {
+  const matches = [...String(text || "").matchAll(/\+CPMS:\s*(?:"[^"]+"\s*,\s*)?(\d+)\s*,\s*(\d+)/gi)];
+  const values = matches.map((match) => ({ used: Number(match[1]), total: Number(match[2]) })).filter((item) => item.total > 0 && item.used >= 0 && item.used <= item.total);
+  if (!values.length) return null;
+  const storage = values[values.length - 1];
+  return { ...storage, full: storage.used >= storage.total, percent: Math.round((storage.used / storage.total) * 100) };
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -647,11 +806,13 @@ async function handleApi(req, res, url) {
       profileNotificationsEnabled: process.env.ALLOW_PROFILE_NOTIFICATIONS === "1",
       profileDeleteEnabled: process.env.ALLOW_PROFILE_DELETE === "1",
       smsSendEnabled: process.env.ALLOW_SMS_SEND === "1",
+      smsDeleteEnabled: process.env.ALLOW_SMS_DELETE === "1",
       callActionsEnabled: process.env.ALLOW_CALL_ACTIONS === "1",
       ussdEnabled: process.env.ALLOW_USSD === "1",
       usbModeEnabled: process.env.ALLOW_USB_MODE === "1",
       stockBootstrapEnabled: process.env.ALLOW_STOCK_BOOTSTRAP === "1",
       driverInstallEnabled: process.env.ALLOW_DRIVER_INSTALL === "1",
+      voiceRuntimeEnabled: process.env.ALLOW_VOICE_RUNTIME === "1",
     });
     return;
   }
@@ -768,29 +929,245 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/call-status") {
     const result = await enqueueAt(portArg(url), ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
     const calls = parseClcc(result.stdout);
+    const voiceCalls = calls.filter((call) => call.isVoice);
     const activityMatch = String(result.stdout || "").match(/\+CPAS:\s*(\d+)/i);
     const clipMatch = String(result.stdout || "").match(/\+CLIP:\s*(\d+)/i);
+    if (voiceRuntime.routeActive && !voiceCalls.some((call) => ["active", "held"].includes(call.state))) {
+      enqueueVoice(() => voiceRuntime.stopRoute()).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
+    }
     sendJson(res, 200, {
       ...result,
       calls,
-      voiceCalls: calls.filter((call) => call.isVoice),
+      voiceCalls,
       dataCalls: calls.filter((call) => !call.isVoice),
       activity: activityMatch ? Number(activityMatch[1]) : null,
       callerIdEnabled: clipMatch ? Number(clipMatch[1]) === 1 : null,
+      voiceRouteActive: voiceRuntime.routeActive,
     });
     return;
   }
 
   if (url.pathname === "/api/call-capabilities") {
-    const result = await enqueueAt(portArg(url), ["ATI", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 45000);
-    const audio = await runPowerShell(["-Command", "Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { ($_.Class -eq 'AudioEndpoint' -or $_.Class -eq 'MEDIA') -and $_.FriendlyName -match 'Quectel|QDC507|Baiwang|AC Interface|AS Interface' } | Select-Object Status,Class,FriendlyName,InstanceId | ConvertTo-Json -Compress"]);
+    const result = await enqueueAt(portArg(url), ["ATI", "AT+GMR", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 45000);
+    const pnp = await voicePnpStatus();
+    const runtime = await voiceRuntime.status();
+    const qpcmvAdvertised = /\+QPCMV:\s*\(/i.test(result.stdout || "");
+    const qpcmvKnownBlocked = /QDC507GLEFM21/i.test(result.stdout || "");
     sendJson(res, 200, {
       ...result,
       callerIdSupported: /\+CLIP:/i.test(result.stdout || ""),
-      rawPcmSupported: /\+QPCMV:\s*\(/i.test(result.stdout || ""),
-      standardUsbAudio: Boolean(String(audio.stdout || "").trim()),
-      audioDevices: String(audio.stdout || "").trim(),
+      qpcmvAdvertised,
+      qpcmvKnownBlocked,
+      standardUsbAudio: pnp.standardUsbAudio,
+      voiceUsb: pnp,
+      runtime,
+      voiceSetupSupported: /QDC507GLEFM21/i.test(result.stdout || ""),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/voice-runtime-status") {
+    const [runtime, pnp] = await Promise.all([voiceRuntime.status(), voicePnpStatus()]);
+    sendJson(res, 200, { ok: true, runtime, voiceUsb: pnp });
+    return;
+  }
+
+  if (url.pathname === "/api/voice-runtime-download" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice runtime setup is disabled on this local server." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "DOWNLOADVOICE") {
+      sendJson(res, 400, { ok: false, error: "Confirm DOWNLOADVOICE before downloading the pinned voice runtime." });
+      return;
+    }
+    const result = await enqueueVoice(() => voiceRuntime.download());
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/voice-usb-enable" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice USB setup is disabled on this local server." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "VOICEUSB") {
+      sendJson(res, 400, { ok: false, error: "Confirm VOICEUSB before persistent QADBKEY authorization and USB composition changes." });
+      return;
+    }
+    const local = await voiceRuntime.localStatus();
+    if (!local.downloaded) {
+      sendJson(res, 409, { ok: false, error: "Download and verify the pinned voice runtime before changing the module.", runtime: local });
+      return;
+    }
+    const portName = portArg(url);
+    const baseline = await enqueueAt(portName, ["ATI", "AT+GMR", "AT+CGMM", "AT+CGSN", "AT+QCFG=\"usbcfg\""], 45000);
+    if (!baseline.ok) {
+      sendJson(res, 502, { ok: false, error: "Could not read the module identity and USB baseline.", baseline: redactModemIdentifiers(baseline) });
+      return;
+    }
+    let identity;
+    let current;
+    let target;
+    try {
+      identity = parseVoiceIdentity(baseline.stdout);
+      current = parseUsbComposition(baseline.stdout);
+      target = voiceUsbTarget(current);
+    } catch (error) {
+      sendJson(res, 409, { ok: false, error: error.message });
+      return;
+    }
+    if (sameUsbComposition(current, target)) {
+      sendJson(res, 200, { ok: true, alreadyEnabled: true, message: "ADB and UAC flags are already enabled. Bind WinUSB only to the ADB MI_06 interface if Windows still cannot open ADB.", imeiSuffix: identity.imei.slice(-4) });
+      return;
+    }
+
+    const saved = saveVoiceUsbBackup("before-voice-usb-enable", identity, current);
+    let authorization = { required: current.flags[5] === 0, accepted: current.flags[5] === 1 };
+    if (current.flags[5] === 0) {
+      const challengeResult = await enqueueAt(portName, ["AT+QADBKEY?"], 20000);
+      let challenge;
+      try { challenge = parseQadbChallenge(challengeResult.stdout); }
+      catch (error) {
+        sendJson(res, 502, { ok: false, error: error.message, backup: voiceBackupSummary(saved), note: "No USBCFG write or reboot was attempted." });
+        return;
+      }
+      const password = legacyQadbPassword(challenge);
+      const unlockedRaw = await enqueueAt(portName, ["AT+QADBKEY=\"" + password + "\""], 20000);
+      const unlocked = redactAtResult(unlockedRaw, [challenge, password]);
+      if (!atAccepted(unlockedRaw)) {
+        sendJson(res, 502, { ok: false, error: "The module rejected QADBKEY authorization.", authorization: unlocked, backup: voiceBackupSummary(saved), note: "No USBCFG write or reboot was attempted." });
+        return;
+      }
+      authorization = { required: true, accepted: true };
+    }
+
+    const write = await enqueueAt(portName, [usbCompositionCommand(target)], 30000);
+    if (!atAccepted(write)) {
+      sendJson(res, 502, { ok: false, error: "The module rejected the protected ADB/UAC USB composition.", write, authorization, backup: voiceBackupSummary(saved), note: "QADBKEY authorization may remain persistent even though USB flags were not changed." });
+      return;
+    }
+    const readback = await enqueueAt(portName, ["AT+QCFG=\"usbcfg\""], 20000);
+    let observed;
+    try { observed = parseUsbComposition(readback.stdout); } catch {}
+    if (!atAccepted(readback) || !sameUsbComposition(observed, target)) {
+      sendJson(res, 502, { ok: false, error: "USBCFG readback did not exactly match the protected target, so no reboot was sent.", write, readback, authorization, backup: voiceBackupSummary(saved) });
+      return;
+    }
+    const reboot = await enqueueAt(portName, ["AT+CFUN=1,1"], 15000);
+    sendJson(res, 200, { ok: true, authorization, backup: voiceBackupSummary(saved), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "ADB and UAC were enabled with the existing VID/PID and all unrelated flags preserved. Reconnect the module after it restarts." });
+    return;
+  }
+
+  if (url.pathname === "/api/voice-usb-restore" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice USB restore is disabled on this local server." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "RESTOREVOICE") {
+      sendJson(res, 400, { ok: false, error: "Confirm RESTOREVOICE before restoring the latest matching USB backup." });
+      return;
+    }
+    const portName = portArg(url);
+    const baseline = await enqueueAt(portName, ["ATI", "AT+GMR", "AT+CGMM", "AT+CGSN", "AT+CLCC", "AT+QCFG=\"usbcfg\""], 45000);
+    if (parseClcc(baseline.stdout).some((call) => call.isVoice && call.state !== "disconnected")) {
+      sendJson(res, 409, { ok: false, error: "End the current voice call before restoring USB settings." });
+      return;
+    }
+    let identity;
+    let current;
+    try {
+      identity = parseVoiceIdentity(baseline.stdout);
+      current = parseUsbComposition(baseline.stdout);
+    } catch (error) {
+      sendJson(res, 409, { ok: false, error: error.message });
+      return;
+    }
+    const matched = latestVoiceUsbBackup(identity, current);
+    if (!matched) {
+      sendJson(res, 404, { ok: false, error: "No local USB backup matches this module IMEI and VID/PID." });
+      return;
+    }
+    const target = { vendorId: Number(matched.backup.usb.vendorId), productId: Number(matched.backup.usb.productId), flags: matched.backup.usb.flags.map(Number) };
+    if (sameUsbComposition(current, target)) {
+      sendJson(res, 200, { ok: true, alreadyRestored: true, backup: voiceBackupSummary(matched) });
+      return;
+    }
+    const protective = saveVoiceUsbBackup("before-voice-usb-restore", identity, current);
+    const write = await enqueueAt(portName, [usbCompositionCommand(target)], 30000);
+    if (!atAccepted(write)) {
+      sendJson(res, 502, { ok: false, error: "The module rejected the saved USB composition.", write, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective) });
+      return;
+    }
+    const readback = await enqueueAt(portName, ["AT+QCFG=\"usbcfg\""], 20000);
+    let observed;
+    try { observed = parseUsbComposition(readback.stdout); } catch {}
+    if (!atAccepted(readback) || !sameUsbComposition(observed, target)) {
+      sendJson(res, 502, { ok: false, error: "Restore readback did not exactly match the backup, so no reboot was sent.", readback, protectiveBackup: voiceBackupSummary(protective) });
+      return;
+    }
+    const reboot = await enqueueAt(portName, ["AT+CFUN=1,1"], 15000);
+    sendJson(res, 200, { ok: true, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "The saved USB composition was restored. QADBKEY authorization is persistent and may remain authorized." });
+    return;
+  }
+
+  if (url.pathname === "/api/voice-runtime-prepare" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice runtime preparation is disabled on this local server." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "PREPAREVOICE") {
+      sendJson(res, 400, { ok: false, error: "Confirm PREPAREVOICE before loading the temporary QDC507 voice runtime." });
+      return;
+    }
+    const pnp = await voicePnpStatus();
+    if (!pnp.adbWinUsb) {
+      sendJson(res, 409, { ok: false, error: "Windows has not bound WinUSB to the QDC507 ADB MI_06 child interface. Do not replace the composite parent or any modem/network/audio interface.", voiceUsb: pnp });
+      return;
+    }
+    const result = await enqueueVoice(() => voiceRuntime.prepare());
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/voice-route-start" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice audio routing is disabled on this local server." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    if (String(body.confirm || "").toUpperCase() !== "AUDIO") {
+      sendJson(res, 400, { ok: false, error: "Confirm AUDIO before opening the live call audio route." });
+      return;
+    }
+    const portName = portArg(url);
+    const baseline = await enqueueAt(portName, ["AT+CLCC"], 20000);
+    const active = parseClcc(baseline.stdout).some((call) => call.isVoice && ["active", "held"].includes(call.state));
+    if (!active) {
+      sendJson(res, 409, { ok: false, error: "Connect or answer a voice call before starting audio." });
+      return;
+    }
+    const pnp = await voicePnpStatus();
+    if (!pnp.standardUsbAudio || !pnp.adbWinUsb) {
+      sendJson(res, 409, { ok: false, error: "The verified ADB/UAC Windows interfaces are not ready.", voiceUsb: pnp });
+      return;
+    }
+    const result = await enqueueVoice(() => voiceRuntime.startRoute());
+    sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/voice-route-stop" && req.method === "POST") {
+    if (!voiceRuntime.routeActive) {
+      sendJson(res, 200, { ok: true, active: false, alreadyStopped: true });
+      return;
+    }
+    const result = await enqueueVoice(() => voiceRuntime.stopRoute());
+    sendJson(res, 200, result);
     return;
   }
 
@@ -806,6 +1183,9 @@ async function handleApi(req, res, url) {
     }
     const result = await enqueueAt(portArg(url), callAction.commands, 30000);
     const accepted = result.ok && /(^|\r?\n)OK(\r?\n|$)/i.test(result.stdout || "") && !/(^|\r?\n)ERROR(\r?\n|$)/i.test(result.stdout || "");
+    if (accepted && ["hangup", "reject"].includes(callAction.action) && voiceRuntime.routeActive) {
+      enqueueVoice(() => voiceRuntime.stopRoute()).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
+    }
     sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, action: callAction.action });
     return;
   }
@@ -818,7 +1198,29 @@ async function handleApi(req, res, url) {
       "AT+CMGL=\"ALL\"",
     ];
     const result = await enqueueAt(portArg(url), commands, 60000);
-    sendJson(res, 200, result);
+    sendJson(res, 200, { ...result, storage: parseSmsStorage(result.stdout) });
+    return;
+  }
+
+  if (url.pathname === "/api/sms-delete" && req.method === "POST") {
+    if (process.env.ALLOW_SMS_DELETE !== "1") {
+      sendJson(res, 403, { ok: false, error: "SMS deletion is disabled on this local server." });
+      return;
+    }
+    const body = JSON.parse(await readBody(req) || "{}");
+    const index = Number(body.index);
+    if (!Number.isInteger(index) || index < 1 || index > 255 || String(body.confirm || "").toUpperCase() !== "DELETE") {
+      sendJson(res, 400, { ok: false, error: "Choose one valid SMS and confirm DELETE." });
+      return;
+    }
+    const portName = portArg(url);
+    const baseline = await enqueueAt(portName, ["AT+CMGF=1", "AT+CMGR=" + index], 30000);
+    if (!baseline.ok || !/\+CMGR:/i.test(baseline.stdout || "")) {
+      sendJson(res, 409, { ok: false, error: "That SMS index is no longer present. Refresh the inbox before retrying.", baseline });
+      return;
+    }
+    const result = await enqueueAt(portName, ["AT+CMGD=" + index], 30000);
+    sendJson(res, atAccepted(result) ? 200 : 502, { ...result, ok: atAccepted(result), deletedIndex: index });
     return;
   }
 
@@ -1240,7 +1642,7 @@ const server = http.createServer((req, res) => {
 
   const requestPath = url.pathname === "/" ? "/index.html" : url.pathname;
   const resolved = path.resolve(publicDir, `.${requestPath}`);
-  if (!resolved.startsWith(publicDir)) {
+  if (resolved !== publicDir && !resolved.startsWith(publicDir + path.sep)) {
     res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
     res.end("Forbidden");
     return;
@@ -1275,4 +1677,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids };
+module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
