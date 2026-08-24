@@ -11,7 +11,7 @@ DJI 4G Assistant（大疆 4G 助手）是面向 Windows 的一体化桌面管理
 3. 双击下载的安装包，按提示完成安装。
 4. 把 SIM/eSIM 卡装进模块，再把模块插到 Windows 电脑。
 5. 双击桌面上的 **DJI 4G Assistant** 图标。
-6. 点击右上角“自动扫描”。
+6. 等待程序自动发现 AT 口并读取设备状态；只有需要重新检查时才点击右上角“自动扫描”。
 
 Releases 页面中的文件用途如下：
 
@@ -27,11 +27,12 @@ Releases 页面中的文件用途如下：
 
 - **看短信：** 打开“短信”，点击“刷新”。
 - **发短信：** 在“短信”右侧填写号码和内容，点击“发送短信”并确认。
+- **接打电话：** 打开“电话”，输入真实号码后点一次“拨打”；来电时点“接听”。执行结果会直接显示在拨号盘下方，声音是否可用见下方说明。
 - **切换 eSIM：** 打开“eSIM”，在目标套餐上点击“切换到此套餐”并确认，等待网络重新注册。
 - **下载 eSIM：** 展开“下载新套餐”，粘贴套餐商给你的完整 `LPA:1$...` 激活码后确认。
 - **检查 Windows 上网：** 打开“网络”，确认网卡为“已连接”，并看到 IPv4、网关和 DHCP。
 
-程序会自动寻找模块和空闲端口。每个写入动作都会再次确认，不点击就不会修改模块。
+程序启动后会自动寻找模块、AT 端口和空闲网页端口，不需要手工填写 `COM5`。拨号、接听、挂断和刷新等日常操作直接执行；eSIM 删除、USB 模式、原始模块转换等高风险操作仍会要求确认。
 
 ### Edge 和 Windows 安全提醒
 
@@ -49,6 +50,7 @@ Releases 页面中的文件用途如下：
 - **网络面板**：Windows 网卡状态、IPv4、网关、DHCP、驱动版本和本次运行的收发流量；可修复已验证设备的 Windows ECM 驱动。
 - **eSIM 管理**：列出多张 Profile，启用、停用、改昵称、下载、处理通知，以及双重确认后删除未启用的 Profile。
 - **短信**：读取收件箱、发送 UCS2/PDU 中文和长短信，并提取常见 4–8 位验证码。
+- **电话**：进入页面后自动监控来电并检查能力，可一键拨号、接听、挂断、查看来电号码和发送 DTMF；技术信息默认折叠，检测到模块的标准 USB 音频端点时才开放 Windows 本机声音桥接。
 - **USSD**：发送余额或运营商服务代码。
 - **AT 工具**：执行诊断指令，危险写入默认受限制。
 - **USB 网卡模式**：对已验证的兼容设备切换 `usbnet=0/1`。
@@ -95,6 +97,8 @@ eSIM 页会分别显示当前卡的 EID、卡内 Profile 数、剩余存储空�
 - 当前以一台 Windows 电脑管理一个活动模块为主，多模块并发调度仍在计划中。
 - VoHive 的代理池、Linux 网络命名空间和 VoWiFi/IMS 实验依赖 Linux 驱动及网络栈，当前 Windows 版不提供虚假按钮。
 - 短信、USSD 和漫游数据最终取决于固件、运营商及套餐权限。
+- 电话控制需要 SIM/套餐支持语音或 VoLTE；能拨号不等于一定有声音。只有 Windows 检测到模块的标准 USB 音频输入和输出时，桌面程序才会开放音频桥接。本版本不会为了声音自动修改 `usbcfg`、启用 ADB/UAC 或加载第三方内核模块。
+- 局域网中的手机和平板可以控制插在 Windows 上的模块，但声音桥接只能在 Windows 本机桌面程序中启动。把模块直接插到 iPad 并管理 AT/eSIM/电话，需要另做带 USB 驱动扩展的原生 iPadOS App。
 - 本项目独立实现，没有复制 DJOneHub、VoHive 或 NetXD 的代码。
 
 ## 相关路线与致谢
@@ -123,9 +127,9 @@ npm run build
 
 ## English
 
-DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and select **Auto Scan**.
+DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, multi-profile eSIM management, UCS2/PDU SMS, OTP extraction, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Provider data allowance requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded installation of the verified official Quectel ECM driver for the exact `2C7C:0125 / MI_04` interface, multi-profile eSIM management, UCS2/PDU SMS, OTP extraction, one-click call control (dial, answer, hang up, caller ID and DTMF), an optional local USB-audio bridge, USSD, guarded AT tools, verified USB mode switching, original `2CA3:4006` setup, and read-only rescue diagnostics. Routine call actions run immediately and show inline feedback; destructive eSIM and modem changes remain guarded. Voice service depends on the SIM, carrier and modem firmware; audio bridging is enabled only when matching standard USB audio endpoints are present. Provider data allowance requires a provider API.
 
 ## License
 

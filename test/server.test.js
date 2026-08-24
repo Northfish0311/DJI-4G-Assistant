@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
-const { buildSmsPdus, localIps } = require("../web/server");
+const { buildSmsPdus, localIps, parseClcc, buildCallAction } = require("../web/server");
 
 test("encodes Chinese SMS in UCS2 PDU mode", () => {
   const [part] = buildSmsPdus("+447700900123", "\u6d4b\u8bd5\u77ed\u4fe1");
@@ -29,6 +29,37 @@ test("supports domestic service numbers", () => {
   assert.ok(parts[0].pdu.startsWith("0001"));
 });
 
+
+test("does not mistake the QDC507 data session for a voice call", () => {
+  const [call] = parseClcc('+CLCC: 1,1,0,1,0,"",128');
+  assert.equal(call.state, "active");
+  assert.equal(call.mode, 1);
+  assert.equal(call.isVoice, false);
+});
+
+test("parses incoming and active voice calls", () => {
+  const calls = parseClcc([
+    '+CLCC: 2,1,4,0,0,"+447700900123",145',
+    '+CLCC: 3,0,0,0,0,"10086",129',
+  ].join("\r\n"));
+  assert.deepEqual(calls.map((call) => [call.direction, call.state, call.isVoice]), [
+    ["incoming", "incoming", true],
+    ["outgoing", "active", true],
+  ]);
+});
+
+test("builds guarded call commands and rejects AT injection", () => {
+  assert.deepEqual(buildCallAction({ action: "dial", number: "+447700900123", confirm: "DIAL" }), {
+    action: "dial",
+    commands: ["ATD+447700900123;"],
+  });
+  assert.deepEqual(buildCallAction({ action: "dtmf", digits: "12#*", confirm: "DTMF" }), {
+    action: "dtmf",
+    commands: ['AT+VTS="1"', 'AT+VTS="2"', 'AT+VTS="#"', 'AT+VTS="*"'],
+  });
+  assert.equal(buildCallAction({ action: "dial", number: "10086;AT+CFUN=1", confirm: "DIAL" }), null);
+  assert.equal(buildCallAction({ action: "hangup", confirm: "DIAL" }), null);
+});
 
 test("prefers a Wi-Fi console URL over the modem ECM subnet", () => {
   const original = os.networkInterfaces;

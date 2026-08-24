@@ -25,6 +25,7 @@
       <nav class="rail" aria-label="Sections">
         <button class="nav-btn active" data-target="overview"><span class="nav-title" data-i18n="overview">Overview</span><span class="nav-subtitle" data-i18n="currentDevice">Current Device</span></button>
         <button class="nav-btn" data-target="sms"><span class="nav-title" data-i18n="sms">SMS</span><span class="nav-subtitle" data-i18n="smsInbox">SMS Inbox</span></button>
+        <button class="nav-btn" data-target="calls"><span class="nav-title" data-i18n="calls">Calls</span><span class="nav-subtitle" data-i18n="dialAndAnswer">Dial & Answer</span></button>
         <button class="nav-btn" data-target="euicc"><span class="nav-title" data-i18n="esim">eSIM</span><span class="nav-subtitle" data-i18n="esimProfiles">eSIM Profiles</span></button>
         <button class="nav-btn" data-target="network"><span class="nav-title" data-i18n="networkCenter">Network</span><span class="nav-subtitle" data-i18n="networkTraffic">Live Traffic</span></button>
         <button class="nav-btn" data-target="atlab"><span class="nav-title" data-i18n="atLab">AT Lab</span><span class="nav-subtitle" data-i18n="safeAtConsole">Safe AT Console</span></button>
@@ -238,6 +239,85 @@
           </div>
         </section>
 
+        <section id="calls" class="view call-view">
+          <div class="view-heading">
+            <div>
+              <p class="eyebrow">VOICE</p>
+              <h2 data-i18n="calls">Calls</h2>
+              <p class="panel-subtitle" data-i18n="callPageSubtitle">Dial, answer and monitor this module</p>
+            </div>
+          </div>
+
+          <div class="call-workspace">
+            <div class="panel call-stage" id="callStatus" data-state="idle">
+              <div class="call-state-line">
+                <span class="call-state-dot" aria-hidden="true"></span>
+                <strong id="callStateLabel" data-i18n="callIdle">Ready</strong>
+                <span id="callDirectionLabel" data-i18n="noActiveCall">No active voice call</span>
+              </div>
+              <div class="call-identity">
+                <span class="call-avatar" aria-hidden="true">4G</span>
+                <strong id="callNumber">--</strong>
+                <span id="callMeta" data-i18n="waitingForCall">Waiting for a call</span>
+              </div>
+              <div class="call-primary-actions">
+                <button id="answerCallBtn" class="call-answer" data-call-action data-i18n="answerCall">Answer</button>
+                <button id="hangupCallBtn" class="danger" data-call-action data-i18n="hangupCall">Hang Up</button>
+              </div>
+              <div class="call-inline-control">
+                <input id="dtmfInput" inputmode="tel" maxlength="32" data-i18n-placeholder="dtmfPlaceholder" placeholder="DTMF 0-9 * #">
+                <button id="sendDtmfBtn" class="secondary" data-call-action data-i18n="sendDtmf">Send DTMF</button>
+              </div>
+              <div class="call-audio-actions" hidden>
+                <button id="startAudioBridgeBtn" class="secondary" data-i18n="startAudio">Start Audio</button>
+                <button id="stopAudioBridgeBtn" class="secondary" data-i18n="stopAudio" disabled>Stop Audio</button>
+              </div>
+            </div>
+
+            <aside class="call-side">
+              <div class="panel dialer-panel">
+                <div class="panel-head"><h2 data-i18n="dialer">Dialer</h2><button id="dialBackspaceBtn" class="secondary dial-icon" title="Backspace" aria-label="Backspace">&#9003;</button></div>
+                <div class="dial-number-row"><input id="callNumberInput" inputmode="tel" autocomplete="tel" data-i18n-placeholder="callNumberPlaceholder" placeholder="Enter phone number"></div>
+                <p id="callFeedback" class="call-feedback" data-tone="neutral" data-i18n="callReadyFeedback">Enter a number to call.</p>
+                <div class="dial-pad" aria-label="Dial pad">
+                  <button class="dial-key" data-dial-key="1"><strong>1</strong><span>&nbsp;</span></button>
+                  <button class="dial-key" data-dial-key="2"><strong>2</strong><span>ABC</span></button>
+                  <button class="dial-key" data-dial-key="3"><strong>3</strong><span>DEF</span></button>
+                  <button class="dial-key" data-dial-key="4"><strong>4</strong><span>GHI</span></button>
+                  <button class="dial-key" data-dial-key="5"><strong>5</strong><span>JKL</span></button>
+                  <button class="dial-key" data-dial-key="6"><strong>6</strong><span>MNO</span></button>
+                  <button class="dial-key" data-dial-key="7"><strong>7</strong><span>PQRS</span></button>
+                  <button class="dial-key" data-dial-key="8"><strong>8</strong><span>TUV</span></button>
+                  <button class="dial-key" data-dial-key="9"><strong>9</strong><span>WXYZ</span></button>
+                  <button class="dial-key" data-dial-key="*"><strong>*</strong><span>&nbsp;</span></button>
+                  <button class="dial-key" data-dial-key="0"><strong>0</strong><span>+</span></button>
+                  <button class="dial-key" data-dial-key="#"><strong>#</strong><span>&nbsp;</span></button>
+                </div>
+                <div class="dial-actions"><button id="dialCallBtn" class="call-answer" data-call-action data-i18n="dialCall">Call</button></div>
+              </div>
+
+              <details class="panel call-capability-panel">
+                <summary><span data-i18n="callCapabilities">Call Capability</span><small data-i18n="advancedDetails">Advanced details</small></summary>
+                <div class="capability-list">
+                  <div><span data-i18n="atCallControl">AT call control</span><strong id="atCallState" data-i18n="available">Available</strong></div>
+                  <div><span data-i18n="callerId">Caller ID</span><strong id="callerIdState" data-i18n="notChecked">Not checked</strong></div>
+                  <div><span data-i18n="voiceAudioBridge">Voice audio bridge</span><strong id="voiceBridgeState" data-i18n="experimental">Experimental</strong></div>
+                </div>
+                <div class="audio-status">
+                  <div><span data-i18n="audioBridge">Audio bridge</span><strong id="audioBridgeState" data-i18n="audioNotConnected">Not connected</strong></div>
+                  <div><span data-i18n="rawPcm">Raw PCM</span><strong id="rawPcmState" data-i18n="notChecked">Not checked</strong></div>
+                  <div><span data-i18n="windowsAudio">Windows audio</span><strong id="windowsAudioState" data-i18n="notChecked">Not checked</strong></div>
+                </div>
+              </details>
+            </aside>
+          </div>
+
+          <div class="panel call-history-panel">
+            <div class="panel-head"><div><h2 data-i18n="recentCalls">Recent Calls</h2><p class="panel-subtitle" data-i18n="thisSession">This session</p></div></div>
+            <div id="callHistory" class="call-history empty" data-i18n="noCallHistory">No call activity yet.</div>
+          </div>
+        </section>
+
         <section id="atlab" class="view">
           <div class="view-heading">
             <div>
@@ -282,7 +362,7 @@
           <div class="panel">
             <div class="panel-head"><h2 data-i18n="connection">Connection</h2></div>
             <div class="field-row" id="tokenRow"><label for="tokenInput" data-i18n="consoleToken">Console Token</label><input id="tokenInput" type="password" autocomplete="current-password"></div>
-            <div class="field-row"><label for="portInput" data-i18n="atPort">AT Port</label><input id="portInput" value="COM5" autocomplete="off"></div>
+            <div class="field-row"><label for="portInput" data-i18n="atPort">AT Port</label><input id="portInput" autocomplete="off" data-i18n-placeholder="automatic" placeholder="Auto"></div>
             <div class="action-grid">
               <button data-action="ports" data-i18n="ports">Ports</button>
               <button data-action="device-check" data-i18n="device">Device</button>

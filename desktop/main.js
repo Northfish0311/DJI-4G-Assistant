@@ -1,7 +1,7 @@
 const fs = require("fs");
 const net = require("net");
 const path = require("path");
-const { app, BrowserWindow, Menu, dialog, shell } = require("electron");
+const { app, BrowserWindow, Menu, dialog, session, shell } = require("electron");
 
 let mainWindow = null;
 let localServer = null;
@@ -43,6 +43,7 @@ function configureRuntime(port) {
   process.env.ALLOW_PROFILE_NOTIFICATIONS = "1";
   process.env.ALLOW_PROFILE_DELETE = "1";
   process.env.ALLOW_SMS_SEND = "1";
+  process.env.ALLOW_CALL_ACTIONS = "1";
   process.env.ALLOW_USSD = "1";
   process.env.ALLOW_USB_MODE = "1";
   process.env.ALLOW_STOCK_BOOTSTRAP = "1";
@@ -59,11 +60,22 @@ function isLocalUrl(rawUrl, port) {
 }
 
 function createWindow(port) {
+  const audioPermission = (permission, details = {}) => {
+    const mediaTypes = Array.isArray(details.mediaTypes) ? details.mediaTypes : [];
+    return permission === "media" && (!mediaTypes.length || mediaTypes.every((type) => type === "audio"));
+  };
+  session.defaultSession.setPermissionCheckHandler((_webContents, permission, requestingOrigin, details) => (
+    audioPermission(permission, details) && isLocalUrl(requestingOrigin, port)
+  ));
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
+    callback(audioPermission(permission, details) && isLocalUrl(webContents.getURL(), port));
+  });
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 860,
-    minWidth: 880,
-    minHeight: 620,
+    width: Number(process.env.ROAMDOCK_SMOKE_WIDTH) || 1280,
+    height: Number(process.env.ROAMDOCK_SMOKE_HEIGHT) || 860,
+    minWidth: smokeTest ? 320 : 880,
+    minHeight: smokeTest ? 480 : 620,
     show: false,
     backgroundColor: "#f4f6f7",
     title: "DJI 4G Assistant",
@@ -89,7 +101,7 @@ function createWindow(port) {
   mainWindow.webContents.once("did-finish-load", async () => {
     if (!smokeTest) return;
     await new Promise((resolve) => setTimeout(resolve, 700));
-    const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")) })');
+    const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")), calls: Boolean(document.querySelector("#callStatus")) })');
     if (process.env.ROAMDOCK_CAPTURE_OUTPUT) {
       const image = await mainWindow.webContents.capturePage();
       fs.writeFileSync(process.env.ROAMDOCK_CAPTURE_OUTPUT, image.toPNG());
@@ -100,7 +112,8 @@ function createWindow(port) {
   });
   mainWindow.on("closed", () => { mainWindow = null; });
   const token = encodeURIComponent(process.env.CONSOLE_TOKEN);
-  mainWindow.loadURL(`http://127.0.0.1:${port}/?token=${token}`);
+  const smokeHash = smokeTest && process.env.ROAMDOCK_SMOKE_HASH ? `#${process.env.ROAMDOCK_SMOKE_HASH.replace(/^#/, "")}` : "";
+  mainWindow.loadURL(`http://127.0.0.1:${port}/?token=${token}${smokeHash}`);
 }
 
 async function startDesktop() {

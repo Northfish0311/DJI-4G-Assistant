@@ -1940,3 +1940,488 @@ textarea:focus {
     gap: 10px;
   }
 }
+
+/* Calls workspace and scan-friendly messaging layout */
+.rail {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.call-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 0.68fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.call-stage {
+  display: flex;
+  min-height: 450px;
+  flex-direction: column;
+  padding: 18px;
+}
+
+.call-state-line {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.call-state-line strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.call-state-dot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #8e8e93;
+}
+
+.call-state-line > span:last-child {
+  margin-left: auto;
+  text-align: right;
+}
+
+.call-stage[data-state="incoming"] .call-state-dot,
+.call-stage[data-state="waiting"] .call-state-dot {
+  background: #34c759;
+  box-shadow: 0 0 0 5px rgba(52, 199, 89, 0.14);
+}
+
+.call-stage[data-state="active"] .call-state-dot {
+  background: var(--accent);
+}
+
+.call-identity {
+  display: flex;
+  min-height: 185px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 12px;
+  text-align: center;
+}
+
+.call-avatar {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 10px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--accent);
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.call-identity strong {
+  max-width: 100%;
+  color: #111114;
+  font-size: 32px;
+  font-weight: 680;
+  overflow-wrap: anywhere;
+}
+
+.call-identity span:last-child {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.call-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.call-answer {
+  background: #28a745;
+}
+
+.call-answer:not(:disabled):hover {
+  background: #20883a;
+}
+
+.call-inline-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+  margin-top: 10px;
+}
+
+.call-audio-actions[hidden] {
+  display: none;
+}
+
+.call-audio-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.audio-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 18px;
+  overflow: hidden;
+  border-top: 1px solid rgba(60, 60, 67, 0.13);
+}
+
+.audio-status > div {
+  min-width: 0;
+  padding: 14px 10px 0;
+  border-left: 1px solid rgba(60, 60, 67, 0.13);
+}
+
+.audio-status > div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.audio-status span,
+.capability-list span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.audio-status strong,
+.capability-list strong {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.call-side {
+  display: grid;
+  gap: 14px;
+}
+
+.dial-number-row {
+  padding: 14px 14px 8px;
+}
+
+.call-feedback {
+  min-height: 38px;
+  margin: 0 14px 4px;
+  padding: 9px 11px;
+  border-left: 3px solid var(--line-strong);
+  border-radius: 4px;
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.call-feedback[data-tone="working"] {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.call-feedback[data-tone="success"] {
+  border-left-color: #34c759;
+  background: rgba(52, 199, 89, 0.1);
+  color: #1f7a37;
+}
+
+.call-feedback[data-tone="error"] {
+  border-left-color: var(--danger);
+  background: rgba(255, 59, 48, 0.08);
+  color: #b42318;
+}
+
+#callNumberInput {
+  height: 52px;
+  text-align: center;
+  font-size: 21px;
+  font-weight: 620;
+}
+
+.dial-icon {
+  width: 40px;
+  min-height: 34px;
+  padding: 0;
+  font-size: 19px;
+}
+
+.dial-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  justify-content: center;
+  gap: 8px 13px;
+  padding: 10px 14px 14px;
+}
+
+.dial-key {
+  width: 56px;
+  height: 56px;
+  min-height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.1);
+  color: var(--ink);
+}
+
+.dial-key:not(:disabled):hover {
+  background: rgba(118, 118, 128, 0.18);
+  color: var(--ink);
+}
+
+.dial-key strong,
+.dial-key span {
+  display: block;
+}
+
+.dial-key strong {
+  font-size: 23px;
+  font-weight: 560;
+  line-height: 1.05;
+}
+
+.dial-key span {
+  min-height: 10px;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.dial-actions {
+  padding: 0 14px 14px;
+}
+
+.dial-actions button {
+  width: 100%;
+}
+
+.capability-list {
+  display: grid;
+}
+
+.capability-list > div {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(60, 60, 67, 0.11);
+}
+
+.capability-list strong {
+  margin-top: 0;
+  text-align: right;
+}
+
+.call-capability-panel > summary {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.call-capability-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+.call-capability-panel > summary::after {
+  color: var(--muted);
+  content: "+";
+  font-size: 19px;
+  font-weight: 400;
+}
+
+.call-capability-panel[open] > summary::after {
+  content: "-";
+}
+
+.call-capability-panel > summary small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.call-capability-panel[open] > summary {
+  border-bottom: 1px solid rgba(60, 60, 67, 0.11);
+}
+
+.call-history {
+  display: grid;
+}
+
+.call-history.empty {
+  min-height: 92px;
+  place-items: center;
+  color: var(--muted);
+}
+
+.call-history-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  min-height: 66px;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 14px;
+  border-top: 1px solid rgba(60, 60, 67, 0.11);
+}
+
+.call-history-row:first-child {
+  border-top: 0;
+}
+
+.call-history-direction,
+.sms-contact-avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(0, 122, 255, 0.1);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.call-history-direction.incoming {
+  background: rgba(52, 199, 89, 0.12);
+  color: #1f7a37;
+}
+
+.call-history-row div {
+  min-width: 0;
+}
+
+.call-history-row strong,
+.call-history-row span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.call-history-row strong {
+  font-size: 15px;
+}
+
+.call-history-row span,
+.call-history-row time {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.status-pill.incoming {
+  background: rgba(52, 199, 89, 0.15);
+  color: #1f7a37;
+}
+
+button.active-monitor {
+  background: rgba(52, 199, 89, 0.13);
+  color: #1f7a37;
+}
+
+.sms-contact-wrap {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.sms-contact-avatar {
+  flex: 0 0 auto;
+}
+
+.sms-contact strong {
+  font-size: 16px;
+}
+
+.sms-card {
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.sms-card:hover {
+  border-color: rgba(0, 122, 255, 0.28);
+}
+
+@media (max-width: 1000px) {
+  .call-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .call-stage {
+    min-height: 430px;
+  }
+
+  .call-side {
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .rail {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .call-side {
+    grid-template-columns: 1fr;
+  }
+
+  .call-stage {
+    min-height: 400px;
+    padding: 14px;
+  }
+
+  .call-identity {
+    min-height: 190px;
+  }
+
+  .audio-status {
+    grid-template-columns: 1fr;
+  }
+
+  .audio-status > div,
+  .audio-status > div:first-child {
+    padding: 10px 0;
+    border-top: 1px solid rgba(60, 60, 67, 0.1);
+    border-left: 0;
+  }
+
+  .audio-status > div:first-child {
+    border-top: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .call-identity strong {
+    font-size: 26px;
+  }
+
+  .call-primary-actions,
+  .call-inline-control {
+    grid-template-columns: 1fr;
+  }
+}

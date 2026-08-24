@@ -4,6 +4,7 @@ param(
   [switch]$EnableProfileNickname,
   [switch]$EnableProfileNotifications,
   [switch]$EnableSmsSend,
+  [switch]$EnableCallActions,
   [switch]$EnableStockBootstrap
 )
 
@@ -11,6 +12,10 @@ $ErrorActionPreference = "Continue"
 
 $root = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")
 $port = if ($env:PORT) { [int]$env:PORT } else { 8787 }
+if (-not $env:CONSOLE_TOKEN) {
+  $env:CONSOLE_TOKEN = [guid]::NewGuid().ToString("N")
+}
+$tokenQuery = "?token=$([uri]::EscapeDataString($env:CONSOLE_TOKEN))"
 
 function Get-LanUrls {
   Get-NetIPAddress -AddressFamily IPv4 |
@@ -71,11 +76,12 @@ if (-not $urls.Count) {
   $urls = @("http://127.0.0.1:$port")
 }
 
-Write-Host "Windows PC URL: http://127.0.0.1:$port" -ForegroundColor Green
+Write-Host "Windows PC URL: http://127.0.0.1:$port/$tokenQuery" -ForegroundColor Green
 Write-Host "Optional LAN URLs:" -ForegroundColor Green
 foreach ($url in $urls) {
-  Write-Host "  $url" -ForegroundColor Green
+  Write-Host "  $url/$tokenQuery" -ForegroundColor Green
 }
+Write-Host "The token in these URLs is generated for this launch only." -ForegroundColor DarkGray
 
 Write-Host ""
 Write-Host "This window must stay open while using the web console."
@@ -116,6 +122,13 @@ if ($EnableSmsSend) {
 }
 else {
   $env:ALLOW_SMS_SEND = "0"
+}
+if ($EnableCallActions) {
+  Write-Host "Call controls: ENABLED" -ForegroundColor Yellow
+  $env:ALLOW_CALL_ACTIONS = "1"
+}
+else {
+  $env:ALLOW_CALL_ACTIONS = "0"
 }
 if ($EnableStockBootstrap) {
   Write-Host "Original-module setup: ENABLED" -ForegroundColor Yellow

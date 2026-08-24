@@ -9,6 +9,7 @@ const root = path.resolve(process.env.ROAMDOCK_RESOURCE_ROOT || path.resolve(__d
 const dataRoot = path.resolve(process.env.ROAMDOCK_DATA_ROOT || root);
 const publicDir = path.join(__dirname, "public");
 const port = Number(process.env.PORT || 8787);
+let detectedAtPort = "";
 const host = process.env.HOST || "0.0.0.0";
 const consoleToken = process.env.CONSOLE_TOKEN || "";
 let atQueue = Promise.resolve();
@@ -331,6 +332,64 @@ function ussdCode(value) {
   return /^[0-9*#]{1,32}$/.test(code) ? code : null;
 }
 
+function callNumber(value) {
+  const number = String(value || "").trim();
+  return /^\+?[0-9]{3,20}$/.test(number) ? number : null;
+}
+
+function dtmfDigits(value) {
+  const digits = String(value || "").trim();
+  return /^[0-9*#]{1,32}$/.test(digits) ? digits : null;
+}
+
+const callStateNames = {
+  0: "active",
+  1: "held",
+  2: "dialing",
+  3: "alerting",
+  4: "incoming",
+  5: "waiting",
+  6: "disconnected",
+};
+
+function parseClcc(text) {
+  const calls = [];
+  const pattern = /\+CLCC:\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*"([^"]*)"\s*,\s*(\d+))?/gi;
+  for (const match of String(text || "").matchAll(pattern)) {
+    const mode = Number(match[4]);
+    const stateCode = Number(match[3]);
+    calls.push({
+      id: Number(match[1]),
+      direction: Number(match[2]) === 1 ? "incoming" : "outgoing",
+      state: callStateNames[stateCode] || "unknown",
+      stateCode,
+      mode,
+      isVoice: mode === 0,
+      multiparty: Number(match[5]) === 1,
+      number: match[6] || "",
+      type: match[7] ? Number(match[7]) : null,
+    });
+  }
+  return calls;
+}
+
+function buildCallAction(body = {}) {
+  const action = String(body.action || "").trim().toLowerCase();
+  const confirm = String(body.confirm || "").trim().toUpperCase();
+  if (action === "dial") {
+    const number = callNumber(body.number);
+    return number && confirm === "DIAL" ? { action, commands: ["ATD" + number + ";"] } : null;
+  }
+  if (action === "answer") return confirm === "ANSWER" ? { action, commands: ["ATA"] } : null;
+  if (["hangup", "reject"].includes(action)) return confirm === "HANGUP" ? { action, commands: ["ATH"] } : null;
+  if (action === "dtmf") {
+    const digits = dtmfDigits(body.digits);
+    return digits && confirm === "DTMF" ? { action, commands: [...digits].map((digit) => 'AT+VTS="' + digit + '"') } : null;
+  }
+  if (action === "caller-id") return confirm === "CALLERID" ? { action, commands: ["AT+CLIP=1"] } : null;
+  return null;
+}
+
 function sendUssd(portName, code) {
   const ps = `
 $sp = New-Object System.IO.Ports.SerialPort '${portName.replace(/'/g, "''")}',115200,'None',8,'One'
@@ -356,8 +415,8 @@ try {
   return enqueueSerial(() => runPowerShell(["-Command", ps], 45000));
 }
 function portArg(url) {
-  const value = url.searchParams.get("port") || "COM5";
-  return /^[A-Za-z0-9]+$/.test(value) ? value : "COM5";
+  const value = url.searchParams.get("port") || detectedAtPort || "COM5";
+  return /^COM\d+$/i.test(value) ? value.toUpperCase() : (detectedAtPort || "COM5");
 }
 
 function isSafeAt(command) {
@@ -456,6 +515,7 @@ async function handleApi(req, res, url) {
       profileNotificationsEnabled: process.env.ALLOW_PROFILE_NOTIFICATIONS === "1",
       profileDeleteEnabled: process.env.ALLOW_PROFILE_DELETE === "1",
       smsSendEnabled: process.env.ALLOW_SMS_SEND === "1",
+      callActionsEnabled: process.env.ALLOW_CALL_ACTIONS === "1",
       ussdEnabled: process.env.ALLOW_USSD === "1",
       usbModeEnabled: process.env.ALLOW_USB_MODE === "1",
       stockBootstrapEnabled: process.env.ALLOW_STOCK_BOOTSTRAP === "1",
@@ -539,7 +599,9 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/find-at") {
     const result = await runPowerShell(["-File", script("find-at-port.ps1")], 30000);
-    sendJson(res, 200, result);
+    const found = String(result.stdout || "").match(/AT_PORT=(COM\d+)/i);
+    if (found) detectedAtPort = found[1].toUpperCase();
+    sendJson(res, 200, { ...result, port: detectedAtPort || null });
     return;
   }
 
@@ -568,6 +630,51 @@ async function handleApi(req, res, url) {
     ];
     const result = await enqueueAt(portArg(url), commands, 60000);
     sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/call-status") {
+    const result = await enqueueAt(portArg(url), ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
+    const calls = parseClcc(result.stdout);
+    const activityMatch = String(result.stdout || "").match(/\+CPAS:\s*(\d+)/i);
+    const clipMatch = String(result.stdout || "").match(/\+CLIP:\s*(\d+)/i);
+    sendJson(res, 200, {
+      ...result,
+      calls,
+      voiceCalls: calls.filter((call) => call.isVoice),
+      dataCalls: calls.filter((call) => !call.isVoice),
+      activity: activityMatch ? Number(activityMatch[1]) : null,
+      callerIdEnabled: clipMatch ? Number(clipMatch[1]) === 1 : null,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/call-capabilities") {
+    const result = await enqueueAt(portArg(url), ["ATI", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 45000);
+    const audio = await runPowerShell(["-Command", "Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { ($_.Class -eq 'AudioEndpoint' -or $_.Class -eq 'MEDIA') -and $_.FriendlyName -match 'Quectel|QDC507|Baiwang|AC Interface|AS Interface' } | Select-Object Status,Class,FriendlyName,InstanceId | ConvertTo-Json -Compress"]);
+    sendJson(res, 200, {
+      ...result,
+      callerIdSupported: /\+CLIP:/i.test(result.stdout || ""),
+      rawPcmSupported: /\+QPCMV:\s*\(/i.test(result.stdout || ""),
+      standardUsbAudio: Boolean(String(audio.stdout || "").trim()),
+      audioDevices: String(audio.stdout || "").trim(),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/call-action" && req.method === "POST") {
+    if (process.env.ALLOW_CALL_ACTIONS !== "1") {
+      sendJson(res, 403, { ok: false, error: "Call controls are disabled on this local server." });
+      return;
+    }
+    const callAction = buildCallAction(JSON.parse(await readBody(req) || "{}"));
+    if (!callAction) {
+      sendJson(res, 400, { ok: false, error: "Invalid call action, number, DTMF digits, or confirmation." });
+      return;
+    }
+    const result = await enqueueAt(portArg(url), callAction.commands, 30000);
+    const accepted = result.ok && /(^|\r?\n)OK(\r?\n|$)/i.test(result.stdout || "") && !/(^|\r?\n)ERROR(\r?\n|$)/i.test(result.stdout || "");
+    sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, action: callAction.action });
     return;
   }
 
@@ -972,4 +1079,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus };
+module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction };

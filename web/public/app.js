@@ -14,8 +14,16 @@ const copy = {
     carrier: "Carrier", radio: "Radio", online: "Online", registered: "Registered", noNetwork: "No network data", registrationHome: "Home network", registrationRoaming: "Roaming", registrationSearching: "Searching", registrationDenied: "Registration denied", registrationUnknown: "Not registered",
     title: "DJI 4G Assistant", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
-    autoScan: "Auto Scan", switchToChinese: "中文", switchToEnglish: "English",
+    autoScan: "Auto Scan", automatic: "Auto", switchToChinese: "中文", switchToEnglish: "English",
     overview: "Overview", networkCenter: "Network", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
+    calls: "Calls", dialAndAnswer: "Dial & Answer", callPageSubtitle: "Enter a number and tap Call", monitorCalls: "Monitor Calls", stopCallMonitor: "Stop Monitor", checkCallCapabilities: "Check Audio", callNumberPlaceholder: "Enter phone number", callReadyFeedback: "Enter a number to call.", advancedDetails: "Advanced details", callSending: "Sending to the module...", dialAccepted: "Dial command accepted. Waiting for the network.", answerAccepted: "Call answered.", hangupAccepted: "Call ended.", dtmfAccepted: "Key sent.", callRejected: "The module rejected the call. This SIM or network may not support voice.", callRequestFailed: "The call request failed.",
+    callIdle: "Ready", noActiveCall: "No active voice call", waitingForCall: "Waiting for a call", answerCall: "Answer", hangupCall: "Hang Up", dtmfPlaceholder: "DTMF 0-9 * #", sendDtmf: "Send DTMF",
+    audioBridge: "Audio bridge", rawPcm: "Raw PCM", windowsAudio: "Windows audio", audioNotConnected: "Not connected", startAudio: "Start Audio", stopAudio: "Stop Audio", audioBridgeActive: "Connected", audioBridgeUnavailable: "USB call audio is unavailable.", audioPermissionFailed: "Windows audio access failed.", audioNeedsCall: "Start or answer a call first.", audioEndpointMissing: "The module audio input/output was not found.", notChecked: "Not checked", dialer: "Dialer", dialCall: "Call",
+    callCapabilities: "Call Capability", atCallControl: "AT call control", available: "Available", callerId: "Caller ID", voiceAudioBridge: "Voice audio bridge", experimental: "Experimental", audioBridgeReady: "Ready", pcmInterfaceOnly: "PCM interface only", enableCallerId: "Enable Caller ID",
+    recentCalls: "Recent Calls", thisSession: "This session", noCallHistory: "No call activity yet.", callActive: "Connected", callHeld: "On hold", callDialing: "Dialing", callAlerting: "Ringing", callIncoming: "Incoming call", callWaiting: "Call waiting", callDisconnected: "Ended",
+    incomingCall: "Incoming", outgoingCall: "Outgoing", callId: "Call {id}", numberUnavailable: "Number unavailable", callerIdOn: "Enabled", callerIdOff: "Disabled", supported: "Supported", unsupported: "Unavailable", audioDeviceFound: "Audio device found", noStandardAudio: "No USB audio device",
+    rawPcmReady: "QPCMV available", callControlsLocked: "Call controls are locked on this local server.", invalidCallNumber: "Enter a phone number using digits and an optional leading +.", invalidDtmf: "Enter DTMF digits using 0-9, * or #.",
+    confirmDial: "Call {number} now?", confirmAnswer: "Answer this call?", confirmHangup: "End this call?", confirmDtmf: "Send these DTMF digits?", confirmCallerId: "Enable caller ID reporting on the module?", callsMonitoring: "Monitoring", callsPaused: "Paused", callStatus: "Call status", observedAt: "Observed {time}",
     currentDevice: "Current Device", waitingScan: "Waiting for scan", insertScan: "Insert the dongle, then run Auto Scan.",
     csq: "CSQ", usb: "USB", atPort: "AT Port", network: "Network", sim: "SIM", unknown: "Unknown",
     euiccInfo: "eUICC Info", eid: "EID", installedProfiles: "Stored profiles", availableMemory: "Free memory", pendingProfiles: "Pending downloads", profileSource: "Profile Sources", profileSourceNote: "Enabled and disabled profiles stored on this EID are listed. Provider app orders are not card profiles.", checkPendingProfiles: "Check Pending", discoveryNotChecked: "GSMA SM-DS has not been checked.", noPendingProfiles: "No pending profiles found on GSMA SM-DS.", pendingProfileSummary: "{count} pending source(s) found", chipInfoUnavailable: "eUICC info unavailable.",
@@ -51,8 +59,16 @@ const copy = {
     carrier: "运营商", radio: "无线制式", online: "已联网", registered: "已注册", noNetwork: "暂无网络数据", registrationHome: "本地注册", registrationRoaming: "漫游注册", registrationSearching: "正在搜索", registrationDenied: "注册被拒绝", registrationUnknown: "未注册",
     title: "DJI 4G Assistant", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
     idle: "空闲", running: "运行中", checking: "检查中", starting: "开始扫描", at: "AT 指令",
-    autoScan: "自动扫描", switchToChinese: "中文", switchToEnglish: "English",
+    autoScan: "自动扫描", automatic: "自动", switchToChinese: "中文", switchToEnglish: "English",
     overview: "概览", networkCenter: "网络", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
+    calls: "电话", dialAndAnswer: "接打电话", callPageSubtitle: "输入号码，点拨打即可", monitorCalls: "监听来电", stopCallMonitor: "停止监听", checkCallCapabilities: "检查音频", callNumberPlaceholder: "请输入电话号码", callReadyFeedback: "输入号码后点“拨打”。", advancedDetails: "高级信息", callSending: "正在发送给模块...", dialAccepted: "模块已接受拨号，正在等待网络响应。", answerAccepted: "已接听。", hangupAccepted: "通话已结束。", dtmfAccepted: "按键已发送。", callRejected: "模块拒绝拨号，当前 SIM 或网络可能不支持语音。", callRequestFailed: "拨号请求失败。",
+    callIdle: "可以拨号", noActiveCall: "当前没有语音通话", waitingForCall: "等待来电或输入号码", answerCall: "接听", hangupCall: "挂断", dtmfPlaceholder: "DTMF 0-9 * #", sendDtmf: "发送按键",
+    audioBridge: "音频桥接", rawPcm: "原始 PCM", windowsAudio: "Windows 声音", audioNotConnected: "未连接", startAudio: "启动声音", stopAudio: "停止声音", audioBridgeActive: "已连接", audioBridgeUnavailable: "当前没有可用的 USB 通话音频。", audioPermissionFailed: "Windows 音频访问失败。", audioNeedsCall: "请先拨通或接听电话。", audioEndpointMissing: "没有找到模块的音频输入和输出端点。", notChecked: "未检查", dialer: "拨号盘", dialCall: "拨打",
+    callCapabilities: "通话能力", atCallControl: "AT 呼叫控制", available: "可用", callerId: "来电号码", voiceAudioBridge: "语音音频桥", experimental: "实验中", audioBridgeReady: "可以连接", pcmInterfaceOnly: "只有 PCM 接口", enableCallerId: "启用来电显示",
+    recentCalls: "最近通话", thisSession: "仅本次运行", noCallHistory: "还没有通话记录。", callActive: "通话中", callHeld: "已保持", callDialing: "正在拨号", callAlerting: "对方振铃", callIncoming: "有来电", callWaiting: "来电等待", callDisconnected: "已结束",
+    incomingCall: "来电", outgoingCall: "去电", callId: "通话 {id}", numberUnavailable: "号码未知", callerIdOn: "已启用", callerIdOff: "未启用", supported: "支持", unsupported: "不可用", audioDeviceFound: "发现音频设备", noStandardAudio: "没有 USB 声卡",
+    rawPcmReady: "QPCMV 可用", callControlsLocked: "本地服务没有开放电话控制。", invalidCallNumber: "请输入数字组成的电话号码，可以在开头使用 +。", invalidDtmf: "按键只能包含 0-9、* 或 #。",
+    confirmDial: "现在拨打 {number} 吗？", confirmAnswer: "接听这个电话吗？", confirmHangup: "结束这个电话吗？", confirmDtmf: "发送这些 DTMF 按键吗？", confirmCallerId: "启用模块的来电号码上报吗？", callsMonitoring: "正在监听", callsPaused: "已暂停", callStatus: "通话状态", observedAt: "记录于 {time}",
     currentDevice: "当前设备", waitingScan: "等待扫描", insertScan: "插入模块后点击自动扫描。",
     csq: "信号", usb: "USB", atPort: "AT 端口", network: "网络", sim: "SIM", unknown: "未知",
     euiccInfo: "eUICC 信息", eid: "EID 卡片编号", installedProfiles: "卡内套餐", availableMemory: "剩余空间", pendingProfiles: "待下载套餐", profileSource: "套餐来源", profileSourceNote: "这里只显示当前 EID 卡内已启用和已停用的套餐；套餐商 App 中的订单不会自动变成卡内套餐。", checkPendingProfiles: "检查待下载", discoveryNotChecked: "尚未检查 GSMA SM-DS。", noPendingProfiles: "GSMA SM-DS 没有发现待下载套餐。", pendingProfileSummary: "发现 {count} 个待下载来源", chipInfoUnavailable: "无法读取 eUICC 信息。",
@@ -87,8 +103,8 @@ const copy = {
 
 const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
-  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, smsPolling: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null,
+  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
+  primaryUrl: "", chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
 
 function t(key, params = {}) {
@@ -113,6 +129,9 @@ function applyLanguage() {
   if (state.notificationText) renderNotifications(state.notificationText);
   if (state.smsText) renderSms(state.smsText);
   if (state.networkText) renderTraffic(state.networkText);
+  if (state.callStatusData) renderCallStatus(state.callStatusData);
+  if (state.callCapabilityData) renderCallCapabilities(state.callCapabilityData);
+  renderCallHistory();
 }
 
 function setBusy(isBusy, labelKey = "running", params = {}) {
@@ -120,18 +139,20 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   statusPill.textContent = isBusy ? t(labelKey, params) : t("idle");
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
-    if (button.id === "clearBtn") continue;
+    if (button.id === "clearBtn" || button.closest("#calls")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
         : button.dataset.profileNickname ? isBusy || !state.profileNicknameEnabled
           : button.dataset.profileNotifications ? isBusy || !state.profileNotificationsEnabled
             : button.dataset.profileDelete ? isBusy || !state.profileDeleteEnabled
               : button.dataset.smsSend ? isBusy || !state.smsSendEnabled
-                : button.dataset.ussd ? isBusy || !state.ussdEnabled
+                : button.dataset.callAction ? isBusy || !state.callActionsEnabled
+                  : button.dataset.ussd ? isBusy || !state.ussdEnabled
                   : button.dataset.usbMode ? isBusy || !state.usbModeEnabled
                     : button.dataset.driverInstall ? isBusy || !state.driverInstallEnabled || button.dataset.driverEligible !== "1" || button.dataset.driverReady === "1" : isBusy;
     if (button.dataset.stockAction) button.disabled = isBusy || !state.stockBootstrapEnabled;
   }
+  syncCallButtons();
 }
 
 function append(title, text) {
@@ -141,7 +162,7 @@ function append(title, text) {
 }
 
 function actionTitle(action) {
-  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
+  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "call-status": t("callStatus"), "call-capabilities": t("callCapabilities"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
 }
 
 function apiHeaders(extra = {}) {
@@ -438,9 +459,10 @@ function renderSms(text) {
     const status = smsStatus(rawStatus || "READ");
     const body = decodeSmsBody(match[2]);
     const code = extractVerificationCode(body);
+    const avatar = String(sender || "").replace(/\D/g, "").slice(-2) || "SMS";
     return `<article class="sms-card">
       <div class="sms-card-head">
-        <div class="sms-contact"><span>${escapeHtml(t("smsFrom"))}</span><strong>${escapeHtml(sender || t("unknown"))}</strong></div>
+        <div class="sms-contact-wrap"><span class="sms-contact-avatar">${escapeHtml(avatar)}</span><div class="sms-contact"><span>${escapeHtml(t("smsFrom"))}</span><strong>${escapeHtml(sender || t("unknown"))}</strong></div></div>
         <span class="sms-status ${status.className}">${escapeHtml(status.label)}</span>
       </div>
       ${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}
@@ -453,6 +475,325 @@ function renderSms(text) {
     await navigator.clipboard.writeText(button.dataset.copyCode);
     button.textContent = t("copied");
   });
+}
+
+function callStateText(call) {
+  const key = ({ active: "callActive", held: "callHeld", dialing: "callDialing", alerting: "callAlerting", incoming: "callIncoming", waiting: "callWaiting", disconnected: "callDisconnected" })[call?.state];
+  return key ? t(key) : t("callIdle");
+}
+
+function rememberCall(call) {
+  const key = [call.id, call.direction, call.state, call.number].join(":");
+  if (key === state.lastCallKey) return;
+  state.lastCallKey = key;
+  state.callHistory.unshift({ ...call, observedAt: new Date().toISOString() });
+  state.callHistory = state.callHistory.slice(0, 20);
+  renderCallHistory();
+}
+
+function renderCallHistory() {
+  const list = document.querySelector("#callHistory");
+  if (!list) return;
+  if (!state.callHistory.length) {
+    list.className = "call-history empty";
+    list.textContent = t("noCallHistory");
+    return;
+  }
+  list.className = "call-history";
+  list.innerHTML = state.callHistory.map((call) => {
+    const time = new Date(call.observedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const direction = call.direction === "incoming" ? t("incomingCall") : t("outgoingCall");
+    return `<article class="call-history-row">
+      <span class="call-history-direction ${escapeHtml(call.direction)}">${escapeHtml(direction.slice(0, 1))}</span>
+      <div><strong>${escapeHtml(call.number || t("numberUnavailable"))}</strong><span>${escapeHtml(direction)} · ${escapeHtml(callStateText(call))}</span></div>
+      <time>${escapeHtml(time)}</time>
+    </article>`;
+  }).join("");
+}
+
+const moduleAudioPattern = /(quectel|qdc507|baiwang|ac interface|as interface)/i;
+const localAudioBridgeHost = ["127.0.0.1", "localhost", "::1"].includes(location.hostname);
+
+function isModuleAudioDevice(device) {
+  return moduleAudioPattern.test(String(device?.label || ""));
+}
+
+function stopStream(stream) {
+  for (const track of stream?.getTracks?.() || []) track.stop();
+}
+
+function stopAudioElement(element) {
+  if (!element) return;
+  element.pause();
+  element.srcObject = null;
+}
+
+function stopAudioBridge(messageKey = "audioNotConnected") {
+  const bridge = state.audioBridge;
+  stopStream(bridge?.moduleDownlink);
+  stopStream(bridge?.microphoneStream);
+  stopAudioElement(bridge?.downlinkAudio);
+  stopAudioElement(bridge?.uplinkAudio);
+  state.audioBridge = null;
+  state.audioBridgeStarting = false;
+  const label = document.querySelector("#audioBridgeState");
+  if (label) label.textContent = t(messageKey);
+  syncCallButtons();
+}
+
+async function startAudioBridge() {
+  const call = state.callStatusData?.voiceCalls?.[0] || null;
+  if (!call || !["active", "held"].includes(call.state)) {
+    append(t("audioBridge"), t("audioNeedsCall"));
+    return;
+  }
+  if (!localAudioBridgeHost || !navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
+    append(t("audioBridge"), t("audioBridgeUnavailable"));
+    return;
+  }
+  if (!state.callCapabilityData?.standardUsbAudio) {
+    append(t("audioBridge"), t("audioEndpointMissing"));
+    return;
+  }
+
+  state.audioBridgeStarting = true;
+  syncCallButtons();
+  let permissionStream = null;
+  let moduleDownlink = null;
+  let microphoneStream = null;
+  let downlinkAudio = null;
+  let uplinkAudio = null;
+
+  try {
+    permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    stopStream(permissionStream);
+    permissionStream = null;
+
+    const moduleInput = devices.find((device) => device.kind === "audioinput" && isModuleAudioDevice(device));
+    const moduleOutput = devices.find((device) => device.kind === "audiooutput" && isModuleAudioDevice(device));
+    const systemInputs = devices.filter((device) => device.kind === "audioinput" && !isModuleAudioDevice(device));
+    const systemOutputs = devices.filter((device) => device.kind === "audiooutput" && !isModuleAudioDevice(device));
+    const systemInput = systemInputs.find((device) => device.deviceId === "default") || systemInputs[0];
+    const systemOutput = systemOutputs.find((device) => device.deviceId === "default") || systemOutputs[0];
+
+    if (!moduleInput || !moduleOutput || !systemInput) throw new Error(t("audioEndpointMissing"));
+
+    moduleDownlink = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: { exact: moduleInput.deviceId },
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+    });
+    microphoneStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        deviceId: { exact: systemInput.deviceId },
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    });
+
+    downlinkAudio = new Audio();
+    downlinkAudio.autoplay = true;
+    downlinkAudio.srcObject = moduleDownlink;
+    if (typeof downlinkAudio.setSinkId === "function" && systemOutput?.deviceId && systemOutput.deviceId !== "default") {
+      await downlinkAudio.setSinkId(systemOutput.deviceId);
+    }
+
+    uplinkAudio = new Audio();
+    uplinkAudio.autoplay = true;
+    uplinkAudio.srcObject = microphoneStream;
+    if (typeof uplinkAudio.setSinkId !== "function") throw new Error(t("audioBridgeUnavailable"));
+    await uplinkAudio.setSinkId(moduleOutput.deviceId);
+    await Promise.all([downlinkAudio.play(), uplinkAudio.play()]);
+
+    state.audioBridge = { moduleDownlink, microphoneStream, downlinkAudio, uplinkAudio };
+    document.querySelector("#audioBridgeState").textContent = t("audioBridgeActive");
+  } catch (error) {
+    stopStream(permissionStream);
+    stopStream(moduleDownlink);
+    stopStream(microphoneStream);
+    stopAudioElement(downlinkAudio);
+    stopAudioElement(uplinkAudio);
+    document.querySelector("#audioBridgeState").textContent = t("audioBridgeUnavailable");
+    append(t("audioBridge"), `${t("audioPermissionFailed")} ${error.message || ""}`.trim());
+  } finally {
+    state.audioBridgeStarting = false;
+    syncCallButtons();
+  }
+}
+
+function syncCallButtons() {
+  const call = state.callStatusData?.voiceCalls?.[0] || null;
+  const locked = !state.callActionsEnabled || state.callActionInFlight;
+  const incoming = call && ["incoming", "waiting"].includes(call.state);
+  const connected = call && ["active", "held"].includes(call.state);
+  const answer = document.querySelector("#answerCallBtn");
+  const hangup = document.querySelector("#hangupCallBtn");
+  const dial = document.querySelector("#dialCallBtn");
+  const dtmf = document.querySelector("#sendDtmfBtn");
+  const callerId = document.querySelector("#enableCallerIdBtn");
+  const startAudio = document.querySelector("#startAudioBridgeBtn");
+  const stopAudio = document.querySelector("#stopAudioBridgeBtn");
+  const audioReady = localAudioBridgeHost && state.callCapabilityData?.standardUsbAudio === true;
+  if (answer) answer.disabled = locked || !incoming;
+  if (hangup) hangup.disabled = locked || !call;
+  if (dial) dial.disabled = locked || Boolean(call);
+  if (dtmf) dtmf.disabled = locked || !connected;
+  if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
+  if (startAudio) startAudio.disabled = state.audioBridgeStarting || Boolean(state.audioBridge) || !connected || !audioReady;
+  if (stopAudio) stopAudio.disabled = !state.audioBridge;
+}
+
+function renderCallStatus(data) {
+  state.callStatusData = data;
+  const call = Array.isArray(data?.voiceCalls) ? data.voiceCalls[0] || null : null;
+  const endedCall = !call && Boolean(state.lastVoiceCall);
+  if (call) {
+    rememberCall(call);
+    state.lastVoiceCall = { ...call };
+  } else if (state.lastVoiceCall) {
+    rememberCall({ ...state.lastVoiceCall, state: "disconnected", stateCode: 6 });
+    state.lastVoiceCall = null;
+  }
+  if (!call && state.audioBridge) stopAudioBridge();
+  if (call) setCallFeedback(callStateText(call), ["active", "incoming", "waiting"].includes(call.state) ? "success" : "working");
+  else if (endedCall) setCallFeedback(t("hangupAccepted"), "neutral");
+
+  const stage = document.querySelector("#callStatus");
+  stage.dataset.state = call?.state || "idle";
+  document.querySelector("#callStateLabel").textContent = call ? callStateText(call) : t("callIdle");
+  document.querySelector("#callDirectionLabel").textContent = call ? (call.direction === "incoming" ? t("incomingCall") : t("outgoingCall")) : t("noActiveCall");
+  document.querySelector("#callNumber").textContent = call?.number || (call ? t("numberUnavailable") : "--");
+  document.querySelector("#callMeta").textContent = call ? `${t("callId", { id: call.id })} · ${callStateText(call)}` : t("waitingForCall");
+  document.querySelector("#callerIdState").textContent = data?.callerIdEnabled === true ? t("callerIdOn") : data?.callerIdEnabled === false ? t("callerIdOff") : t("notChecked");
+  if (call?.state === "incoming" || call?.state === "waiting") {
+    statusPill.textContent = t("callIncoming");
+    statusPill.classList.add("incoming");
+  } else {
+    statusPill.classList.remove("incoming");
+    if (!state.busy) statusPill.textContent = t("idle");
+  }
+  syncCallButtons();
+}
+
+function renderCallCapabilities(data) {
+  state.callCapabilityData = data;
+  const rawPcmState = document.querySelector("#rawPcmState");
+  const windowsAudioState = document.querySelector("#windowsAudioState");
+  if (rawPcmState) rawPcmState.textContent = data?.rawPcmSupported ? t("rawPcmReady") : t("unsupported");
+  if (windowsAudioState) windowsAudioState.textContent = data?.standardUsbAudio ? t("audioDeviceFound") : t("noStandardAudio");
+  const audioActions = document.querySelector(".call-audio-actions");
+  if (audioActions) audioActions.hidden = !data?.standardUsbAudio;
+  document.querySelector("#callerIdState").textContent = data?.callerIdSupported ? (state.callStatusData?.callerIdEnabled ? t("callerIdOn") : t("supported")) : t("unsupported");
+  document.querySelector("#atCallState").textContent = data?.ok ? t("available") : t("unsupported");
+  document.querySelector("#voiceBridgeState").textContent = data?.standardUsbAudio ? t("audioBridgeReady") : data?.rawPcmSupported ? t("pcmInterfaceOnly") : t("unsupported");
+  if (!state.audioBridge) document.querySelector("#audioBridgeState").textContent = t("audioNotConnected");
+  syncCallButtons();
+}
+
+async function refreshCallStatusQuietly(force = false) {
+  if (state.callRefreshInFlight || document.hidden || (!force && (!state.callMonitoring || state.busy))) return;
+  state.callRefreshInFlight = true;
+  try {
+    const { data } = await requestAction("call-status");
+    renderCallStatus(data);
+  } catch (error) {
+    if (force) append(t("callStatus"), error.message);
+  } finally {
+    state.callRefreshInFlight = false;
+  }
+}
+
+function toggleCallMonitoring(forceOn = false) {
+  state.callMonitoring = forceOn || !state.callMonitoring;
+  const button = document.querySelector("#callMonitorBtn");
+  if (button) {
+    button.textContent = state.callMonitoring ? t("stopCallMonitor") : t("monitorCalls");
+    button.classList.toggle("active-monitor", state.callMonitoring);
+  }
+  if (state.callMonitoring) refreshCallStatusQuietly(true);
+}
+
+function setCallFeedback(message, tone = "neutral") {
+  const feedback = document.querySelector("#callFeedback");
+  if (!feedback) return;
+  feedback.textContent = message;
+  feedback.dataset.tone = tone;
+}
+
+async function runCallAction(action) {
+  if (!state.callActionsEnabled) {
+    setCallFeedback(t("callControlsLocked"), "error");
+    append(t("calls"), t("callControlsLocked"));
+    return;
+  }
+
+  const body = { action };
+  let label = t("calls");
+  let successKey = "dialAccepted";
+  if (action === "dial") {
+    body.number = document.querySelector("#callNumberInput").value.trim();
+    if (!/^\+?[0-9]{3,20}$/.test(body.number)) {
+      setCallFeedback(t("invalidCallNumber"), "error");
+      return;
+    }
+    body.confirm = "DIAL";
+    label = t("dialCall");
+  } else if (action === "answer") {
+    body.confirm = "ANSWER";
+    label = t("answerCall");
+    successKey = "answerAccepted";
+  } else if (action === "hangup") {
+    body.confirm = "HANGUP";
+    label = t("hangupCall");
+    successKey = "hangupAccepted";
+  } else if (action === "dtmf") {
+    body.digits = document.querySelector("#dtmfInput").value.trim();
+    if (!/^[0-9*#]{1,32}$/.test(body.digits)) {
+      setCallFeedback(t("invalidDtmf"), "error");
+      return;
+    }
+    body.confirm = "DTMF";
+    label = t("sendDtmf");
+    successKey = "dtmfAccepted";
+  } else if (action === "caller-id") {
+    body.confirm = "CALLERID";
+    label = t("enableCallerId");
+    successKey = "callerIdOn";
+  }
+
+  state.callActionInFlight = true;
+  setCallFeedback(t("callSending"), "working");
+  setBusy(true, "running");
+  try {
+    const port = encodeURIComponent(portInput.value.trim());
+    const res = await fetch(`/api/call-action?port=${port}`, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    const raw = textFromResult(data) || JSON.stringify(data, null, 2);
+    append(label, raw);
+    if (res.ok) {
+      setCallFeedback(t(successKey), "success");
+      if (action === "dtmf") document.querySelector("#dtmfInput").value = "";
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      await refreshCallStatusQuietly(true);
+    } else {
+      setCallFeedback(res.status === 502 || /(^|\r?\n)(ERROR|NO CARRIER)(\r?\n|$)/i.test(raw) ? t("callRejected") : (data.error || t("callRequestFailed")), "error");
+    }
+  } catch (error) {
+    setCallFeedback(t("callRequestFailed"), "error");
+    append(label, error.stack || error.message);
+  } finally {
+    state.callActionInFlight = false;
+    setBusy(false);
+  }
 }
 
 function updateProfileHint() {
@@ -471,13 +812,13 @@ async function fetchJson(path, timeoutMs = 90000) {
 }
 
 async function requestAction(action) {
-  const port = encodeURIComponent(portInput.value.trim() || "COM5");
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}`, "lpac-discovery": `/api/lpac-discovery?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
+  const port = encodeURIComponent(portInput.value.trim());
+  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}`, "lpac-discovery": `/api/lpac-discovery?port=${port}`, "lpac-profiles": `/api/lpac-profiles?port=${port}`, "lpac-notifications": `/api/lpac-notifications?port=${port}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const data = await fetchJson(paths[action]); return { data, text: textFromResult(data) || JSON.stringify(data, null, 2) };
 }
 
 function applyHealth(data) {
-  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.primaryUrl = data.primaryUrl || "";
+  state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.callActionsEnabled = Boolean(data.callActionsEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.primaryUrl = data.primaryUrl || "";
   document.querySelector("#tokenRow").style.display = state.authRequired ? "grid" : "none"; updateProfileHint(); applyLanguage();
 }
 
@@ -489,7 +830,7 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
   catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -521,14 +862,20 @@ async function autoScan() {
   try {
     for (let index = 0; index < actions.length; index += 1) {
       const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
       catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message); }
     }
   } finally { setBusy(false); }
 }
 
+async function quickStart() {
+  for (const action of ["health", "find-at", "module-status", "network-traffic"]) {
+    await callApi(action);
+  }
+}
+
 async function sendAt() {
-  const port = encodeURIComponent(portInput.value.trim() || "COM5"); const command = document.querySelector("#atInput").value.trim(); if (!command) return;
+  const port = encodeURIComponent(portInput.value.trim()); const command = document.querySelector("#atInput").value.trim(); if (!command) return;
   setBusy(true, "at");
   try { const res = await fetch(`/api/at?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ command }) }); const data = await res.json(); const text = textFromResult(data) || JSON.stringify(data, null, 2); append(`AT ${command}`, text); updateSummary(text); }
   catch (error) { append(`AT ${command}`, error.name === "AbortError" ? t("atTimedOut") : error.stack || error.message); }
@@ -540,7 +887,7 @@ async function runProfileAction(action, id) {
   if (!state.profileActionsEnabled) { append(label, t("locked")); return; }
   if (!window.confirm(t("confirmProfile", { action: label.toLowerCase() }))) return;
   setBusy(true, action);
-  try { const found = await requestAction("find-at"); append(actionTitle("find-at"), found.text); updateSummary(found.text); const port = encodeURIComponent(portInput.value.trim() || "COM5"); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
+  try { const found = await requestAction("find-at"); append(actionTitle("find-at"), found.text); updateSummary(found.text); const port = encodeURIComponent(portInput.value.trim()); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
   catch (error) { append(label, error.stack || error.message); }
   finally { setBusy(false); }
 }
@@ -551,7 +898,7 @@ async function deleteProfile(id) {
   if (window.prompt(t("confirmDeleteProfile")) !== "DELETE") return;
   setBusy(true, "deleteProfile");
   try {
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/lpac-profile-action?port=${port}`, {
       method: "POST",
       headers: apiHeaders({ "content-type": "application/json" }),
@@ -573,7 +920,7 @@ async function downloadProfile() {
   if (!window.confirm(t("confirmDownload"))) return;
   setBusy(true, "profileDownload");
   try {
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/lpac-profile-download?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ activationCode, confirm: "DOWNLOAD" }) });
     const data = await res.json();
     append(t("profileDownload"), textFromResult(data) || JSON.stringify(data, null, 2));
@@ -587,7 +934,7 @@ async function runStockSetup(endpoint, confirmation, title) {
   if (window.prompt(confirmation) !== (endpoint.endsWith("convert") ? "CONVERT" : "USBNET")) return;
   setBusy(true, "running");
   try {
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`${endpoint}?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ confirm: endpoint.endsWith("convert") ? "CONVERT" : "USBNET" }) });
     const data = await res.json();
     append(title, textFromResult(data) || JSON.stringify(data, null, 2));
@@ -603,7 +950,7 @@ async function renameProfile(id) {
   if (!window.confirm(t("confirmNickname"))) return;
   setBusy(true, "profileNickname");
   try {
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/lpac-profile-nickname?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ id, nickname, confirm: "RENAME" }) });
     const data = await res.json();
     append(t("profileNickname"), textFromResult(data) || JSON.stringify(data, null, 2));
@@ -617,7 +964,7 @@ async function processNotifications() {
   if (!window.confirm(t("confirmNotifications"))) return;
   setBusy(true, "profileNotifications");
   try {
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/lpac-notifications-process?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ confirm: "PROCESS" }) });
     const data = await res.json();
     append(t("profileNotifications"), textFromResult(data) || JSON.stringify(data, null, 2));
@@ -637,7 +984,7 @@ async function sendSmsMessage() {
     const found = await requestAction("find-at");
     append(actionTitle("find-at"), found.text);
     updateSummary(found.text);
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/sms-send?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ number, message, confirm: "SEND" }) });
     const data = await res.json();
     append(t("sendSms"), textFromResult(data) || JSON.stringify(data, null, 2));
@@ -655,7 +1002,7 @@ async function sendUssdRequest() {
   try {
     const found = await requestAction("find-at");
     updateSummary(found.text);
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/ussd?port=${port}`, {
       method: "POST",
       headers: apiHeaders({ "content-type": "application/json" }),
@@ -679,7 +1026,7 @@ async function switchUsbMode(mode) {
     const found = await requestAction("find-at");
     append(actionTitle("find-at"), found.text);
     updateSummary(found.text);
-    const port = encodeURIComponent(portInput.value.trim() || "COM5");
+    const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/usbnet-mode?port=${port}`, {
       method: "POST",
       headers: apiHeaders({ "content-type": "application/json" }),
@@ -732,6 +1079,7 @@ function toggleSmsPolling() {
 
 setInterval(() => { if (state.smsPolling && !state.busy) callApi("sms-list"); }, 20000);
 setInterval(refreshTrafficQuietly, 2000);
+setInterval(refreshCallStatusQuietly, 3500);
 
 const launchToken = new URLSearchParams(location.search).get("token") || "";
 tokenInput.value = launchToken || localStorage.getItem("consoleToken") || "";
@@ -748,6 +1096,14 @@ function selectView(target, updateHash = false) {
   button.classList.add("active");
   view.classList.add("active");
   if (updateHash) history.replaceState(null, "", `#${target}`);
+  if (target === "calls" && !state.callMonitoring) toggleCallMonitoring(true);
+  if (target === "calls" && !state.callCapabilityData) callApi("call-capabilities");
+  if (!state.autoLoadedViews.has(target)) {
+    state.autoLoadedViews.add(target);
+    if (target === "sms") callApi("sms-list");
+    if (target === "network") callApi("network-traffic");
+    if (target === "esim") callApi("lpac-chip").then(() => callApi("lpac-profiles"));
+  }
 }
 
 function resetViewScroll() {
@@ -756,6 +1112,7 @@ function resetViewScroll() {
 
 for (const button of document.querySelectorAll(".nav-btn")) button.addEventListener("click", () => selectView(button.dataset.target, true));
 window.addEventListener("hashchange", () => { selectView(location.hash.slice(1)); resetViewScroll(); });
+window.addEventListener("beforeunload", () => stopAudioBridge());
 selectView(location.hash.slice(1) || "overview");
 if (location.hash) window.addEventListener("load", resetViewScroll, { once: true });
 for (const button of document.querySelectorAll(".preset")) button.addEventListener("click", () => { document.querySelector("#atInput").value = button.dataset.command; sendAt(); });
@@ -765,6 +1122,24 @@ document.querySelector("#sendAtBtn").addEventListener("click", sendAt);
 document.querySelector("#downloadProfileBtn").addEventListener("click", downloadProfile);
 document.querySelector("#processNotificationsBtn").addEventListener("click", processNotifications);
 document.querySelector("#sendSmsBtn").addEventListener("click", sendSmsMessage);
+document.querySelector("#callMonitorBtn")?.addEventListener("click", () => toggleCallMonitoring());
+document.querySelector("#dialCallBtn").addEventListener("click", () => runCallAction("dial"));
+document.querySelector("#answerCallBtn").addEventListener("click", () => runCallAction("answer"));
+document.querySelector("#hangupCallBtn").addEventListener("click", () => runCallAction("hangup"));
+document.querySelector("#sendDtmfBtn").addEventListener("click", () => runCallAction("dtmf"));
+document.querySelector("#enableCallerIdBtn")?.addEventListener("click", () => runCallAction("caller-id"));
+document.querySelector("#startAudioBridgeBtn").addEventListener("click", startAudioBridge);
+document.querySelector("#stopAudioBridgeBtn").addEventListener("click", () => stopAudioBridge());
+for (const button of document.querySelectorAll("[data-dial-key]")) button.addEventListener("click", () => {
+  const activeCall = state.callStatusData?.voiceCalls?.[0];
+  const target = activeCall ? document.querySelector("#dtmfInput") : document.querySelector("#callNumberInput");
+  target.value += button.dataset.dialKey;
+});
+document.querySelector("#dialBackspaceBtn").addEventListener("click", () => {
+  const activeCall = state.callStatusData?.voiceCalls?.[0];
+  const target = activeCall ? document.querySelector("#dtmfInput") : document.querySelector("#callNumberInput");
+  target.value = target.value.slice(0, -1);
+});
 document.querySelector("#sendUssdBtn").addEventListener("click", sendUssdRequest);
 document.querySelector("#installEcmDriverBtn").addEventListener("click", installEcmDriver);
 for (const button of document.querySelectorAll("button[data-usb-mode]")) button.addEventListener("click", () => switchUsbMode(Number(button.dataset.usbMode)));
@@ -775,4 +1150,4 @@ document.querySelector("#atInput").addEventListener("keydown", (event) => { if (
 document.querySelector("#clearBtn").addEventListener("click", () => { output.textContent = ""; });
 
 applyLanguage();
-callApi("health");
+quickStart();

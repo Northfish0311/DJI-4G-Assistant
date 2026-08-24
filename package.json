@@ -1,8 +1,8 @@
 {
   "name": "dji-4g-assistant",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": false,
-  "description": "Windows desktop assistant for DJI Cellular Dongle and compatible Quectel USB LTE modules, with eSIM, SMS, network diagnostics, and guided setup.",
+  "description": "Windows desktop assistant for DJI Cellular Dongle and compatible Quectel USB LTE modules, with eSIM, SMS, guarded call control, network diagnostics, and guided setup.",
   "main": "desktop/main.js",
   "scripts": {
     "start": "node web/server.js",
@@ -20,6 +20,8 @@
     "esim",
     "lte",
     "modem",
+    "voice",
+    "calls",
     "ipad"
   ],
   "license": "MIT",
