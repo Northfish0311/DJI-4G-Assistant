@@ -55,3 +55,14 @@ test("contains the SMS capacity and three-step voice setup surfaces", () => {
   assert.match(html, /id="voiceUsbStep"/);
   assert.match(html, /id="voicePrepareStep"/);
 });
+
+test("ignores Bluetooth COM ports during modem discovery", () => {
+  const finder = read("scripts/windows/find-at-port.ps1");
+  const diagnostics = read("scripts/windows/read-only-device-check.ps1");
+  for (const source of [finder, diagnostics]) {
+    assert.match(source, /BTHENUM\|Bluetooth/);
+    assert.match(source, /Win32_SerialPort/);
+  }
+  assert.match(finder, /Skipping Bluetooth serial port/);
+  assert.match(diagnostics, /none are USB modem interfaces/);
+});
