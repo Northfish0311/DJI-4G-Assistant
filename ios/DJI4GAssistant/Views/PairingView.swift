@@ -47,7 +47,9 @@ struct PairingView: View {
             Text(pairingStore.errorMessage ?? "")
         }
         .onAppear {
-            discovery.start()
+            if !ProcessInfo.processInfo.arguments.contains("-UIScreenshotMode") {
+                discovery.start()
+            }
         }
         .onDisappear {
             discovery.stop()

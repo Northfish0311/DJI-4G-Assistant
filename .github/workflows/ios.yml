@@ -38,6 +38,32 @@ jobs:
             -derivedDataPath ios/build/SimulatorDerivedData \
             CODE_SIGNING_ALLOWED=NO \
             build
+      - name: Capture native Chinese pairing screen
+        run: |
+          RUNTIME="$(xcrun simctl list runtimes -j | jq -r '[.runtimes[] | select(.isAvailable == true and (.identifier | contains("iOS")))] | last | .identifier')"
+          DEVICE_TYPE="$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.name == "iPhone 16 Pro") | .identifier' | head -n 1)"
+          if [ -z "$DEVICE_TYPE" ]; then
+            DEVICE_TYPE="$(xcrun simctl list devicetypes -j | jq -r '.devicetypes[] | select(.name | startswith("iPhone")) | .identifier' | head -n 1)"
+          fi
+          test -n "$RUNTIME"
+          test -n "$DEVICE_TYPE"
+          UDID="$(xcrun simctl create "DJI 4G Assistant CI" "$DEVICE_TYPE" "$RUNTIME")"
+          trap 'xcrun simctl shutdown "$UDID" >/dev/null 2>&1 || true; xcrun simctl delete "$UDID" >/dev/null 2>&1 || true' EXIT
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" \
+            "ios/build/SimulatorDerivedData/Build/Products/Debug-iphonesimulator/DJI 4G Assistant.app"
+          xcrun simctl launch "$UDID" com.northfish0311.dji4gassistant \
+            -AppleLanguages "(zh-Hans)" \
+            -AppleLocale "zh_CN" \
+            -UIScreenshotMode
+          sleep 4
+          mkdir -p "ios/build/screenshots"
+          xcrun simctl io "$UDID" screenshot \
+            "ios/build/screenshots/DJI-4G-Assistant-iOS-Pairing-zh-Hans.png"
+          sips -g pixelWidth -g pixelHeight \
+            "ios/build/screenshots/DJI-4G-Assistant-iOS-Pairing-zh-Hans.png"
+
       - name: Build unsigned iPhone and iPad device app
         run: |
           xcodebuild \
@@ -74,4 +100,5 @@ jobs:
             DJI-4G-Assistant-iOS-Unsigned.ipa
             DJI-4G-Assistant-iOS-Simulator.zip
             DJI-4G-Assistant-iOS-SHA256SUMS.txt
+            ios/build/screenshots/DJI-4G-Assistant-iOS-Pairing-zh-Hans.png
           if-no-files-found: error
