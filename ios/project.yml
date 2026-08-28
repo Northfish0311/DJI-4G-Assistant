@@ -1,0 +1,60 @@
+name: DJI4GAssistant
+options:
+  minimumXcodeGenVersion: 2.40.0
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+targets:
+  DJI4GAssistant:
+    type: application
+    platform: iOS
+    sources:
+      - path: DJI4GAssistant
+    info:
+      path: DJI4GAssistant/Info.plist
+      properties:
+        CFBundleDisplayName: DJI 4G Assistant
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}
+        UIRequiresFullScreen: false
+        NSLocalNetworkUsageDescription: DJI 4G Assistant uses your local network to find and securely connect to the Windows computer hosting the cellular dongle.
+        NSBonjourServices:
+          - _dji4g._tcp
+        NSCameraUsageDescription: Scan the one-time pairing QR code shown by DJI 4G Assistant on Windows.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        CFBundleURLTypes:
+          - CFBundleTypeRole: Editor
+            CFBundleURLName: com.northfish0311.dji4gassistant.pair
+            CFBundleURLSchemes:
+              - dji4g
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.northfish0311.dji4gassistant
+        PRODUCT_NAME: DJI 4G Assistant
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: false
+        ENABLE_USER_SCRIPT_SANDBOXING: true
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+schemes:
+  DJI4GAssistant:
+    build:
+      targets:
+        DJI4GAssistant: all
+    run:
+      config: Debug
+    archive:
+      config: Release

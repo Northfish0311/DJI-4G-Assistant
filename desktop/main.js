@@ -2,6 +2,7 @@ const fs = require("fs");
 const net = require("net");
 const path = require("path");
 const { app, BrowserWindow, Menu, dialog, session, shell } = require("electron");
+const { loadOrCreateConsoleToken } = require("../web/pairing");
 
 let mainWindow = null;
 let localServer = null;
@@ -33,10 +34,10 @@ async function choosePort(start = 8787, attempts = 20) {
 
 function configureRuntime(port) {
   process.env.HOST = "0.0.0.0";
-  process.env.CONSOLE_TOKEN = require("crypto").randomBytes(18).toString("base64url");
   process.env.PORT = String(port);
   process.env.ROAMDOCK_RESOURCE_ROOT = app.isPackaged ? process.resourcesPath : path.resolve(__dirname, "..");
   process.env.ROAMDOCK_DATA_ROOT = app.getPath("userData");
+  process.env.CONSOLE_TOKEN = loadOrCreateConsoleToken(process.env.ROAMDOCK_DATA_ROOT);
   process.env.ALLOW_PROFILE_ACTIONS = "1";
   process.env.ALLOW_PROFILE_DOWNLOAD = "1";
   process.env.ALLOW_PROFILE_NICKNAME = "1";

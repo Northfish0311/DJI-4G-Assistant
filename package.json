@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node web/server.js",
     "desktop": "electron .",
-    "check": "node --check web/server.js && node --check web/original-usb.js && node --check web/adb-usb.js && node --check web/voice-runtime.js && node --check web/public/app.js && node --check desktop/main.js",
+    "check": "node --check web/server.js && node --check web/pairing.js && node --check web/original-usb.js && node --check web/adb-usb.js && node --check web/voice-runtime.js && node --check web/public/app.js && node --check desktop/main.js",
     "build:portable": "npm run check && electron-builder --win portable --publish never",
     "build:installer": "npm run check && electron-builder --win nsis --publish never",
     "build": "npm run check && electron-builder --win portable nsis --publish never",
@@ -32,6 +32,8 @@
   "homepage": "https://github.com/Northfish0311/DJI-4G-Assistant#readme",
   "bugs": "https://github.com/Northfish0311/DJI-4G-Assistant/issues",
   "dependencies": {
+    "bonjour-service": "1.4.4",
+    "qrcode": "1.5.4",
     "usb": "2.16.0"
   },
   "devDependencies": {

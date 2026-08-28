@@ -16,6 +16,7 @@
       </div>
       <div class="top-actions">
         <div class="status-pill" id="statusPill" data-i18n="idle">Idle</div>
+        <button id="pairIosBtn" class="secondary pair-ios-button" data-i18n="pairIos">Connect iPhone / iPad</button>
         <button id="languageBtn" class="secondary">中文</button>
         <button id="autoScanBtn" data-i18n="autoScan">Auto Scan</button>
       </div>
@@ -467,6 +468,39 @@
         </details>
       </section>
     </main>
+
+    <dialog id="pairingDialog" class="pairing-dialog" aria-labelledby="pairingTitle">
+      <form method="dialog" class="pairing-sheet">
+        <header class="pairing-header">
+          <div>
+            <p class="eyebrow" data-i18n="iosCompanion">iOS Companion</p>
+            <h2 id="pairingTitle" data-i18n="pairingTitle">Connect iPhone or iPad</h2>
+          </div>
+          <button id="closePairingBtn" class="icon-button" value="cancel" aria-label="Close" title="Close">&times;</button>
+        </header>
+        <div class="pairing-content">
+          <div class="pairing-qr-frame">
+            <img id="pairingQr" alt="Pairing QR code" hidden>
+            <div id="pairingQrPlaceholder" class="pairing-placeholder" data-i18n="pairingLoading">Preparing a secure pairing code...</div>
+          </div>
+          <div class="pairing-copy">
+            <span class="pairing-status"><span class="pairing-status-dot"></span><span data-i18n="sameNetwork">Trusted local network</span></span>
+            <h3 data-i18n="pairingScanTitle">Scan once in the DJI 4G Assistant app</h3>
+            <p data-i18n="pairingDescription">The app discovers this Windows computer automatically. The QR code securely adds the address and control token.</p>
+            <div class="pairing-address">
+              <span data-i18n="windowsHost">Windows host</span>
+              <code id="pairingUrl">--</code>
+            </div>
+            <p id="pairingStatus" class="pairing-message" aria-live="polite" data-i18n="pairingLoading">Preparing a secure pairing code...</p>
+            <div class="pairing-actions">
+              <button id="copyPairingBtn" type="button" disabled data-i18n="copyPairingLink">Copy pairing link</button>
+              <button class="secondary" value="cancel" data-i18n="done">Done</button>
+            </div>
+          </div>
+        </div>
+        <p class="pairing-security" data-i18n="pairingSecurity">Anyone with this code can control the connected module. Only scan it on a trusted network and never publish it online.</p>
+      </form>
+    </dialog>
 
     <script src="/app.js"></script>
   </body>

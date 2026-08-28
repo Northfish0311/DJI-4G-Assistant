@@ -1,0 +1,50 @@
+name: Build iOS companion
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "ios/**"
+      - "web/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - "web/**"
+      - ".github/workflows/ios.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+      - name: Build for iPhone and iPad simulator
+        run: |
+          xcodebuild \
+            -project ios/DJI4GAssistant.xcodeproj \
+            -scheme DJI4GAssistant \
+            -sdk iphonesimulator \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath ios/build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+      - name: Package simulator build
+        run: |
+          ditto -c -k --sequesterRsrc --keepParent \
+            "ios/build/DerivedData/Build/Products/Debug-iphonesimulator/DJI 4G Assistant.app" \
+            "DJI-4G-Assistant-iOS-Simulator.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJI-4G-Assistant-iOS-Simulator
+          path: DJI-4G-Assistant-iOS-Simulator.zip
+          if-no-files-found: error

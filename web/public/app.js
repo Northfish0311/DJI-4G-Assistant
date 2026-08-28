@@ -1,9 +1,20 @@
+const launchParameters = new URLSearchParams(location.search);
+if (launchParameters.get("native") === "ios") document.documentElement.classList.add("native-ios");
+
 const output = document.querySelector("#output");
 const statusPill = document.querySelector("#statusPill");
 const hostLine = document.querySelector("#hostLine");
 const portInput = document.querySelector("#portInput");
 const tokenInput = document.querySelector("#tokenInput");
 const languageBtn = document.querySelector("#languageBtn");
+const pairIosBtn = document.querySelector("#pairIosBtn");
+const pairingDialog = document.querySelector("#pairingDialog");
+const pairingQr = document.querySelector("#pairingQr");
+const pairingQrPlaceholder = document.querySelector("#pairingQrPlaceholder");
+const pairingUrl = document.querySelector("#pairingUrl");
+const pairingStatus = document.querySelector("#pairingStatus");
+const copyPairingBtn = document.querySelector("#copyPairingBtn");
+let pairingDeepLink = "";
 const carrierValue = document.querySelector("#carrierValue");
 const radioValue = document.querySelector("#radioValue");
 const connectionBadge = document.querySelector("#connectionBadge");
@@ -15,6 +26,7 @@ const copy = {
     title: "DJI 4G Assistant", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
     autoScan: "Auto Scan", automatic: "Auto", switchToChinese: "中文", switchToEnglish: "English",
+    pairIos: "Connect iPhone / iPad", iosCompanion: "iOS Companion", pairingTitle: "Connect iPhone or iPad", pairingScanTitle: "Scan once in the DJI 4G Assistant app", pairingDescription: "The app discovers this Windows computer automatically. The QR code securely adds the address and control token.", sameNetwork: "Trusted local network", windowsHost: "Windows host", pairingLoading: "Preparing a secure pairing code...", pairingReady: "Ready to scan.", pairingFailed: "Pairing is unavailable: {error}", pairingQrAlt: "DJI 4G Assistant pairing QR code", copyPairingLink: "Copy pairing link", pairingCopied: "Pairing link copied.", done: "Done", close: "Close", pairingSecurity: "Anyone with this code can control the connected module. Only scan it on a trusted network and never publish it online.",
     overview: "Overview", networkCenter: "Network", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
     calls: "Calls", dialAndAnswer: "Dial & Answer", callPageSubtitle: "Enter a number and tap Call", monitorCalls: "Monitor Calls", stopCallMonitor: "Stop Monitor", checkCallCapabilities: "Check Audio", callNumberPlaceholder: "Enter phone number", callReadyFeedback: "Enter a number to call.", advancedDetails: "Advanced details", callSending: "Sending to the module...", dialAccepted: "Dial command accepted. Waiting for the network.", answerAccepted: "Call answered.", hangupAccepted: "Call ended.", dtmfAccepted: "Key sent.", callRejected: "The module rejected the call. This SIM or network may not support voice.", callRequestFailed: "The call request failed.",
     callIdle: "Ready", noActiveCall: "No active voice call", waitingForCall: "Waiting for a call", answerCall: "Answer", hangupCall: "Hang Up", dtmfPlaceholder: "DTMF 0-9 * #", sendDtmf: "Send DTMF",
@@ -65,6 +77,7 @@ const copy = {
     title: "DJI 4G Assistant", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
     idle: "空闲", running: "运行中", checking: "检查中", starting: "开始扫描", at: "AT 指令",
     autoScan: "自动扫描", automatic: "自动", switchToChinese: "中文", switchToEnglish: "English",
+    pairIos: "连接 iPhone / iPad", iosCompanion: "iOS 客户端", pairingTitle: "连接 iPhone 或 iPad", pairingScanTitle: "在 DJI 4G Assistant App 中扫码一次", pairingDescription: "App 会自动发现这台 Windows 电脑，二维码会安全添加管理地址和控制密码。", sameNetwork: "可信局域网", windowsHost: "Windows 主机", pairingLoading: "正在生成安全配对码...", pairingReady: "配对码已就绪，请用 App 扫描。", pairingFailed: "暂时无法配对：{error}", pairingQrAlt: "DJI 4G Assistant 配对二维码", copyPairingLink: "复制配对链接", pairingCopied: "配对链接已复制。", done: "完成", close: "关闭", pairingSecurity: "拿到此配对码的人可以控制已连接的模块。只在可信网络中扫码，绝对不要把二维码或链接公开到网上。",
     overview: "概览", networkCenter: "网络", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
     calls: "电话", dialAndAnswer: "接打电话", callPageSubtitle: "输入号码，点拨打即可", monitorCalls: "监听来电", stopCallMonitor: "停止监听", checkCallCapabilities: "检查音频", callNumberPlaceholder: "请输入电话号码", callReadyFeedback: "输入号码后点“拨打”。", advancedDetails: "高级信息", callSending: "正在发送给模块...", dialAccepted: "模块已接受拨号，正在等待网络响应。", answerAccepted: "已接听。", hangupAccepted: "通话已结束。", dtmfAccepted: "按键已发送。", callRejected: "模块拒绝拨号，当前 SIM 或网络可能不支持语音。", callRequestFailed: "拨号请求失败。",
     callIdle: "可以拨号", noActiveCall: "当前没有语音通话", waitingForCall: "等待来电或输入号码", answerCall: "接听", hangupCall: "挂断", dtmfPlaceholder: "DTMF 0-9 * #", sendDtmf: "发送按键",
@@ -129,6 +142,9 @@ function applyLanguage() {
   for (const element of document.querySelectorAll("[data-i18n]")) element.textContent = t(element.dataset.i18n);
   for (const element of document.querySelectorAll("[data-i18n-placeholder]")) element.placeholder = t(element.dataset.i18nPlaceholder);
   languageBtn.textContent = state.language === "zh" ? t("switchToEnglish") : t("switchToChinese");
+  pairingQr.alt = t("pairingQrAlt");
+  document.querySelector("#closePairingBtn").setAttribute("aria-label", t("close"));
+  document.querySelector("#closePairingBtn").title = t("close");
   statusPill.textContent = state.busy ? t(state.busyKey, state.busyParams) : t("idle");
   hostLine.textContent = state.primaryUrl ? t("ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
   updateProfileHint();
@@ -151,7 +167,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   statusPill.textContent = isBusy ? t(labelKey, params) : t("idle");
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
-    if (button.id === "clearBtn" || button.closest("#calls")) continue;
+    if (button.id === "clearBtn" || button.closest("#calls") || button.closest("#pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
         : button.dataset.profileNickname ? isBusy || !state.profileNicknameEnabled
@@ -1448,6 +1464,57 @@ async function refreshTrafficQuietly() {
     renderTraffic(data.stdout || "");
   } catch {}
 }
+async function openPairingDialog() {
+  pairingDeepLink = "";
+  pairingQr.hidden = true;
+  pairingQr.removeAttribute("src");
+  pairingQrPlaceholder.hidden = false;
+  pairingUrl.textContent = "--";
+  pairingStatus.textContent = t("pairingLoading");
+  copyPairingBtn.disabled = true;
+  if (!pairingDialog.open) pairingDialog.showModal();
+  pairIosBtn.disabled = true;
+  try {
+    const response = await fetch("/api/pairing", { headers: apiHeaders() });
+    const data = await response.json();
+    if (!response.ok || !data.ok) throw new Error(data.error || "Pairing request failed.");
+    pairingDeepLink = data.deepLink;
+    pairingQr.src = data.qrDataUrl;
+    pairingQr.hidden = false;
+    pairingQrPlaceholder.hidden = true;
+    pairingUrl.textContent = data.url;
+    pairingStatus.textContent = t("pairingReady");
+    copyPairingBtn.disabled = false;
+  } catch (error) {
+    pairingStatus.textContent = t("pairingFailed", { error: error.message });
+    append(t("pairIos"), error.message);
+  } finally {
+    pairIosBtn.disabled = state.busy;
+  }
+}
+
+async function copyPairingLink() {
+  if (!pairingDeepLink) return;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(pairingDeepLink);
+    } else {
+      const field = document.createElement("textarea");
+      field.value = pairingDeepLink;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+      document.execCommand("copy");
+      field.remove();
+    }
+    pairingStatus.textContent = t("pairingCopied");
+  } catch (error) {
+    pairingStatus.textContent = t("pairingFailed", { error: error.message });
+  }
+}
+
 function toggleSmsPolling() {
   state.smsPolling = !state.smsPolling;
   const button = document.querySelector("#smsPollingBtn");
@@ -1459,7 +1526,7 @@ setInterval(() => { if (state.smsPolling && !state.busy) callApi("sms-list"); },
 setInterval(refreshTrafficQuietly, 2000);
 setInterval(refreshCallStatusQuietly, 3500);
 
-const launchToken = new URLSearchParams(location.search).get("token") || "";
+const launchToken = launchParameters.get("token") || "";
 tokenInput.value = launchToken || localStorage.getItem("consoleToken") || "";
 if (launchToken) localStorage.setItem("consoleToken", launchToken);
 tokenInput.addEventListener("change", () => localStorage.setItem("consoleToken", tokenInput.value.trim()));
@@ -1495,6 +1562,13 @@ selectView(location.hash.slice(1) || "overview");
 if (location.hash) window.addEventListener("load", resetViewScroll, { once: true });
 for (const button of document.querySelectorAll(".preset")) button.addEventListener("click", () => { document.querySelector("#atInput").value = button.dataset.command; sendAt(); });
 document.querySelector("#autoScanBtn").addEventListener("click", autoScan);
+pairIosBtn.addEventListener("click", openPairingDialog);
+copyPairingBtn.addEventListener("click", copyPairingLink);
+pairingDialog.addEventListener("close", () => {
+  pairingDeepLink = "";
+  pairingQr.removeAttribute("src");
+  pairingUrl.textContent = "--";
+});
 document.querySelector("#rescueScanBtn").addEventListener("click", rescueScan);
 document.querySelector("#sendAtBtn").addEventListener("click", sendAt);
 document.querySelector("#downloadProfileBtn").addEventListener("click", downloadProfile);

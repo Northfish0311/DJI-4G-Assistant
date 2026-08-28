@@ -66,3 +66,35 @@ test("ignores Bluetooth COM ports during modem discovery", () => {
   assert.match(finder, /Skipping Bluetooth serial port/);
   assert.match(diagnostics, /none are USB modem interfaces/);
 });
+
+
+test("includes a bilingual responsive iOS pairing surface", () => {
+  const html = read("web/public/index.html");
+  const app = read("web/public/app.js");
+  const css = read("web/public/styles.css");
+  assert.match(html, /id="pairIosBtn"/);
+  assert.match(html, /id="pairingDialog"/);
+  assert.match(html, /id="pairingQr"/);
+  assert.match(app, /fetch\("\/api\/pairing"/);
+  assert.match(app, /连接 iPhone \/ iPad/);
+  assert.match(css, /\.pairing-content[\s\S]*grid-template-columns/);
+  assert.match(css, /@media \(max-width: 720px\)[\s\S]*\.pairing-content[\s\S]*grid-template-columns: 1fr/);
+});
+
+
+test("ships the native iPhone and iPad companion project", () => {
+  const project = read("ios/project.yml");
+  const pairing = read("ios/DJI4GAssistant/Models/PairingStore.swift");
+  const discovery = read("ios/DJI4GAssistant/Services/BonjourDiscovery.swift");
+  const scanner = read("ios/DJI4GAssistant/Views/QRScannerView.swift");
+  const consoleView = read("ios/DJI4GAssistant/Views/ConsoleView.swift");
+  assert.match(project, /NSBonjourServices:[\s\S]*_dji4g\._tcp/);
+  assert.match(project, /NSCameraUsageDescription/);
+  assert.match(project, /NSAllowsLocalNetworking: true/);
+  assert.match(pairing, /kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly/);
+  assert.match(pairing, /host\.isPrivateNetworkHost/);
+  assert.match(discovery, /_dji4g\._tcp\./);
+  assert.match(scanner, /AVMetadataObject\.ObjectType|metadataOutputTypes|metadataObjectTypes = \[\.qr\]/);
+  assert.match(consoleView, /allowedBaseURL/);
+  assert.match(consoleView, /native", value: "ios"/);
+});

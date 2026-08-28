@@ -2903,3 +2903,234 @@ button.danger-text:not(:disabled):hover {
     min-width: 0;
   }
 }
+
+
+/* Secure iPhone and iPad pairing */
+.pair-ios-button {
+  border-color: rgba(0, 122, 255, 0.22);
+  background: rgba(0, 122, 255, 0.08);
+  color: var(--accent);
+}
+
+.pairing-dialog {
+  width: min(760px, calc(100vw - 28px));
+  max-height: min(760px, calc(100vh - 28px));
+  padding: 0;
+  overflow: auto;
+  border: 1px solid rgba(60, 60, 67, 0.2);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--ink);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2);
+}
+
+.pairing-dialog::backdrop {
+  background: rgba(28, 28, 30, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.pairing-sheet {
+  display: block;
+}
+
+.pairing-header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(249, 249, 251, 0.94);
+}
+
+.pairing-header h2 {
+  color: #111114;
+  font-size: 20px;
+  font-weight: 720;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(118, 118, 128, 0.12);
+  color: #3a3a3c;
+  font-size: 26px;
+  font-weight: 400;
+  line-height: 32px;
+}
+
+.pairing-content {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.78fr) minmax(0, 1.22fr);
+  align-items: center;
+  gap: 26px;
+  padding: 24px;
+}
+
+.pairing-qr-frame {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 1;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.pairing-qr-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  object-fit: contain;
+}
+
+.pairing-placeholder {
+  max-width: 190px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.pairing-copy {
+  min-width: 0;
+}
+
+.pairing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ok);
+  font-size: 12px;
+  font-weight: 680;
+}
+
+.pairing-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34c759;
+}
+
+.pairing-copy h3 {
+  margin: 13px 0 8px;
+  color: #111114;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.pairing-copy > p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.pairing-address {
+  display: grid;
+  gap: 5px;
+  margin-top: 18px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel-soft);
+}
+
+.pairing-address span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 680;
+}
+
+.pairing-address code {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.pairing-message {
+  min-height: 22px;
+  margin-top: 11px;
+  font-size: 12px;
+}
+
+.pairing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pairing-security {
+  padding: 13px 18px;
+  border-top: 1px solid var(--line);
+  background: #fff9eb;
+  color: #765000;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  #autoScanBtn {
+    grid-column: 1 / -1;
+  }
+
+  .pairing-content {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 18px;
+  }
+
+  .pairing-qr-frame {
+    width: min(300px, 100%);
+    justify-self: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .pairing-dialog {
+    width: calc(100vw - 16px);
+    max-height: calc(100vh - 16px);
+  }
+
+  .pairing-header,
+  .pairing-content {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .pairing-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* Native iOS container: SwiftUI owns the app bar, the web surface owns module tools. */
+html.native-ios .topbar {
+  display: none;
+}
+
+html.native-ios .shell {
+  padding-top: max(8px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+html.native-ios .rail {
+  top: 0;
+  margin-top: 0;
+}
+
+html.native-ios button,
+html.native-ios input,
+html.native-ios textarea {
+  min-height: 44px;
+}
+
+html.native-ios .nav-btn {
+  min-height: 56px;
+}

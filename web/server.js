@@ -3,7 +3,10 @@ const os = require("os");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
+const QRCode = require("qrcode");
+const { Bonjour } = require("bonjour-service");
 const originalUsb = require("./original-usb");
+const { buildPairingDeepLink } = require("./pairing");
 const {
   VoiceRuntimeManager,
   parseUsbComposition,
@@ -24,6 +27,8 @@ let atQueue = Promise.resolve();
 let driverInstallRunning = false;
 const voiceRuntime = new VoiceRuntimeManager(dataRoot);
 let voiceQueue = Promise.resolve();
+let bonjour = null;
+let bonjourService = null;
 
 const DEFAULT_ISDR_AID = "A0000005591010FFFFFFFF8900000100";
 const KNOWN_ISDR_AIDS = [
@@ -70,6 +75,42 @@ function localIps() {
 function primaryConsoleUrl() {
   const ips = localIps();
   return ips.length ? `http://${ips[0]}:${port}` : `http://127.0.0.1:${port}`;
+}
+
+function pairingServiceName() {
+  const computerName = os.hostname().replace(/[^A-Za-z0-9 ._-]/g, "").trim() || "Windows";
+  return `DJI 4G Assistant - ${computerName}`.slice(0, 63);
+}
+
+function startBonjour() {
+  if (bonjour || host === "127.0.0.1" || host === "::1") return null;
+  bonjour = new Bonjour({}, (error) => {
+    console.warn("BONJOUR_ERROR", error?.message || error);
+  });
+  bonjourService = bonjour.publish({
+    name: pairingServiceName(),
+    type: "dji4g",
+    protocol: "tcp",
+    port,
+    disableIPv6: true,
+    txt: { path: "/", version: "1", product: "DJI4GAssistant", url: primaryConsoleUrl() },
+  });
+  bonjourService.on("error", (error) => {
+    console.warn("BONJOUR_PUBLISH_ERROR", error?.message || error);
+  });
+  return bonjourService;
+}
+
+function stopBonjour() {
+  if (!bonjour) return;
+  const activeBonjour = bonjour;
+  bonjour = null;
+  bonjourService = null;
+  try {
+    activeBonjour.destroy();
+  } catch (error) {
+    console.warn("BONJOUR_STOP_ERROR", error?.message || error);
+  }
 }
 
 function sendJson(res, status, body) {
@@ -822,6 +863,34 @@ async function handleApi(req, res, url) {
       ok: false,
       error: "Unauthorized",
       authRequired: true,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/pairing") {
+    if (!consoleToken) {
+      sendJson(res, 409, { ok: false, error: "Pairing requires CONSOLE_TOKEN. The Windows desktop app configures it automatically." });
+      return;
+    }
+    const baseUrl = primaryConsoleUrl();
+    if (/\/\/127\.0\.0\.1(?::|\/)/.test(baseUrl)) {
+      sendJson(res, 409, { ok: false, error: "No reachable LAN address is available. Connect Windows and the iPhone or iPad to the same trusted network." });
+      return;
+    }
+    const deepLink = buildPairingDeepLink(baseUrl, consoleToken);
+    const qrDataUrl = await QRCode.toDataURL(deepLink, {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 360,
+      color: { dark: "#111114", light: "#FFFFFF" },
+    });
+    sendJson(res, 200, {
+      ok: true,
+      name: pairingServiceName(),
+      url: baseUrl,
+      token: consoleToken,
+      deepLink,
+      qrDataUrl,
     });
     return;
   }
@@ -1651,6 +1720,8 @@ const server = http.createServer((req, res) => {
   sendFile(res, resolved);
 });
 
+server.on("close", stopBonjour);
+
 function startServer() {
   if (server.listening) return Promise.resolve(server);
   return new Promise((resolve, reject) => {
@@ -1658,6 +1729,7 @@ function startServer() {
     server.once("error", onError);
     server.listen(port, host, () => {
       server.off("error", onError);
+      startBonjour();
       console.log(`DJI 4G Assistant running on http://127.0.0.1:${port}`);
       console.log("");
       if (host !== "127.0.0.1") {
@@ -1677,4 +1749,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
