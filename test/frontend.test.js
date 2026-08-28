@@ -77,6 +77,7 @@ test("includes a bilingual responsive iOS pairing surface", () => {
   assert.match(html, /id="pairingQr"/);
   assert.match(app, /fetch\("\/api\/pairing"/);
   assert.match(app, /连接 iPhone \/ iPad/);
+  assert.match(app, /launchToken && !nativeIos/);
   assert.match(css, /\.pairing-content[\s\S]*grid-template-columns/);
   assert.match(css, /@media \(max-width: 720px\)[\s\S]*\.pairing-content[\s\S]*grid-template-columns: 1fr/);
 });

@@ -1,5 +1,6 @@
 const launchParameters = new URLSearchParams(location.search);
-if (launchParameters.get("native") === "ios") document.documentElement.classList.add("native-ios");
+const nativeIos = launchParameters.get("native") === "ios";
+if (nativeIos) document.documentElement.classList.add("native-ios");
 
 const output = document.querySelector("#output");
 const statusPill = document.querySelector("#statusPill");
@@ -1527,9 +1528,11 @@ setInterval(refreshTrafficQuietly, 2000);
 setInterval(refreshCallStatusQuietly, 3500);
 
 const launchToken = launchParameters.get("token") || "";
-tokenInput.value = launchToken || localStorage.getItem("consoleToken") || "";
-if (launchToken) localStorage.setItem("consoleToken", launchToken);
-tokenInput.addEventListener("change", () => localStorage.setItem("consoleToken", tokenInput.value.trim()));
+tokenInput.value = launchToken || (nativeIos ? "" : localStorage.getItem("consoleToken") || "");
+if (launchToken && !nativeIos) localStorage.setItem("consoleToken", launchToken);
+tokenInput.addEventListener("change", () => {
+  if (!nativeIos) localStorage.setItem("consoleToken", tokenInput.value.trim());
+});
 languageBtn.addEventListener("click", () => { state.language = state.language === "zh" ? "en" : "zh"; localStorage.setItem("uiLanguage", state.language); applyLanguage(); });
 for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action));
 function selectView(target, updateHash = false) {
