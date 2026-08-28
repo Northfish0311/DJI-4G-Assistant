@@ -35,16 +35,43 @@ jobs:
             -scheme DJI4GAssistant \
             -sdk iphonesimulator \
             -destination "generic/platform=iOS Simulator" \
-            -derivedDataPath ios/build/DerivedData \
+            -derivedDataPath ios/build/SimulatorDerivedData \
             CODE_SIGNING_ALLOWED=NO \
             build
-      - name: Package simulator build
+      - name: Build unsigned iPhone and iPad device app
+        run: |
+          xcodebuild \
+            -project ios/DJI4GAssistant.xcodeproj \
+            -scheme DJI4GAssistant \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath ios/build/DeviceDerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+      - name: Package simulator and unsigned device artifacts
         run: |
           ditto -c -k --sequesterRsrc --keepParent \
-            "ios/build/DerivedData/Build/Products/Debug-iphonesimulator/DJI 4G Assistant.app" \
+            "ios/build/SimulatorDerivedData/Build/Products/Debug-iphonesimulator/DJI 4G Assistant.app" \
             "DJI-4G-Assistant-iOS-Simulator.zip"
+          mkdir -p "ios/build/ipa/Payload"
+          cp -R \
+            "ios/build/DeviceDerivedData/Build/Products/Release-iphoneos/DJI 4G Assistant.app" \
+            "ios/build/ipa/Payload/"
+          ditto -c -k --sequesterRsrc --keepParent \
+            "ios/build/ipa/Payload" \
+            "DJI-4G-Assistant-iOS-Unsigned.ipa"
+          unzip -l "DJI-4G-Assistant-iOS-Unsigned.ipa" | grep "Payload/DJI 4G Assistant.app/Info.plist"
+          shasum -a 256 \
+            "DJI-4G-Assistant-iOS-Unsigned.ipa" \
+            "DJI-4G-Assistant-iOS-Simulator.zip" \
+            > "DJI-4G-Assistant-iOS-SHA256SUMS.txt"
       - uses: actions/upload-artifact@v4
         with:
-          name: DJI-4G-Assistant-iOS-Simulator
-          path: DJI-4G-Assistant-iOS-Simulator.zip
+          name: DJI-4G-Assistant-iOS
+          path: |
+            DJI-4G-Assistant-iOS-Unsigned.ipa
+            DJI-4G-Assistant-iOS-Simulator.zip
+            DJI-4G-Assistant-iOS-SHA256SUMS.txt
           if-no-files-found: error

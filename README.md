@@ -1,6 +1,6 @@
 # DJI 4G Assistant（大疆 4G 助手）
 
-DJI 4G Assistant（大疆 4G 助手）是面向 Windows 的一体化桌面管理工具，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
+DJI 4G Assistant（大疆 4G 助手）是一套 Windows 主机程序与原生 iPhone/iPad 客户端，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
 这是目前唯一维护的完整版本。
 
@@ -42,11 +42,12 @@ Releases 页面中的文件用途如下：
 2. Windows 显示“Windows 已保护你的电脑”时，选择“更多信息”，再选择“仍要运行”。
 3. 如果文件不是从本仓库 Releases 下载，或者 SHA256 与发布页不一致，请停止安装并删除文件。
 
-[详细中文使用说明](docs/使用说明.md) · [硬件安全说明](docs/safety.md) · [安全策略](SECURITY.md)
+[详细中文使用说明](docs/使用说明.md) · [iPhone/iPad 安装说明](docs/iOS安装说明.md) · [硬件安全说明](docs/safety.md) · [安全策略](SECURITY.md)
 
 ## 一个程序包含的功能
 
 - **设备发现**：USB 身份、COM 口、模块型号、SIM、运营商、信号、注册状态、APN、PDP 和模块 IP。
+- **iPhone/iPad 原生客户端**：Bonjour 自动发现 Windows 主机、系统相机扫码配对、Keychain 保存控制密码，并以原生导航打开完整管理界面。
 - **网络面板**：Windows 网卡状态、IPv4、网关、DHCP、驱动版本和本次运行的收发流量；可修复已验证设备的 Windows ECM 驱动。
 - **eSIM 管理**：自动发现并按 EID 去重多个 eUICC 空间，支持本地分类备注；在所选 EID 内列出 Profile、启用、停用、改昵称、下载、处理通知，并在双重确认后删除未启用 Profile。
 - **短信**：读取收件箱、发送 UCS2/PDU 中文和长短信、提取常见 4–8 位验证码，并显示存储容量；满仓时可逐条确认删除。
@@ -59,9 +60,23 @@ Releases 页面中的文件用途如下：
 
 ## 电脑、手机和平板访问
 
-Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平板或其他电脑，可以打开“系统”页显示的局域网地址，并输入本次启动自动生成的临时控制台密码。
+Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平板或其他电脑仍可使用浏览器访问“系统”页显示的局域网地址。
 
-`127.0.0.1` 永远表示当前设备自己，不能把电脑上的 `http://127.0.0.1:8787` 原样输入手机。不要把管理端口映射到公网或无认证隧道。
+桌面版第一次运行会为当前 Windows 用户生成一个随机控制密码，并只保存在应用数据目录。它会在以后启动时继续使用，让 iPhone/iPad 配对一次后无需每次重扫。源码版 Start-Web-Console.cmd 仍为每次启动生成临时密码。
+
+### iPhone / iPad 原生 App
+
+1. 让 Windows 电脑和 iPhone/iPad 连接同一可信 Wi-Fi。
+2. 保持 Windows DJI 4G Assistant 运行，点击顶部“连接 iPhone / iPad”。
+3. 在 iOS App 中点击“扫描配对码”，允许相机和本地网络权限。
+4. 扫描电脑显示的二维码，即可管理短信、eSIM、网络、电话和诊断。
+5. App 会把密码保存在 Apple Keychain；选择“忘记这台电脑”可清除。
+
+原生 App 的源码位于 **ios/**，GitHub 的绿色 **Build iOS companion** 工作流会生成模拟器包和明确标注的未签名真机 IPA。Apple 要求真机 App 必须签名，普通 Windows 用户可用自己的 Apple ID 通过 Sideloadly 签名测试；模拟器 ZIP 不能安装到真实设备。完整步骤见 [iPhone/iPad 安装说明](docs/iOS安装说明.md)。
+
+iOS App 管理的是插在 Windows 上的模块。Windows 必须保持运行；拨号、接听等控制可远程操作，但 USB 通话声音仍在 Windows 电脑上处理。模块直插 iPad 后读取 AT/eSIM 仍需要 Apple 批准的 DriverKit 路线，当前没有冒充支持。
+
+**127.0.0.1** 永远表示当前设备自己，不能把电脑上的本机地址原样输入手机。不要把管理端口映射到公网或无认证隧道。
 
 ## 多张 EID、eSIM 套餐和流量
 
@@ -115,7 +130,7 @@ eSIM 页会自动扫描这张实体卡中**当前接口能够访问的全部 eUI
 - VoHive 的代理池、Linux 网络命名空间和 VoWiFi/IMS 实验依赖 Linux 驱动及网络栈，当前 Windows 版不提供虚假按钮。
 - 短信、USSD 和漫游数据最终取决于固件、运营商及套餐权限。
 - 电话控制需要 SIM/套餐支持语音或 VoLTE；能拨号不等于一定有声音。QDC507 声音向导只在用户确认后修改 ADB/UAC，并按需临时加载固定哈希运行时；未知固件不会开放。该声音路线仍属实验功能。
-- 局域网中的手机和平板可以控制插在 Windows 上的模块，但声音桥接只能在 Windows 本机桌面程序中启动。把模块直接插到 iPad 并管理 AT/eSIM/电话，需要另做带 USB 驱动扩展的原生 iPadOS App。
+- 原生 iPhone/iPad 客户端可以扫码管理插在 Windows 上的模块，但声音桥接仍只能在 Windows 本机启动。模块直插 iPad 后管理通用 USB AT/eSIM 仍需要 Apple 批准的 DriverKit 驱动扩展。
 - 本项目独立实现，没有复制 DJOneHub、VoHive 或 NetXD 的代码。
 
 ## 相关路线与致谢
@@ -143,13 +158,13 @@ npm run desktop
 npm run build
 ```
 
-推送 `v*` 标签后，GitHub Actions 会自动构建安装版、免安装版和 SHA256 校验文件。
+推送 `v*` 标签后，GitHub Actions 会自动构建 Windows 安装版、免安装版和 SHA256 校验文件。iOS 工作流使用 macOS/Xcode 编译模拟器与未签名真机架构；开发者可在 macOS 中进入 `ios` 目录运行 `xcodegen generate`，再选择自己的 Apple Team 签名。
 
 ## English
 
 DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. Phones and tablets on the LAN can control calls, but the Windows host carries USB audio. Provider data allowance still requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. The native SwiftUI iPhone/iPad companion discovers the Windows host over Bonjour, pairs by QR code, stores the token in Keychain, and opens the complete management surface. The Windows host still carries USB audio and must remain running. Direct generic USB modem access on iPadOS remains a separate Apple DriverKit entitlement path. Provider data allowance still requires a provider API.
 
 ## License
 

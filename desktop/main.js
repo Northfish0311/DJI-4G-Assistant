@@ -105,7 +105,7 @@ function createWindow(port) {
     if (!smokeTest) return;
     await new Promise((resolve) => setTimeout(resolve, 700));
     if (process.env.ROAMDOCK_SMOKE_PAIRING === "1") {
-      await mainWindow.webContents.executeJavaScript('document.querySelector("#pairIosBtn").click()');
+      await mainWindow.webContents.executeJavaScript("openPairingDialog()");
       await new Promise((resolve) => setTimeout(resolve, 700));
     }
     const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")), calls: Boolean(document.querySelector("#callStatus")), pairingOpen: document.querySelector("#pairingDialog")?.open === true, pairingQr: Boolean(document.querySelector("#pairingQr")?.getAttribute("src")) })');
