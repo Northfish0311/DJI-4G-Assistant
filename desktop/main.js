@@ -104,7 +104,11 @@ function createWindow(port) {
   mainWindow.webContents.once("did-finish-load", async () => {
     if (!smokeTest) return;
     await new Promise((resolve) => setTimeout(resolve, 700));
-    const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")), calls: Boolean(document.querySelector("#callStatus")) })');
+    if (process.env.ROAMDOCK_SMOKE_PAIRING === "1") {
+      await mainWindow.webContents.executeJavaScript('document.querySelector("#pairIosBtn").click()');
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    }
+    const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")), calls: Boolean(document.querySelector("#callStatus")), pairingOpen: document.querySelector("#pairingDialog")?.open === true, pairingQr: Boolean(document.querySelector("#pairingQr")?.getAttribute("src")) })');
     if (process.env.ROAMDOCK_CAPTURE_OUTPUT) {
       const image = await mainWindow.webContents.capturePage();
       fs.writeFileSync(process.env.ROAMDOCK_CAPTURE_OUTPUT, image.toPNG());
