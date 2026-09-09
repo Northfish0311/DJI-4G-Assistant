@@ -44,3 +44,7 @@ DJI 4G Assistant is MIT licensed. Release packages and optional downloads may co
 - The driver remains subject to Quectel's terms.
 
 No source code from DJOneHub, VoHive, NetXD, CellDock, or CardDock is included. Their public feature sets and documentation were reviewed as product references.
+# Lucide
+
+The Windows interface bundles Lucide icons from the `lucide` package (ISC license).
+Source and license: https://github.com/lucide-icons/lucide

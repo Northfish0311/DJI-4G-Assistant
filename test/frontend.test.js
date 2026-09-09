@@ -5,6 +5,15 @@ const path = require("node:path");
 
 const read = (relative) => fs.readFileSync(path.join(__dirname, "..", relative), "utf8");
 
+test("loads the eSIM inventory using the actual navigation target", () => {
+  const html = read("web/public/index.html");
+  const app = read("web/public/app.js");
+  assert.ok(html.includes('data-target="euicc"'));
+  assert.ok(html.includes('id="euicc"'));
+  assert.ok(app.includes('if (target === "euicc") callApi("euicc-inventory")'));
+  assert.ok(html.includes('id="euiccReadStatus"'));
+});
+
 test("allows Start Audio to auto-prepare a downloaded runtime", () => {
   const source = read("web/public/app.js");
   assert.match(source, /standardUsbAudio \|\| !state\.voiceRuntimeStatus\?\.runtime\?\.local\?\.downloaded/);

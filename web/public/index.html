@@ -6,11 +6,12 @@
     <link rel="icon" href="data:,">
     <title>DJI 4G Assistant</title>
     <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/desktop-ui.css">
   </head>
   <body>
     <header class="topbar">
       <div>
-        <p class="eyebrow">DJI Cellular Dongle / Quectel / eUICC</p>
+        <p class="eyebrow">DJI 4G</p>
         <h1 data-i18n="title">DJI 4G Assistant</h1>
         <p id="hostLine" data-i18n="hostLocal">Local control page for the module connected to this computer.</p>
       </div>
@@ -34,6 +35,7 @@
       </nav>
 
       <section class="content">
+        <p id="operationFeedback" class="operation-feedback" role="status" hidden></p>
         <section id="overview" class="view active">
           <div class="view-heading">
             <div>
@@ -64,14 +66,12 @@
           </section>
 
           <div class="panel">
-            <div class="panel-head"><h2 data-i18n="quickActions">Quick Actions</h2></div>
+            <div class="panel-head"><h2 data-i18n="commonTasks">Everyday tasks</h2></div>
             <div class="action-grid">
-              <button data-action="device-check" data-i18n="deviceCheck">Device Check</button>
-              <button data-action="find-at" data-i18n="findAt">Find AT</button>
-              <button data-action="module-status" data-i18n="moduleStatus">Module Status</button>
-              <button data-action="lpac-profiles" data-i18n="esimProfiles">eSIM Profiles</button>
-              <button data-action="windows-network" data-i18n="windowsNetwork">Windows Network</button>
-              <button data-action="network-traffic" data-i18n="networkTraffic">Live Traffic</button>
+              <button data-open-view="sms" data-i18n="smsInbox">SMS Inbox</button>
+              <button data-open-view="calls" data-i18n="dialAndAnswer">Dial & Answer</button>
+              <button data-open-view="euicc" data-i18n="esimProfiles">eSIM Profiles</button>
+              <button data-open-view="network" data-i18n="networkCenter">Network</button>
             </div>
           </div>
 
@@ -156,6 +156,7 @@
               <span id="euiccProbeState" class="quiet-state" data-i18n="automaticDiscovery">Automatic discovery</span>
             </div>
             <div id="euiccInventory" class="euicc-slot-grid empty" data-i18n="runScanRefresh">Run Auto Scan or Refresh.</div>
+            <p id="euiccReadStatus" class="hint" role="status" hidden></p>
           </div>
 
           <div class="active-euicc-band">
@@ -502,6 +503,8 @@
       </form>
     </dialog>
 
+    <script src="/vendor/lucide.js"></script>
+    <script src="/desktop-ui.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

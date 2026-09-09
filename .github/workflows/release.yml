@@ -42,6 +42,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          body_path: docs/RELEASE-${{ github.ref_name }}.md
           files: |
             dist/DJI-4G-Assistant-*.exe
             dist/SHA256SUMS.txt

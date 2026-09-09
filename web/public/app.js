@@ -22,6 +22,14 @@ const connectionBadge = document.querySelector("#connectionBadge");
 
 const copy = {
   en: {
+    commonTasks: "Everyday tasks", moreProfile: "More options & card details",
+    cardConnecting: "Reading module and SIM...", cardNotConnected: "Waiting for the module",
+    cardChanged: "SIM changed. Reading the new card...", cardRemoved: "SIM or module disconnected. Previous card data cleared.",
+    actionDone: "{action} completed.", actionFailed: "{action} failed. Check the connection or open the log.",
+    estkSpace: "ESTK space {index}",
+    profilesReadFailed: "Profiles not read",
+    inventoryReadStatus: "Profile lists read: {loaded}/{count} EID spaces.",
+    estkReadStatus: "ESTK SE0 / SE1 entries responding: {count}/2.",
     advanced: "Advanced", console: "Console",
     carrier: "Carrier", radio: "Radio", online: "Online", registered: "Registered", noNetwork: "No network data", registrationHome: "Home network", registrationRoaming: "Roaming", registrationSearching: "Searching", registrationDenied: "Registration denied", registrationUnknown: "Not registered",
     title: "DJI 4G Assistant", hostLocal: "Local control page for the module connected to this computer.",
@@ -73,6 +81,14 @@ const copy = {
     deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
   },
   zh: {
+    commonTasks: "常用操作", moreProfile: "更多操作与卡号",
+    cardConnecting: "正在识别模块和卡片…", cardNotConnected: "等待连接模块",
+    cardChanged: "卡片已变化，正在读取新卡…", cardRemoved: "卡片或模块已断开，已清除上一张卡的数据。",
+    actionDone: "{action}完成。", actionFailed: "{action}未完成，请检查连接或展开日志。",
+    estkSpace: "ESTK 空间 {index}",
+    profilesReadFailed: "套餐未读取",
+    inventoryReadStatus: "已读取套餐列表：{loaded}/{count} 个 EID 空间。",
+    estkReadStatus: "ESTK SE0 / SE1 专用入口已响应：{count}/2。",
     advanced: "\u9ad8\u7ea7\u8bbe\u7f6e", console: "\u63a7\u5236\u53f0",
     carrier: "运营商", radio: "无线制式", online: "已联网", registered: "已注册", noNetwork: "暂无网络数据", registrationHome: "本地注册", registrationRoaming: "漫游注册", registrationSearching: "正在搜索", registrationDenied: "注册被拒绝", registrationUnknown: "未注册",
     title: "DJI 4G Assistant", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
@@ -161,6 +177,31 @@ function applyLanguage() {
   if (state.callCapabilityData) renderCallCapabilities(state.callCapabilityData);
   if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
   renderCallHistory();
+  window.refreshDesktopIcons?.();
+}
+
+function showFeedback(message, tone = "neutral") {
+  const element = document.querySelector("#operationFeedback");
+  element.textContent = message;
+  element.dataset.tone = tone;
+  element.hidden = !message;
+}
+
+function clearCardView() {
+  state.activeEid = ""; state.activeAid = ""; state.euiccProbes = [];
+  state.euiccCandidatesChecked = 0;
+  state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms");
+  state.chipText = ""; state.profileText = ""; state.discoveryText = ""; state.notificationText = "";
+  state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = "";
+  state.cardSignature = null;
+  state.networkKind = "";
+  renderEuiccInventory({ eids: [], probes: [], candidatesChecked: 0 });
+  document.querySelector("#smsList").textContent = t("noSms");
+  document.querySelector("#smsCount").textContent = "0";
+  document.querySelector("#smsStorageWarning").hidden = true;
+  document.querySelector("#notificationsList").textContent = t("noNotifications");
+  document.querySelector("#pendingProfileCount").textContent = "--";
+  renderSummary();
 }
 
 function setBusy(isBusy, labelKey = "running", params = {}) {
@@ -267,7 +308,8 @@ function parseLpaData(text) {
 }
 
 function euiccDisplayLabel(item, index = 0) {
-  return item?.label || t("defaultEidLabel", { index: index + 1 });
+  const estk = ["A06573746B6D65FFFF4953442D522030", "A06573746B6D65FFFF4953442D522031"].indexOf(item?.aid);
+  return item?.label || (estk >= 0 ? t("estkSpace", { index: "SE" + estk }) : t("defaultEidLabel", { index: index + 1 }));
 }
 
 function shortEid(value) {
@@ -303,13 +345,14 @@ function renderActiveEuicc() {
   eid.textContent = item.eid;
   status.className = "profile-state active";
   status.textContent = t("selected");
-  installed.textContent = String(item.profileCount ?? item.profiles?.length ?? 0);
-  active.textContent = String(item.activeCount ?? item.profiles?.filter((profile) => profile.profileState === "enabled").length ?? 0);
+  installed.textContent = String(item.profileCount ?? item.profiles?.length ?? "--");
+  active.textContent = String(item.activeCount ?? item.profiles?.filter((profile) => profile.profileState === "enabled").length ?? "--");
   memory.textContent = item.freeMemory ? formatBytes(item.freeMemory) : "--";
-  renderProfileItems(Array.isArray(item.profiles) ? item.profiles : []);
+  renderProfileItems(Array.isArray(item.profiles) ? item.profiles : null);
 }
 
 function selectEuicc(eid) {
+  if (state.busy) return;
   const item = state.euiccInventory.find((entry) => entry.eid === eid);
   if (!item || item.eid === state.activeEid) return;
   state.activeEid = item.eid;
@@ -347,6 +390,7 @@ async function renameEuicc(eid) {
 function renderEuiccInventory(data) {
   const items = Array.isArray(data?.eids) ? data.eids : [];
   state.euiccInventory = items;
+  if (Array.isArray(data?.probes)) state.euiccProbes = data.probes;
   state.euiccCandidatesChecked = Number(data?.candidatesChecked) || state.euiccCandidatesChecked || 0;
   state.inventoryLoaded = true;
   if (!items.some((item) => item.eid === state.activeEid)) {
@@ -357,6 +401,14 @@ function renderEuiccInventory(data) {
   }
   document.querySelector("#eidLibraryCount").textContent = t("eidsSummary", { count: items.length });
   document.querySelector("#euiccProbeState").textContent = t("probeSummary", { count: items.length, checked: state.euiccCandidatesChecked });
+  const readStatus = document.querySelector("#euiccReadStatus");
+  const loaded = items.filter((item) => Array.isArray(item.profiles)).length;
+  const estkProbes = (state.euiccProbes || []).filter((probe) =>
+    ["A06573746B6D65FFFF4953442D522030", "A06573746B6D65FFFF4953442D522031"].includes(probe.aid));
+  const estkCount = estkProbes.filter((probe) => probe.status !== "eid-unavailable").length;
+  readStatus.textContent = t("inventoryReadStatus", { loaded, count: items.length }) +
+    (estkCount ? " " + t("estkReadStatus", { count: estkCount }) : "");
+  readStatus.hidden = !items.length;
   const inventory = document.querySelector("#euiccInventory");
   if (!items.length) {
     inventory.className = "euicc-slot-grid empty";
@@ -371,8 +423,9 @@ function renderEuiccInventory(data) {
     return `<article class="euicc-slot-card ${selected ? "active" : ""}">
       <div class="euicc-slot-head"><span class="euicc-slot-index">${index + 1}</span><span class="profile-state ${selected ? "active" : "inactive"}">${escapeHtml(selected ? t("selected") : t("notSelected"))}</span></div>
       <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code title="${escapeHtml(item.eid)}">${escapeHtml(shortEid(item.eid))}</code></div>
-      <div class="euicc-slot-stats"><span>${escapeHtml(t("installedProfiles"))}<strong>${Number(item.profileCount) || 0}</strong></span><span>${escapeHtml(t("activeProfiles"))}<strong>${Number(item.activeCount) || 0}</strong></span></div>
-      <div class="euicc-slot-actions"><button data-euicc-select="${escapeHtml(item.eid)}" ${selected ? "disabled" : ""}>${escapeHtml(selected ? t("selected") : t("manageEid"))}</button><button class="secondary" data-euicc-label="${escapeHtml(item.eid)}">${escapeHtml(t("renameEid"))}</button></div>
+      <div class="euicc-slot-stats"><span>${escapeHtml(t("installedProfiles"))}<strong>${item.profileCount ?? "--"}</strong></span><span>${escapeHtml(t("activeProfiles"))}<strong>${item.activeCount ?? "--"}</strong></span></div>
+      ${!Array.isArray(item.profiles) ? `<p class="hint">${escapeHtml(t("profilesReadFailed"))}</p>` : ""}
+      <div class="euicc-slot-actions"><button data-euicc-select="${escapeHtml(item.eid)}" ${selected || state.busy ? "disabled" : ""}>${escapeHtml(selected ? t("selected") : t("manageEid"))}</button><button class="secondary" data-euicc-label="${escapeHtml(item.eid)}" ${state.busy ? "disabled" : ""}>${escapeHtml(t("renameEid"))}</button></div>
     </article>`;
   }).join("");
   for (const button of inventory.querySelectorAll("[data-euicc-select]")) button.addEventListener("click", () => selectEuicc(button.dataset.euiccSelect));
@@ -418,6 +471,7 @@ function renderProfiles(text) {
   const item = activeEuicc();
   if (item) {
     item.profiles = profiles;
+    item.profilesLoaded = true;
     item.profileCount = profiles.length;
     item.activeCount = profiles.filter((profile) => profile.profileState === "enabled").length;
     renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
@@ -459,16 +513,21 @@ function renderProfileItems(profiles) {
         <div class="profile-title"><span>${provider}</span><strong>${title}</strong></div>
         <span class="profile-state ${enabled ? "active" : "inactive"}">${enabled ? t("currentProfile") : t("inactiveProfile")}</span>
       </div>
+      <div class="profile-actions profile-primary-actions">
+        <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
+      </div>
+      <details class="profile-more">
+      <summary>${escapeHtml(t("moreProfile"))}</summary>
       <div class="profile-detail-grid">
         <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${id}</code></div>
         <div><span>${escapeHtml(t("profileClassLabel"))}</span><strong>${profileClass}</strong></div>
         <div class="profile-traffic"><span>${escapeHtml(t("trafficBalance"))}</span><strong>${escapeHtml(t("trafficUnavailable"))}</strong></div>
       </div>
       <div class="profile-actions">
-        <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
         ${enabled ? "" : `<button class="profile-action danger" data-profile-delete data-profile-id="${id}" ${state.profileDeleteEnabled ? "" : "disabled"}>${escapeHtml(t("deleteProfile"))}</button>`}
         <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div>
       </div>
+      </details>
     </article>`;
   }).join("");
   for (const button of list.querySelectorAll("button[data-profile-action]")) button.addEventListener("click", () => runProfileAction(button.dataset.profileAction, button.dataset.profileId));
@@ -1180,7 +1239,12 @@ async function requestAction(action) {
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
   const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
-  const data = await fetchJson(paths[action]); return { data, text: textFromResult(data) || JSON.stringify(data, null, 2) };
+  const data = await fetchJson(paths[action], action === "euicc-inventory" ? 600000 : 90000);
+  if (action === "find-at" && Object.hasOwn(data, "port")) {
+    state.atPort = data.port || "";
+    portInput.value = state.atPort;
+  }
+  return { data, text: textFromResult(data) || JSON.stringify(data, null, 2) };
 }
 
 function applyHealth(data) {
@@ -1191,13 +1255,13 @@ function applyHealth(data) {
 async function callApi(action) {
   setBusy(true, action === "health" ? "checking" : "running");
   try {
-    if (action === "sms-list") {
+    if (action === "sms-list" || (action === "euicc-inventory" && !state.atPort)) {
       const found = await requestAction("find-at");
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
     const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text, data); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
-  catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
+  catch (error) { showFeedback(t("actionFailed", { action: actionTitle(action) }), "error"); append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
   finally { setBusy(false); }
 }
 
@@ -1235,9 +1299,73 @@ async function autoScan() {
 }
 
 async function quickStart() {
-  for (const action of ["health", "find-at", "module-status", "network-traffic"]) {
-    await callApi(action);
+  if (state.busy || state.connecting) return;
+  state.connecting = true;
+  setBusy(true, "checking");
+  showFeedback(t("cardConnecting"));
+  try {
+    const health = await requestAction("health");
+    applyHealth(health.data);
+    state.portsSignature = (await requestAction("ports")).text.trim();
+    const found = await requestAction("find-at");
+    updateSummary(found.text);
+    if (!state.atPort) {
+      clearCardView();
+      showFeedback(t("cardNotConnected"));
+      return;
+    }
+    for (const action of ["module-status", "network-traffic", "euicc-inventory"]) {
+      const { data, text } = await requestAction(action);
+      append(actionTitle(action), text);
+      updateSummary(text);
+      if (action === "network-traffic") renderTraffic(data.stdout || "");
+      if (action === "euicc-inventory") {
+        renderEuiccInventory(data);
+        if (data.ok) state.autoLoadedViews.add("euicc");
+        showFeedback(data.ok ? t("inventoryReadStatus", {
+          loaded: data.eids.filter((item) => Array.isArray(item.profiles)).length, count: data.eids.length,
+        }) : t("chipInfoUnavailable"), data.ok ? "success" : "error");
+      }
+    }
+    const card = await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
+    if (card.ok) { state.cardSignature = card.signature; state.cardReady = card.ready; }
+  } catch (error) {
+    showFeedback(t("actionFailed", { action: t("autoScan") }), "error");
+    append(t("autoScan"), error.message);
+  } finally {
+    state.connecting = false;
+    setBusy(false);
   }
+}
+
+async function monitorCard() {
+  if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.voiceCalls?.length) return;
+  state.cardMonitorBusy = true;
+  try {
+    const ports = (await requestAction("ports")).text.trim();
+    if (ports !== state.portsSignature) {
+      state.portsSignature = ports;
+      clearCardView();
+      showFeedback(t("cardChanged"));
+      await quickStart();
+      return;
+    }
+    if (!state.atPort) return;
+    const card = await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
+    if (!card.ok) return;
+    if (!card.ready) {
+      if (state.cardReady !== false) { clearCardView(); showFeedback(t("cardRemoved")); }
+      state.cardReady = false;
+    } else if (state.cardReady === false || (card.signature && state.cardSignature && card.signature !== state.cardSignature)) {
+      clearCardView();
+      showFeedback(t("cardChanged"));
+      await quickStart();
+    } else {
+      state.cardReady = true;
+      if (card.signature) state.cardSignature = card.signature;
+    }
+  } catch { /* Transient driver errors are retried on the next read-only poll. */ }
+  finally { state.cardMonitorBusy = false; }
 }
 
 async function sendAt() {
@@ -1546,11 +1674,11 @@ function selectView(target, updateHash = false) {
   if (updateHash) history.replaceState(null, "", `#${target}`);
   if (target === "calls" && !state.callMonitoring) toggleCallMonitoring(true);
   if (target === "calls" && !state.callCapabilityData) refreshVoiceSetup();
-  if (!state.autoLoadedViews.has(target)) {
+  if (state.started && !state.busy && !state.autoLoadedViews.has(target)) {
     state.autoLoadedViews.add(target);
-    if (target === "sms") callApi("sms-list");
+    if (target === "sms") { state.smsPolling = true; callApi("sms-list"); }
     if (target === "network") callApi("network-traffic");
-    if (target === "esim") callApi("euicc-inventory");
+    if (target === "euicc") callApi("euicc-inventory");
   }
 }
 
@@ -1559,6 +1687,7 @@ function resetViewScroll() {
 }
 
 for (const button of document.querySelectorAll(".nav-btn")) button.addEventListener("click", () => selectView(button.dataset.target, true));
+for (const button of document.querySelectorAll("[data-open-view]")) button.addEventListener("click", () => selectView(button.dataset.openView, true));
 window.addEventListener("hashchange", () => { selectView(location.hash.slice(1)); resetViewScroll(); });
 window.addEventListener("beforeunload", () => { stopAudioBridge("audioNotConnected", false); stopModuleVoiceRoute(true); });
 selectView(location.hash.slice(1) || "overview");
@@ -1611,4 +1740,8 @@ document.querySelector("#atInput").addEventListener("keydown", (event) => { if (
 document.querySelector("#clearBtn").addEventListener("click", () => { output.textContent = ""; });
 
 applyLanguage();
-quickStart();
+quickStart().finally(() => {
+  state.started = true;
+  selectView(location.hash.slice(1) || "overview");
+});
+setInterval(monitorCard, 10000);

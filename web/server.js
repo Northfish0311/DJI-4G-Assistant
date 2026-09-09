@@ -2,6 +2,7 @@ const http = require("http");
 const os = require("os");
 const path = require("path");
 const fs = require("fs");
+const { createHash } = require("crypto");
 const { spawn } = require("child_process");
 const QRCode = require("qrcode");
 const { Bonjour } = require("bonjour-service");
@@ -31,7 +32,13 @@ let bonjour = null;
 let bonjourService = null;
 
 const DEFAULT_ISDR_AID = "A0000005591010FFFFFFFF8900000100";
+// ESTK multi-SE protocol identifiers, documented by estkme-group/openeuicc.
+const ESTK_ISDR_AIDS = [
+  "A06573746B6D65FFFF4953442D522030",
+  "A06573746B6D65FFFF4953442D522031",
+];
 const KNOWN_ISDR_AIDS = [
+  ...ESTK_ISDR_AIDS,
   DEFAULT_ISDR_AID,
   "A0000005591010FFFFFFFF8900050500",
   "A0000005591010000000008900000300",
@@ -221,6 +228,10 @@ function findLpac() {
 }
 
 function runLpac(lpac, portName, args, timeoutMs = 60000, options = {}) {
+  return enqueueSerial(() => runLpacProcess(lpac, portName, args, timeoutMs, options));
+}
+
+function runLpacProcess(lpac, portName, args, timeoutMs, options) {
   return new Promise((resolve) => {
     const aid = normalizeIsdrAid(options.aid) || DEFAULT_ISDR_AID;
     const child = spawn(lpac, args, {
@@ -230,6 +241,7 @@ function runLpac(lpac, portName, args, timeoutMs = 60000, options = {}) {
         ...process.env,
         LPAC_APDU: "at",
         LPAC_APDU_AT_DEVICE: portName,
+        AT_DEVICE: portName,
         LPAC_CUSTOM_ES10X_MSS: "60",
         LPAC_CUSTOM_ISD_R_AID: aid,
       },
@@ -238,6 +250,7 @@ function runLpac(lpac, portName, args, timeoutMs = 60000, options = {}) {
     let stdout = "";
     let stderr = "";
     let finished = false;
+    let timedOut = false;
     const finish = (result) => {
       if (finished) return;
       finished = true;
@@ -245,14 +258,19 @@ function runLpac(lpac, portName, args, timeoutMs = 60000, options = {}) {
       resolve(result);
     };
     const timer = setTimeout(() => {
+      timedOut = true;
       child.kill();
-      finish({ ok: false, code: null, stdout, stderr: `${stderr}\nTimed out after ${timeoutMs}ms`.trim() });
     }, timeoutMs);
 
     child.stdout.on("data", (chunk) => { stdout += chunk.toString("utf8"); });
     child.stderr.on("data", (chunk) => { stderr += chunk.toString("utf8"); });
     child.on("error", (error) => finish({ ok: false, code: null, stdout, stderr: `${stderr}\n${error.message}`.trim() }));
-    child.on("close", (code) => finish({ ok: code === 0, code, stdout, stderr }));
+    child.on("close", (code) => finish({
+      ok: !timedOut && code === 0,
+      code: timedOut ? null : code,
+      stdout,
+      stderr: timedOut ? `${stderr}\nTimed out after ${timeoutMs}ms`.trim() : stderr,
+    }));
   });
 }
 
@@ -285,6 +303,17 @@ function euiccLabel(value) {
   return label.length <= 40 && !/[\r\n\x00-\x1f]/.test(label) ? label : null;
 }
 
+function parseCardPresence(result) {
+  const text = String(result.stdout || "");
+  const ready = /\+CPIN:\s*READY\b/i.test(text);
+  const iccid = text.match(/\+(?:QCCID|CCID):\s*"?([0-9]{18,22})/i)?.[1];
+  return {
+    ok: Boolean(result.ok),
+    ready,
+    signature: ready && iccid ? createHash("sha256").update(iccid).digest("hex") : null,
+  };
+}
+
 function inventoryCandidateAids(savedState = readEuiccState()) {
   const configured = String(process.env.EUICC_AID_CANDIDATES || "").split(/[,;\s]+/);
   const saved = Object.values(savedState.aids || {});
@@ -301,16 +330,24 @@ function mergeEuiccRecords(records, labels = {}) {
     if (byEid.has(eid)) {
       const existing = byEid.get(eid);
       if (!existing.aids.includes(aid)) existing.aids.push(aid);
+      // A second alias may succeed after the first profile query failed.
+      if (existing.profilesLoaded || !Array.isArray(record.profiles)) continue;
+      existing.aid = aid;
+      existing.profiles = record.profiles;
+      existing.profilesLoaded = true;
+      existing.profileCount = record.profiles.length;
+      existing.activeCount = record.profiles.filter((profile) => String(profile?.profileState).toLowerCase() === "enabled").length;
       continue;
     }
-    const profiles = Array.isArray(record.profiles) ? record.profiles : [];
+    const profiles = Array.isArray(record.profiles) ? record.profiles : null;
     const item = {
       eid,
       aid,
       aids: [aid],
       label: euiccLabel(labels[eid]) || "",
-      profileCount: profiles.length,
-      activeCount: profiles.filter((profile) => String(profile?.profileState).toLowerCase() === "enabled").length,
+      profilesLoaded: profiles !== null,
+      profileCount: profiles?.length ?? null,
+      activeCount: profiles ? profiles.filter((profile) => String(profile?.profileState).toLowerCase() === "enabled").length : null,
       freeMemory: Number(record.freeMemory) || 0,
       firmware: String(record.firmware || ""),
       profileVersion: String(record.profileVersion || ""),
@@ -322,35 +359,51 @@ function mergeEuiccRecords(records, labels = {}) {
   return eids;
 }
 
-async function discoverEuiccInventory(lpac, portName) {
-  const savedState = readEuiccState();
-  const candidates = inventoryCandidateAids(savedState);
+async function scanEuiccInventory(candidates, query, labels = {}) {
   const records = [];
+  const probes = [];
   for (const aid of candidates) {
-    const chipResult = await runLpac(lpac, portName, ["chip", "info"], 30000, { aid });
+    const chipResult = await query(aid, ["chip", "info"], 30000);
     const chip = chipResult.ok ? parseLpacData(chipResult.stdout) : null;
-    if (!chip || !isEid(chip.eidValue)) continue;
-    const profileResult = await runLpac(lpac, portName, ["profile", "list"], 45000, { aid });
-    const profiles = profileResult.ok ? parseLpacData(profileResult.stdout) : [];
+    if (!chip || !isEid(chip.eidValue)) {
+      probes.push({ aid, status: "eid-unavailable" });
+      continue;
+    }
+    const profileResult = await query(aid, ["profile", "list"], 45000);
+    const profiles = profileResult.ok ? parseLpacData(profileResult.stdout) : null;
+    probes.push({ aid, status: Array.isArray(profiles) ? "loaded" : "profiles-unavailable" });
     records.push({
       eid: chip.eidValue,
       aid,
-      profiles: Array.isArray(profiles) ? profiles : [],
+      profiles: Array.isArray(profiles) ? profiles : null,
       freeMemory: chip.EUICCInfo2?.extCardResource?.freeNonVolatileMemory,
       firmware: chip.EUICCInfo2?.euiccFirmwareVer,
       profileVersion: chip.EUICCInfo2?.profileVersion,
     });
-    savedState.aids[chip.eidValue] = aid;
   }
-  const eids = mergeEuiccRecords(records, savedState.labels);
-  if (eids.length) writeEuiccState(savedState);
+  const eids = mergeEuiccRecords(records, labels);
   return {
     ok: eids.length > 0,
     eids,
     count: eids.length,
     candidatesChecked: candidates.length,
+    discoveryScope: "known-aids",
+    profilesComplete: eids.length > 0 && eids.every((item) => item.profilesLoaded),
+    probes,
     warning: eids.length ? "" : "No accessible eUICC EID was found.",
   };
+}
+
+async function discoverEuiccInventory(lpac, portName) {
+  const savedState = readEuiccState();
+  const result = await scanEuiccInventory(inventoryCandidateAids(savedState),
+    (aid, args, timeout) => runLpac(lpac, portName, args, timeout, { aid }), savedState.labels);
+  if (result.eids.length) {
+    // Keep explicit SE routes instead of replacing them with a default alias.
+    for (const item of result.eids) savedState.aids[item.eid] = item.aid;
+    writeEuiccState(savedState);
+  }
+  return result;
 }
 
 function requestedAid(url, body = {}) {
@@ -960,15 +1013,15 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/find-at") {
-    const result = await runPowerShell(["-File", script("find-at-port.ps1")], 30000);
+    const result = await enqueueSerial(() => runPowerShell(["-File", script("find-at-port.ps1")], 30000));
     const found = String(result.stdout || "").match(/AT_PORT=(COM\d+)/i);
-    if (found) detectedAtPort = found[1].toUpperCase();
+    detectedAtPort = found ? found[1].toUpperCase() : "";
     sendJson(res, 200, { ...result, port: detectedAtPort || null });
     return;
   }
 
   if (url.pathname === "/api/baseline") {
-    const result = await runPowerShell(["-File", script("at-baseline.ps1"), "-PortName", portArg(url)], 60000);
+    const result = await enqueueSerial(() => runPowerShell(["-File", script("at-baseline.ps1"), "-PortName", portArg(url)], 60000));
     sendJson(res, 200, result);
     return;
   }
@@ -992,6 +1045,12 @@ async function handleApi(req, res, url) {
     ];
     const result = await enqueueAt(portArg(url), commands, 60000);
     sendJson(res, 200, result);
+    return;
+  }
+
+  if (url.pathname === "/api/card-status") {
+    const result = await enqueueAt(portArg(url), ["AT+CPIN?", "AT+QCCID"], 15000);
+    sendJson(res, 200, parseCardPresence(result));
     return;
   }
 
@@ -1710,6 +1769,10 @@ const server = http.createServer((req, res) => {
   }
 
   const requestPath = url.pathname === "/" ? "/index.html" : url.pathname;
+  if (requestPath === "/vendor/lucide.js") {
+    sendFile(res, path.join(path.dirname(require.resolve("lucide")), "../umd/lucide.min.js"));
+    return;
+  }
   const resolved = path.resolve(publicDir, `.${requestPath}`);
   if (resolved !== publicDir && !resolved.startsWith(publicDir + path.sep)) {
     res.writeHead(403, { "content-type": "text/plain; charset=utf-8" });
@@ -1749,4 +1812,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
