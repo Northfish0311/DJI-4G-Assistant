@@ -20,6 +20,8 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Install official lpac release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         shell: powershell
         run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\install-lpac.ps1
       - run: npm test

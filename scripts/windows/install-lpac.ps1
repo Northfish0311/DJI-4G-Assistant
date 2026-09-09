@@ -3,7 +3,9 @@ $ErrorActionPreference = "Stop"
 $root = Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")
 $tools = Join-Path $root "tools"
 $installRoot = Join-Path $tools "lpac"
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/estkme-group/lpac/releases/latest" -Headers @{ "User-Agent" = "DJI-Cellular-Dongle-Windows-Hub" }
+$headers = @{ "User-Agent" = "DJI-Cellular-Dongle-Windows-Hub" }
+if ($env:GITHUB_TOKEN) { $headers.Authorization = "Bearer $env:GITHUB_TOKEN" }
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/estkme-group/lpac/releases/latest" -Headers $headers
 $asset = @($release.assets) | Where-Object { $_.name -match "windows-x86_64-mingw\.zip$" } | Select-Object -First 1
 
 if (-not $asset) {
