@@ -22,6 +22,7 @@ const connectionBadge = document.querySelector("#connectionBadge");
 
 const copy = {
   en: {
+    conversations: "Conversations", newMessage: "New message", searchMessages: "Search number or message", noMatchingThreads: "No matching conversations", conversationMessage: "1 message", conversationMessages: "{count} messages", newMessageHint: "Enter a recipient and write your first message below.", discardSmsDraft: "Discard the current draft and change conversation?",
     commonTasks: "Everyday tasks", moreProfile: "More options & card details",
     cardConnecting: "Reading module and SIM...", cardNotConnected: "Waiting for the module",
     cardChanged: "SIM changed. Reading the new card...", cardRemoved: "SIM or module disconnected. Previous card data cleared.",
@@ -81,6 +82,7 @@ const copy = {
     deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
   },
   zh: {
+    conversations: "会话", newMessage: "新建短信", searchMessages: "搜索号码或短信内容", noMatchingThreads: "没有匹配的会话", conversationMessage: "1 条短信", conversationMessages: "{count} 条短信", newMessageHint: "在下方填写收件人，开始新的对话。", discardSmsDraft: "切换会话会放弃当前草稿，是否继续？",
     commonTasks: "常用操作", moreProfile: "更多操作与卡号",
     cardConnecting: "正在识别模块和卡片…", cardNotConnected: "等待连接模块",
     cardChanged: "卡片已变化，正在读取新卡…", cardRemoved: "卡片或模块已断开，已清除上一张卡的数据。",
@@ -141,8 +143,17 @@ const copy = {
   },
 };
 
+Object.assign(copy.en, {"draftKept":"Draft kept for this conversation until this page closes","draftLabel":"Draft","unreadCount":"{count} unread","smsShortcut":"Ctrl + Enter to review and send","smsConfirmDescription":"Review the recipient and message. Carrier charges may apply.","smsSending":"Sending to {number}…","smsSentTo":"Sent to {number}. This confirms module acceptance, not delivery.","smsSendFailedDraft":"Send failed. Your draft is still here; try again.","sentThisSession":"Sent in this session","copyCodeFailed":"Could not copy. Select the code and copy it manually.","pauseSmsRefresh":"Pause refresh","resumeSmsRefresh":"Resume refresh","smsRefreshing":"Checking for new messages…","smsLastSynced":"Auto refresh · Updated {time}","smsSyncPaused":"Refresh paused · Updated {time}","smsRefreshFailed":"Refresh failed · Existing messages kept","smsNotSynced":"Messages have not been refreshed","retry":"Retry","cancelAction":"Cancel","deviceConnected":"Connected · {port}","callConnectFirst":"Connect the module before placing a call.","callReadOnly":"Call control unavailable","callChecking":"Checking call status","callInProgressHint":"Use the controls below for this call.","cardChangedRetry":"The card changed. Review the current card and try again.","viewEidHint":"Selecting an EID only changes what you view. Enabling a profile is a separate action.","confirmTarget":"Target EID","profileNameLabel":"Profile","profileActionDone":"{action} completed. Profile list refreshed.","profileActionFailed":"The profile operation failed. Refresh the list before retrying.","viewProfiles":"View profiles","viewing":"Viewing","callNumberLabel":"Phone number","fillNumber":"Use number","dismissFeedback":"Dismiss message"});
+Object.assign(copy.zh, {"draftKept":"草稿已保留在当前会话，关闭页面后清除","draftLabel":"草稿","unreadCount":"{count} 条未读","smsShortcut":"Ctrl + Enter 预览并发送","smsConfirmDescription":"请核对收件号码和内容。发送可能产生运营商费用。","smsSending":"正在发送给 {number}…","smsSentTo":"已提交给模块发送：{number}。这不是送达回执。","smsSendFailedDraft":"发送失败，草稿已保留，可以重试。","sentThisSession":"本次会话发送","copyCodeFailed":"复制失败，请选中验证码后手动复制。","pauseSmsRefresh":"暂停刷新","resumeSmsRefresh":"恢复刷新","smsRefreshing":"正在检查新短信…","smsLastSynced":"自动刷新中 · 更新于 {time}","smsSyncPaused":"已暂停刷新 · 更新于 {time}","smsRefreshFailed":"刷新失败 · 已保留现有短信","smsNotSynced":"尚未刷新短信","retry":"重试","cancelAction":"取消","deviceConnected":"已连接 · {port}","callConnectFirst":"连接模块后才可拨号。","callReadOnly":"电话控制未开放","callChecking":"正在检查通话状态","callInProgressHint":"使用下方按钮控制当前通话。","cardChangedRetry":"卡片已变化，请核对当前卡片后重试。","viewEidHint":"选择 EID 只改变查看的卡片空间；启用套餐需要单独操作。","confirmTarget":"目标 EID","profileNameLabel":"套餐","profileActionDone":"{action}已完成，套餐列表已刷新。","profileActionFailed":"套餐操作失败，请刷新列表确认状态后重试。","viewProfiles":"查看套餐","viewing":"当前查看","callNumberLabel":"电话号码","fillNumber":"填入号码","dismissFeedback":"关闭提示"});
+
+Object.assign(copy.en, {callReadFailed: "Could not refresh call status. The last known state is kept; retrying automatically.", callStatusUncertain: "Call status unavailable"});
+Object.assign(copy.zh, {callReadFailed: "通话状态刷新失败，已保留上次状态，稍后自动重试。", callStatusUncertain: "暂时无法确认通话状态"});
+Object.assign(copy.en, {"replyTo":"Reply to {number}","writeMessage":"Write a message…","replyMessage":"Write a reply…","chooseEidCompact":"View card space","compactProfiles":"{count} profiles · {active} enabled","callNextReady":"Enter or paste a number in the dialer. Incoming calls appear here.","callNextLocked":"You can view call status. Calling and answering require call control to be enabled on the local service.","callNextDisconnected":"Connect the module by USB, then scan to find it.","callNextWaiting":"The next call status check will run automatically.","callFocusDialer":"Enter a number","callRetryStatus":"Check again","voiceSummaryUnknown":"Check audio before your first call","voiceSummaryReady":"Ready · Start audio after the call connects","voiceSummaryRuntime":"Next: download the verified audio files","voiceSummaryUsb":"Next: set up the module audio interface","voiceSummaryPrepare":"Ready to prepare · Start Audio can do this for you","voiceSummaryUnsupported":"Automatic audio setup is unavailable for this module","voiceSummaryRemote":"Audio runs on the connected Windows computer"});
+Object.assign(copy.zh, {"replyTo":"回复给 {number}","writeMessage":"输入短信内容…","replyMessage":"输入回复内容…","chooseEidCompact":"查看卡片空间","compactProfiles":"{count} 个套餐 · {active} 个已启用","callNextReady":"在拨号盘输入或粘贴号码。有来电时，这里会显示接听按钮。","callNextLocked":"当前可以查看通话状态。拨号和接听需要先在本地服务中开放电话控制。","callNextDisconnected":"用 USB 连接模块，再扫描查找设备。","callNextWaiting":"正在等待下一次自动状态检查。","callFocusDialer":"输入号码","callRetryStatus":"重新检查","voiceSummaryUnknown":"首次通话前，检查声音是否就绪","voiceSummaryReady":"声音已就绪 · 接通后可启动","voiceSummaryRuntime":"下一步：下载已校验的语音文件","voiceSummaryUsb":"下一步：设置模块声音接口","voiceSummaryPrepare":"可准备声音 · 接通后也可自动完成","voiceSummaryUnsupported":"当前模块不支持自动声音设置","voiceSummaryRemote":"声音由连接模块的 Windows 电脑处理"});
 const state = {
+  smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
+  smsActiveSender: null, smsQuery: "", smsNewDraft: false, smsStorage: null,
   authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, smsDeleteEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, voiceRuntimeEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
   primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, voiceRuntimeStatus: null, voiceSetupBusy: false, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
@@ -155,6 +166,7 @@ function t(key, params = {}) {
 function applyLanguage() {
   document.documentElement.lang = state.language === "zh" ? "zh-CN" : "en";
   document.title = t("title");
+  for (const element of document.querySelectorAll("[data-i18n-aria]")) element.setAttribute("aria-label", t(element.dataset.i18nAria));
   document.querySelector("nav[aria-label]").setAttribute("aria-label", state.language === "zh" ? "分区" : "Sections");
   for (const element of document.querySelectorAll("[data-i18n]")) element.textContent = t(element.dataset.i18n);
   for (const element of document.querySelectorAll("[data-i18n-placeholder]")) element.placeholder = t(element.dataset.i18nPlaceholder);
@@ -162,7 +174,7 @@ function applyLanguage() {
   pairingQr.alt = t("pairingQrAlt");
   document.querySelector("#closePairingBtn").setAttribute("aria-label", t("close"));
   document.querySelector("#closePairingBtn").title = t("close");
-  statusPill.textContent = state.busy ? t(state.busyKey, state.busyParams) : t("idle");
+  renderConnectionState();
   hostLine.textContent = state.primaryUrl ? t("ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
   updateProfileHint();
   renderSummary();
@@ -171,23 +183,36 @@ function applyLanguage() {
   if (state.discoveryText) renderDiscovery(state.discoveryText);
   if (state.profileText && !state.inventoryLoaded) renderProfiles(state.profileText);
   if (state.notificationText) renderNotifications(state.notificationText);
-  if (state.smsText) renderSms(state.smsText);
+  renderSms(state.smsText);
+  document.querySelector("#smsSearchInput").setAttribute("aria-label", t("searchMessages"));
+  document.querySelector("#dialBackspaceBtn").setAttribute("aria-label", state.language === "zh" ? "退格" : "Backspace");
+  document.querySelector("#dialBackspaceBtn").title = state.language === "zh" ? "退格" : "Backspace";
   if (state.networkText) renderTraffic(state.networkText);
-  if (state.callStatusData) renderCallStatus(state.callStatusData);
+  if (state.callStatusData) {
+    const readError = state.callStatusReadError;
+    renderCallStatus(state.callStatusData);
+    state.callStatusReadError = readError;
+  }
   if (state.callCapabilityData) renderCallCapabilities(state.callCapabilityData);
   if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
   renderCallHistory();
+  syncCallButtons(); renderSmsRefreshState(); updateSmsComposer();
+  if (state.smsFeedback) setSmsFeedback(state.smsFeedback.key, state.smsFeedback.tone, state.smsFeedback.params);
+  document.querySelector("#callNumberInput").setAttribute("aria-label", t("callNumberLabel"));
   window.refreshDesktopIcons?.();
 }
 
-function showFeedback(message, tone = "neutral") {
+function showFeedback(message, tone = "neutral", view) {
+  if (view && document.querySelector(".view.active")?.id !== view) return;
+  clearTimeout(state.feedbackTimer);
   const element = document.querySelector("#operationFeedback");
-  element.textContent = message;
-  element.dataset.tone = tone;
-  element.hidden = !message;
+  document.querySelector("#operationFeedbackText").textContent = message;
+  element.dataset.tone = tone; element.hidden = !message;
+  if (message && tone === "success") state.feedbackTimer = setTimeout(() => {element.hidden = true;}, 5000);
 }
 
 function clearCardView() {
+  state.cardEpoch += 1; state.smsDrafts.clear(); state.smsSentThisSession = []; state.smsLastRead = 0; state.smsReadError = false; state.failedViews.clear(); setSmsFeedback(null);
   state.activeEid = ""; state.activeAid = ""; state.euiccProbes = [];
   state.euiccCandidatesChecked = 0;
   state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms");
@@ -196,7 +221,9 @@ function clearCardView() {
   state.cardSignature = null;
   state.networkKind = "";
   renderEuiccInventory({ eids: [], probes: [], candidatesChecked: 0 });
-  document.querySelector("#smsList").textContent = t("noSms");
+  state.smsActiveSender = null; state.smsQuery = ""; state.smsNewDraft = false; state.smsStorage = null;
+  for (const id of ["smsNumberInput", "smsMessageInput", "smsSearchInput"]) document.getElementById(id).value = "";
+  renderSms("");
   document.querySelector("#smsCount").textContent = "0";
   document.querySelector("#smsStorageWarning").hidden = true;
   document.querySelector("#notificationsList").textContent = t("noNotifications");
@@ -206,9 +233,10 @@ function clearCardView() {
 
 function setBusy(isBusy, labelKey = "running", params = {}) {
   state.busy = isBusy; state.busyKey = labelKey; state.busyParams = params;
-  statusPill.textContent = isBusy ? t(labelKey, params) : t("idle");
+  renderConnectionState();
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
+    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #newSmsBtn, #smsPollingBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog")) {button.disabled = false; continue;}
     if (button.id === "clearBtn" || button.closest("#calls") || button.closest("#pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
@@ -224,7 +252,8 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
                       : button.dataset.euiccSelect ? isBusy || button.dataset.euiccSelect === state.activeEid : isBusy;
     if (button.dataset.stockAction) button.disabled = isBusy || !state.stockBootstrapEnabled;
   }
-  syncCallButtons();
+  syncCallButtons(); updateSmsComposer(); renderCallGuidance();
+  if (!isBusy) queueMicrotask(ensureCurrentViewLoaded);
 }
 
 function append(title, text) {
@@ -264,6 +293,7 @@ function renderSummary() {
   connectionBadge.textContent = status;
   connectionBadge.classList.toggle("online", Boolean(state.moduleIp));
   connectionBadge.classList.toggle("registered", !state.moduleIp && Boolean(registration));
+  renderConnectionState();
 }
 
 function updateSummary(text) {
@@ -323,6 +353,7 @@ function activeEuicc() {
 
 function renderActiveEuicc() {
   const item = activeEuicc();
+  document.querySelector("#renameSelectedEidBtn").disabled = !item || state.busy;
   const label = document.querySelector("#activeEuiccLabel");
   const eid = document.querySelector("#eidValue");
   const status = document.querySelector("#activeEuiccState");
@@ -421,11 +452,8 @@ function renderEuiccInventory(data) {
     const selected = item.eid === state.activeEid;
     const label = euiccDisplayLabel(item, index);
     return `<article class="euicc-slot-card ${selected ? "active" : ""}">
-      <div class="euicc-slot-head"><span class="euicc-slot-index">${index + 1}</span><span class="profile-state ${selected ? "active" : "inactive"}">${escapeHtml(selected ? t("selected") : t("notSelected"))}</span></div>
-      <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code title="${escapeHtml(item.eid)}">${escapeHtml(shortEid(item.eid))}</code></div>
-      <div class="euicc-slot-stats"><span>${escapeHtml(t("installedProfiles"))}<strong>${item.profileCount ?? "--"}</strong></span><span>${escapeHtml(t("activeProfiles"))}<strong>${item.activeCount ?? "--"}</strong></span></div>
-      ${!Array.isArray(item.profiles) ? `<p class="hint">${escapeHtml(t("profilesReadFailed"))}</p>` : ""}
-      <div class="euicc-slot-actions"><button data-euicc-select="${escapeHtml(item.eid)}" ${selected || state.busy ? "disabled" : ""}>${escapeHtml(selected ? t("selected") : t("manageEid"))}</button><button class="secondary" data-euicc-label="${escapeHtml(item.eid)}" ${state.busy ? "disabled" : ""}>${escapeHtml(t("renameEid"))}</button></div>
+      <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code title="${escapeHtml(item.eid)}">${escapeHtml(shortEid(item.eid))}</code><span class="euicc-slot-count">${escapeHtml(Array.isArray(item.profiles) ? t("compactProfiles", {count:item.profiles.length, active:item.profiles.filter(p => p.profileState === "enabled").length}) : t("profilesReadFailed"))}</span></div>
+      <button data-euicc-select="${escapeHtml(item.eid)}" aria-pressed="${selected}" ${selected || state.busy ? "disabled" : ""}>${escapeHtml(selected ? t("viewing") : t("viewProfiles"))}</button>
     </article>`;
   }).join("");
   for (const button of inventory.querySelectorAll("[data-euicc-select]")) button.addEventListener("click", () => selectEuicc(button.dataset.euiccSelect));
@@ -499,7 +527,7 @@ function renderProfileItems(profiles) {
     return;
   }
   list.className = "profile-list";
-  list.innerHTML = profiles.map((profile) => {
+  list.innerHTML = [...profiles].sort((a, b) => Number(b.profileState === "enabled") - Number(a.profileState === "enabled")).map((profile) => {
     const enabled = profile.profileState === "enabled";
     const id = escapeHtml(profile.iccid || profile.isdpAid || "");
     const action = enabled ? "disable" : "enable";
@@ -721,40 +749,233 @@ async function deleteSmsMessage(index) {
   }
 }
 
+function normalizePhone(value) {
+  return String(value).trim().replace(/[\s()-]/g, "");
+}
+
+function smsDraftKey() { return state.smsNewDraft ? "new" : (state.smsActiveSender || "new"); }
+
+function saveSmsDraft() {
+  const draft = { number: document.querySelector("#smsNumberInput").value, message: document.querySelector("#smsMessageInput").value };
+  if (draft.message || (smsDraftKey() === "new" && draft.number)) state.smsDrafts.set(smsDraftKey(), draft);
+  else state.smsDrafts.delete(smsDraftKey());
+  updateSmsComposer();
+  for (const badge of document.querySelectorAll("[data-draft-for]")) badge.hidden = !state.smsDrafts.get(badge.dataset.draftFor)?.message;
+}
+
+function setSmsFeedback(key, tone = "neutral", params = {}) {
+  state.smsFeedback = key ? { key, tone, params } : null;
+  const element = document.querySelector("#smsComposeFeedback");
+  element.hidden = !key;
+  element.textContent = key ? t(key, params) : "";
+  element.dataset.tone = tone;
+}
+
+function updateSmsComposer() {
+  const number = normalizePhone(document.querySelector("#smsNumberInput").value);
+  const message = document.querySelector("#smsMessageInput").value;
+  const validNumber = /^\+?[0-9]{3,20}$/.test(number);
+  const button = document.querySelector("#sendSmsBtn");
+  button.disabled = state.busy || state.smsSending || !state.smsSendEnabled || !state.atPort || state.cardReady === false || !validNumber || !message.trim() || message.length > 480;
+  button.title = !state.smsSendEnabled ? t("smsSendLocked") : !validNumber || !message.trim() ? t("invalidSms") : t("smsShortcut");
+  document.querySelector("#smsCharacterCount").textContent = `${message.length} / 480`;
+  document.querySelector("#smsDraftHint").textContent = t(message ? "draftKept" : "smsShortcut");
+  const input = document.querySelector("#smsNumberInput");
+  input.setAttribute("aria-invalid", String(Boolean(number) && !validNumber));
+  const replying = !state.smsNewDraft && Boolean(state.smsActiveSender) && validNumber;
+  document.querySelector("#smsRecipientRow").hidden = replying;
+  document.querySelector("#smsReplyTarget").textContent = replying ? t("replyTo", {number}) : "";
+  document.querySelector("#smsMessageInput").placeholder = t(replying ? "replyMessage" : "writeMessage");
+  document.querySelector("#smsSendHint").hidden = state.smsSendEnabled;
+}
+
+function renderSmsRefreshState() {
+  const button = document.querySelector("#smsPollingBtn");
+  button.textContent = t(state.smsPolling ? "pauseSmsRefresh" : "resumeSmsRefresh");
+  button.setAttribute("aria-pressed", String(state.smsPolling));
+  const time = state.smsLastRead ? new Date(state.smsLastRead).toLocaleTimeString(state.language === "zh" ? "zh-CN" : "en-GB", {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "";
+  document.querySelector("#smsRefreshState").textContent = state.smsRefreshing ? t("smsRefreshing") : state.smsReadError ? t("smsRefreshFailed") : time ? t(state.smsPolling ? "smsLastSynced" : "smsSyncPaused", {time}) : t("smsNotSynced");
+  document.querySelector("#smsRetryBtn").hidden = !state.smsReadError;
+}
+
+async function refreshSmsQuietly() {
+  if (!state.started || state.busy || state.smsRefreshing || state.smsSending || !state.atPort || state.cardReady === false || state.confirming || document.hidden) return;
+  const epoch = state.cardEpoch;
+  state.smsRefreshing = true;
+  renderSmsRefreshState();
+  try {
+    const {data, text} = await requestAction("sms-list");
+    if (!data.ok) throw new Error(data.error || "SMS read failed");
+    if (epoch !== state.cardEpoch) return;
+    state.smsLastRead = Date.now(); state.smsReadError = false;
+    renderSms(text, data);
+  } catch (error) {
+    if (epoch === state.cardEpoch) {state.smsReadError = true; append(t("readSms"), error.message);}
+  } finally { state.smsRefreshing = false; renderSmsRefreshState(); }
+}
+
+function renderConnectionState() {
+  const call = state.callStatusData?.voiceCalls?.[0];
+  statusPill.textContent = state.busy ? t(state.busyKey, state.busyParams) : call?.state === "incoming" ? t("callIncoming") : state.atPort && state.cardReady !== false ? t("deviceConnected", {port: state.atPort}) : t("cardNotConnected");
+}
+
+function renderCallGuidance() {
+  const call = state.callStatusData?.voiceCalls?.[0];
+  const hasDevice = Boolean(state.atPort) && state.cardReady !== false;
+  let key = !hasDevice ? "callConnectFirst" : !state.callActionsEnabled ? "callControlsLocked" : !state.callStatusData ? "callChecking" : call ? "callInProgressHint" : "callReadyFeedback";
+  if (hasDevice && state.callStatusReadError) key = "callReadFailed";
+  document.querySelector("#callAvailability").textContent = t(key);
+  if (!call) document.querySelector("#callStateLabel").textContent = t(!hasDevice ? "cardNotConnected" : !state.callActionsEnabled ? "callReadOnly" : !state.callStatusData ? "callChecking" : "callIdle");
+  if (!call && state.callStatusReadError) document.querySelector("#callStateLabel").textContent = t("callStatusUncertain");
+  document.querySelector(".call-inline-control").hidden = !call || !["active", "held"].includes(call.state);
+  document.querySelector(".call-primary-actions").hidden = !call;
+  document.querySelector(".call-audio-actions").hidden = !call && !state.audioBridge;
+  renderCallNextStep(call, hasDevice);
+}
+
+
+function renderCallNextStep(call, hasDevice) {
+  document.querySelector(".call-identity").hidden = !call;
+  document.querySelector("#callNextStep").hidden = Boolean(call);
+  const button = document.querySelector("#callNextBtn");
+  const uncertain = state.callStatusReadError || state.callStatusData?.ok !== true;
+  const key = !hasDevice ? "callNextDisconnected" : !state.callActionsEnabled ? "callNextLocked" : uncertain ? "callNextWaiting" : "callNextReady";
+  document.querySelector("#callNextDescription").textContent = t(key);
+  button.hidden = Boolean(call) || (hasDevice && !state.callActionsEnabled);
+  button.dataset.next = !hasDevice ? "scan" : uncertain ? "retry" : "dial";
+  button.textContent = t(!hasDevice ? "autoScan" : uncertain ? "callRetryStatus" : "callFocusDialer");
+  button.disabled = state.busy || state.callRefreshInFlight;
+  const runtime = state.voiceRuntimeStatus?.runtime, usb = state.voiceRuntimeStatus?.voiceUsb;
+  const audioKey = !hasDevice || !state.callCapabilityData?.ok || state.voiceRuntimeStatus?.ok !== true ? "voiceSummaryUnknown"
+    : !localAudioBridgeHost ? "voiceSummaryRemote"
+    : !state.callCapabilityData.voiceSetupSupported ? "voiceSummaryUnsupported"
+    : !runtime?.local?.downloaded ? "voiceSummaryRuntime"
+    : !usb?.adbWinUsb || !usb?.standardUsbAudio ? "voiceSummaryUsb"
+    : !runtime?.prepared || !runtime?.adb?.root || !runtime?.adb?.kernelCompatible ? "voiceSummaryPrepare" : "voiceSummaryReady";
+  document.querySelector("#voiceSetupSummary").textContent = t(audioKey);
+}
+
+function confirmOperation({title, description, details = [], confirmLabel}) {
+  if (state.confirming || state.busy) return Promise.resolve(false);
+  state.confirming = true;
+  const dialog = document.querySelector("#actionConfirmDialog");
+  document.querySelector("#actionConfirmTitle").textContent = title;
+  document.querySelector("#actionConfirmDescription").textContent = description;
+  const list = document.querySelector("#actionConfirmDetails");
+  list.replaceChildren();
+  for (const [label, value] of details) {
+    const row = document.createElement("div"), name = document.createElement("dt"), detail = document.createElement("dd");
+    name.textContent = label; detail.textContent = value; row.append(name, detail); list.append(row);
+  }
+  document.querySelector("#actionConfirmSubmit").textContent = confirmLabel;
+  dialog.returnValue = "cancel";
+  dialog.showModal();
+  document.querySelector("#actionConfirmCancel").focus();
+  return new Promise(resolve => dialog.addEventListener("close", () => {state.confirming = false; resolve(dialog.returnValue === "confirm");}, {once:true}));
+}
+
+function ensureCurrentViewLoaded() {
+  const target = document.querySelector(".view.active")?.id;
+  if (state.failedViews.has(target)) return;
+  if (!state.started || state.busy || state.connecting || state.autoLoadedViews.has(target)) return;
+  state.autoLoadedViews.add(target);
+  if (target === "sms") {state.smsPolling = true; renderSmsRefreshState(); callApi("sms-list");}
+  if (target === "network") callApi("network-traffic");
+  if (target === "euicc") callApi("euicc-inventory");
+}
+
 function renderSms(text, data = {}) {
   state.smsText = text;
   const list = document.querySelector("#smsList");
-  const count = document.querySelector("#smsCount");
-  renderSmsStorage(data.storage || parseSmsStorageText(text));
+  const wasAtBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
+  state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
+  renderSmsStorage(state.smsStorage);
   const matches = [...text.matchAll(/\+CMGL:\s*([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n\+CMGL:|\r?\nOK|$)/g)];
-  count.textContent = String(matches.length);
-  if (!matches.length) { list.className = "sms-list empty"; list.textContent = text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"); return; }
-  list.className = "sms-list";
-  list.innerHTML = matches.map((match) => {
-    const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]);
-    const status = smsStatus(rawStatus || "READ");
-    const body = decodeSmsBody(match[2]);
-    const code = extractVerificationCode(body);
-    const avatar = String(sender || "").replace(/\D/g, "").slice(-2) || "SMS";
-    return `<article class="sms-card">
-      <div class="sms-card-head">
-        <div class="sms-contact-wrap"><span class="sms-contact-avatar">${escapeHtml(avatar)}</span><div class="sms-contact"><span>${escapeHtml(t("smsFrom"))}</span><strong>${escapeHtml(sender || t("unknown"))}</strong></div></div>
-        <span class="sms-status ${status.className}">${escapeHtml(status.label)}</span>
-      </div>
-      ${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}
-      <p class="sms-body">${escapeHtml(body)}</p>
-      ${code ? `<div class="sms-code"><span>${escapeHtml(t("otpCode"))}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${escapeHtml(t("copyCode"))}</button></div>` : ""}
-      <div class="sms-card-foot"><span>${escapeHtml(t("smsMessageNumber", { value: index || "-" }))}</span><button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index || "")}"${state.smsDeleteEnabled ? "" : " disabled"}>${escapeHtml(t("deleteSms"))}</button></div>
-    </article>`;
-  }).join("");
-  for (const button of list.querySelectorAll("button[data-copy-code]")) button.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(button.dataset.copyCode);
-    button.textContent = t("copied");
-  });
-  for (const button of list.querySelectorAll("button[data-sms-delete]")) {
-    button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
+  const storedSent = matches.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "sent").map(m => normalizePhone(parseAtCsv(m[1])[2]) + "\n" + decodeSmsBody(m[2]));
+  for (const sent of state.smsSentThisSession) {
+    const key = sent.number + "\n" + sent.message, index = storedSent.indexOf(key);
+    if (index >= 0) {storedSent.splice(index, 1); continue;}
+    const match = ["", `local,"STO SENT","${sent.number}","","${sent.time}"`, sent.message];
+    match.local = true; matches.push(match);
   }
+  const groups = new Map();
+  for (const match of matches) {
+    const sender = normalizePhone(parseAtCsv(match[1])[2] || "");
+    if (!groups.has(sender)) groups.set(sender, []);
+    groups.get(sender).push(match);
+  }
+  for (const [key, draft] of state.smsDrafts) if (key !== "new" && draft.message && !groups.has(key)) groups.set(key, []);
+  if (!state.smsNewDraft && !groups.has(state.smsActiveSender)) {
+    if (document.querySelector("#smsMessageInput").value.trim()) {saveSmsDraft(); groups.set(state.smsActiveSender, []);}
+    else {state.smsActiveSender = groups.keys().next().value ?? null; document.querySelector("#smsNumberInput").value = state.smsActiveSender ?? "";}
+  }
+  const threads = document.querySelector("#smsThreads");
+  const filtered = [...groups].filter(([sender, messages]) => (sender + " " + messages.map(m => decodeSmsBody(m[2])).join(" ") + " " + (state.smsDrafts.get(sender)?.message || "")).toLowerCase().includes(state.smsQuery.toLowerCase()));
+  threads.className = "sms-threads" + (filtered.length ? "" : " empty");
+  const threadHtml = filtered.map(([sender, messages]) => {
+    const unread = messages.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "unread").length;
+    const draft = state.smsDrafts.get(sender)?.message;
+    const preview = messages.length ? decodeSmsBody(messages.at(-1)[2]) : t("draftKept");
+    return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${escapeHtml(sender || t("unknown"))}</strong><small>${escapeHtml(preview)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
+  }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t("noSms"));
+  if (threads.dataset.markup !== threadHtml) {
+    threads.innerHTML = threadHtml; threads.dataset.markup = threadHtml;
+    for (const button of threads.querySelectorAll("[data-sms-thread]")) button.addEventListener("click", () => selectSmsConversation(button.dataset.smsThread));
+  }
+  const visible = state.smsNewDraft ? [] : (groups.get(state.smsActiveSender) || []);
+  document.querySelector("#smsCount").textContent = t(visible.length === 1 ? "conversationMessage" : "conversationMessages", {count:visible.length});
+  document.querySelector("#smsConversationTitle").textContent = state.smsNewDraft ? t("newMessage") : (state.smsActiveSender || t("smsInbox"));
+  list.className = "sms-list" + (visible.length ? "" : " empty");
+  const markup = visible.map(match => {
+    const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]), status = smsStatus(rawStatus || "READ"), body = decodeSmsBody(match[2]), code = extractVerificationCode(body);
+    return `<article class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}"><div class="sms-card-head"><div class="sms-contact"><strong>${escapeHtml(sender || t("unknown"))}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}<p class="sms-body">${escapeHtml(body)}</p>${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}<div class="sms-card-foot"><span>${escapeHtml(match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index}))}</span>${match.local ? "" : `<button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index)}" ${state.smsDeleteEnabled ? "" : "disabled"}>${t("deleteSms")}</button>`}</div></article>`;
+  }).join("") || escapeHtml(state.smsNewDraft || state.smsDrafts.get(state.smsActiveSender)?.message ? t("newMessageHint") : state.smsLastRead || text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"));
+  if (list.dataset.markup !== markup) {
+    list.innerHTML = markup; list.dataset.markup = markup;
+    for (const button of list.querySelectorAll("[data-copy-code]")) button.addEventListener("click", async () => {try {await navigator.clipboard.writeText(button.dataset.copyCode); button.textContent = t("copied");} catch {setSmsFeedback("copyCodeFailed", "error");}});
+    for (const button of list.querySelectorAll("[data-sms-delete]")) button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
+    if (wasAtBottom) list.scrollTop = list.scrollHeight;
+  }
+  updateSmsComposer(); renderSmsRefreshState();
 }
+
+function selectSmsConversation(sender) {
+  saveSmsDraft();
+  state.smsActiveSender = sender; state.smsNewDraft = sender === null;
+  const draft = state.smsDrafts.get(sender === null ? "new" : sender);
+  document.querySelector("#smsNumberInput").value = draft?.number ?? sender ?? "";
+  document.querySelector("#smsMessageInput").value = draft?.message ?? "";
+  setSmsFeedback(null); renderSms(state.smsText);
+  const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
+  document.querySelector(sender === null ? "#smsNumberInput" : "#smsMessageInput").focus();
+}
+
+async function sendSmsMessage() {
+  if (state.busy || state.smsSending || state.confirming) return;
+  const number = normalizePhone(document.querySelector("#smsNumberInput").value), message = document.querySelector("#smsMessageInput").value.trim();
+  if (!state.smsSendEnabled) {setSmsFeedback("smsSendLocked", "error"); return;}
+  if (!/^\+?[0-9]{3,20}$/.test(number) || !message || message.length > 480) {setSmsFeedback("invalidSms", "error"); return;}
+  const epoch = state.cardEpoch, key = smsDraftKey();
+  if (!await confirmOperation({title:t("sendSms"), description:t("smsConfirmDescription"), details:[[t("recipient"), number], [t("message"), message]], confirmLabel:t("sendSms")})) return;
+  if (epoch !== state.cardEpoch) {setSmsFeedback("cardChangedRetry", "error"); return;}
+  state.smsSending = true; setBusy(true, "sendSms"); setSmsFeedback("smsSending", "working", {number});
+  try {
+    const found = await requestAction("find-at"); updateSummary(found.text);
+    if (!state.atPort || epoch !== state.cardEpoch) throw new Error("Card unavailable");
+    const res = await fetch(`/api/sms-send?port=${encodeURIComponent(state.atPort)}`, {method:"POST", headers:apiHeaders({"content-type":"application/json"}), body:JSON.stringify({number, message, confirm:"SEND"})});
+    const data = await res.json(); append(t("sendSms"), textFromResult(data) || JSON.stringify(data));
+    if (!res.ok || data.ok === false) throw new Error(data.error || "Send failed");
+    if (epoch !== state.cardEpoch) return;
+    state.smsSentThisSession.push({number, message, time:new Date().toLocaleTimeString()});
+    if (state.smsDrafts.get(key)?.message.trim() === message) state.smsDrafts.delete(key);
+    if (smsDraftKey() === key && document.querySelector("#smsMessageInput").value.trim() === message && normalizePhone(document.querySelector("#smsNumberInput").value) === number) {
+      document.querySelector("#smsMessageInput").value = ""; state.smsActiveSender = number; state.smsNewDraft = false;
+    }
+    renderSms(state.smsText); setSmsFeedback("smsSentTo", "success", {number});
+  } catch (error) {if (epoch === state.cardEpoch) setSmsFeedback("smsSendFailedDraft", "error"); append(t("sendSms"), error.message);}
+  finally {state.smsSending = false; setBusy(false);}
+}
+
 
 function callStateText(call) {
   const key = ({ active: "callActive", held: "callHeld", dialing: "callDialing", alerting: "callAlerting", incoming: "callIncoming", waiting: "callWaiting", disconnected: "callDisconnected" })[call?.state];
@@ -1034,7 +1255,7 @@ async function startAudioBridge() {
 
 function syncCallButtons() {
   const call = state.callStatusData?.voiceCalls?.[0] || null;
-  const locked = !state.callActionsEnabled || state.callActionInFlight;
+  const locked = !state.callActionsEnabled || state.callActionInFlight || state.busy || !state.atPort || state.cardReady === false;
   const incoming = call && ["incoming", "waiting"].includes(call.state);
   const connected = call && ["active", "held"].includes(call.state);
   const answer = document.querySelector("#answerCallBtn");
@@ -1052,15 +1273,18 @@ function syncCallButtons() {
   );
   if (answer) answer.disabled = locked || !incoming;
   if (hangup) hangup.disabled = locked || !call;
-  if (dial) dial.disabled = locked || Boolean(call);
+  if (dial) dial.disabled = locked || state.callStatusReadError || state.callStatusData?.ok !== true || Boolean(call) || !/^\+?[0-9]{3,20}$/.test(normalizePhone(document.querySelector("#callNumberInput").value));
   if (dtmf) dtmf.disabled = locked || !connected;
   if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
   if (startAudio) startAudio.disabled = state.audioBridgeStarting || Boolean(state.audioBridge) || !connected || !audioReady;
   if (stopAudio) stopAudio.disabled = !state.audioBridge && !state.callStatusData?.voiceRouteActive;
   if (refreshSetup) refreshSetup.disabled = state.voiceSetupBusy;
+  renderCallGuidance();
 }
 
 function renderCallStatus(data) {
+  if (data?.ok === false) {state.callStatusReadError = true; syncCallButtons(); return;}
+  state.callStatusReadError = false;
   state.callStatusData = data;
   const call = Array.isArray(data?.voiceCalls) ? data.voiceCalls[0] || null : null;
   const endedCall = !call && Boolean(state.lastVoiceCall);
@@ -1087,7 +1311,7 @@ function renderCallStatus(data) {
     statusPill.classList.add("incoming");
   } else {
     statusPill.classList.remove("incoming");
-    if (!state.busy) statusPill.textContent = t("idle");
+    renderConnectionState();
   }
   syncCallButtons();
 }
@@ -1126,9 +1350,12 @@ async function refreshCallStatusQuietly(force = false) {
     const { data } = await requestAction("call-status");
     renderCallStatus(data);
   } catch (error) {
+    state.callStatusReadError = true;
+    syncCallButtons();
     if (force) append(t("callStatus"), error.message);
   } finally {
     state.callRefreshInFlight = false;
+    syncCallButtons();
   }
 }
 
@@ -1150,6 +1377,7 @@ function setCallFeedback(message, tone = "neutral") {
 }
 
 async function runCallAction(action) {
+  if (state.busy || state.callActionInFlight || state.confirming) return;
   if (!state.callActionsEnabled) {
     setCallFeedback(t("callControlsLocked"), "error");
     append(t("calls"), t("callControlsLocked"));
@@ -1160,7 +1388,7 @@ async function runCallAction(action) {
   let label = t("calls");
   let successKey = "dialAccepted";
   if (action === "dial") {
-    body.number = document.querySelector("#callNumberInput").value.trim();
+    body.number = normalizePhone(document.querySelector("#callNumberInput").value);
     if (!/^\+?[0-9]{3,20}$/.test(body.number)) {
       setCallFeedback(t("invalidCallNumber"), "error");
       return;
@@ -1221,6 +1449,8 @@ async function runCallAction(action) {
 }
 
 function updateProfileHint() {
+  document.querySelector("#profileWriteState").textContent = t("profileWritesLocked");
+  document.querySelector("#profileWriteState").hidden = state.profileActionsEnabled;
   document.querySelector("#profileActionsHint").textContent = state.profileActionsEnabled ? t("profileWritesEnabled") : t("profileWritesLocked");
   document.querySelector("#profileDownloadHint").textContent = state.profileDownloadEnabled ? t("profileDownloadEnabled") : t("profileDownloadLocked");
   document.querySelector("#profileNotificationsHint").textContent = state.profileNotificationsEnabled ? t("profileNotificationsEnabled") : t("profileNotificationsLocked");
@@ -1253,6 +1483,8 @@ function applyHealth(data) {
 }
 
 async function callApi(action) {
+  const view = document.querySelector(".view.active")?.id;
+  if (action === "sms-list") {state.smsRefreshing = true; renderSmsRefreshState();}
   setBusy(true, action === "health" ? "checking" : "running");
   try {
     if (action === "sms-list" || (action === "euicc-inventory" && !state.atPort)) {
@@ -1260,9 +1492,14 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text, data); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
-  catch (error) { showFeedback(t("actionFailed", { action: actionTitle(action) }), "error"); append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message); }
-  finally { setBusy(false); }
+    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") {if (data.ok === false) throw new Error(data.error || "SMS read failed"); state.smsLastRead = Date.now(); state.smsReadError = false; renderSms(text, data);} if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+  catch (error) {
+    state.failedViews.add(view); state.autoLoadedViews.delete(view);
+    if (action === "sms-list") state.smsReadError = true;
+    else showFeedback(t("actionFailed", {action:actionTitle(action)}), "error", view);
+    append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message);
+  }
+  finally {if (action === "sms-list") {state.smsRefreshing = false; renderSmsRefreshState();} setBusy(false);}
 }
 
 async function rescueScan() {
@@ -1377,14 +1614,25 @@ async function sendAt() {
 }
 
 async function runProfileAction(action, id) {
-  const label = action === "enable" ? t("switchProfile") : t("disable");
-  if (!state.activeAid) { append(label, t("selectEidFirst")); return; }
-  if (!state.profileActionsEnabled) { append(label, t("locked")); return; }
-  if (!window.confirm(t("confirmProfile", { action: label.toLowerCase() }))) return;
+  const label = action === "enable" ? t("switchProfile") : t("disable"), item = activeEuicc();
+  if (state.busy || !state.profileActionsEnabled || !item || !state.activeAid) return;
+  const aid = state.activeAid, epoch = state.cardEpoch;
+  const profile = item.profiles?.find(p => (p.iccid || p.isdpAid) === id);
+  if (!profile) return;
+  if (!await confirmOperation({title:label, description:t("confirmProfile", {action:label}), details:[[t("confirmTarget"), euiccDisplayLabel(item, state.euiccInventory.indexOf(item)) + " · " + shortEid(item.eid)], [t("profileNameLabel"), profile.profileNickname || profile.profileName || profile.serviceProviderName || id]], confirmLabel:label})) return;
+  if (epoch !== state.cardEpoch || aid !== state.activeAid) {showFeedback(t("cardChangedRetry"), "error"); return;}
   setBusy(true, action);
-  try { const found = await requestAction("find-at"); append(actionTitle("find-at"), found.text); updateSummary(found.text); const port = encodeURIComponent(portInput.value.trim()); const res = await fetch(`/api/lpac-profile-action?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ action, id, aid: state.activeAid, confirm: action.toUpperCase() }) }); const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data, null, 2)); if (res.ok) await callApi("lpac-profiles"); }
-  catch (error) { append(label, error.stack || error.message); }
-  finally { setBusy(false); }
+  try {
+    const found = await requestAction("find-at"); updateSummary(found.text);
+    if (!state.atPort || epoch !== state.cardEpoch) throw new Error("Card unavailable");
+    const res = await fetch('/api/lpac-profile-action?port=' + encodeURIComponent(state.atPort), {method:"POST", headers:apiHeaders({"content-type":"application/json"}), body:JSON.stringify({action, id, aid, confirm:action.toUpperCase()})});
+    const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data));
+    if (!res.ok || data.ok === false) throw new Error(data.error || "Profile action failed");
+    const refreshed = await requestAction("lpac-profiles");
+    if (!refreshed.data.ok || !Array.isArray(parseLpaData(refreshed.text))) throw new Error("Could not confirm profile state");
+    renderProfiles(refreshed.text); showFeedback(t("profileActionDone", {action:label}), "success", "euicc");
+  } catch (error) {showFeedback(t("profileActionFailed"), "error", "euicc"); append(label, error.message);}
+  finally {setBusy(false);}
 }
 
 async function deleteProfile(id) {
@@ -1493,26 +1741,6 @@ async function processNotifications() {
     append(t("profileNotifications"), textFromResult(data) || JSON.stringify(data, null, 2));
     if (res.ok) await callApi("lpac-notifications");
   } catch (error) { append(t("profileNotifications"), error.stack || error.message); }
-  finally { setBusy(false); }
-}
-
-async function sendSmsMessage() {
-  const number = document.querySelector("#smsNumberInput").value.trim();
-  const message = document.querySelector("#smsMessageInput").value.trim();
-  if (!state.smsSendEnabled) { append(t("sendSms"), t("smsSendLocked")); return; }
-  if (!/^\+?[0-9]{3,20}$/.test(number) || !message || message.length > 480) { append(t("sendSms"), t("invalidSms")); return; }
-  if (!window.confirm(t("confirmSms"))) return;
-  setBusy(true, "sendSms");
-  try {
-    const found = await requestAction("find-at");
-    append(actionTitle("find-at"), found.text);
-    updateSummary(found.text);
-    const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/sms-send?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ number, message, confirm: "SEND" }) });
-    const data = await res.json();
-    append(t("sendSms"), textFromResult(data) || JSON.stringify(data, null, 2));
-    if (res.ok) { document.querySelector("#smsMessageInput").value = ""; }
-  } catch (error) { append(t("sendSms"), error.stack || error.message); }
   finally { setBusy(false); }
 }
 
@@ -1645,13 +1873,10 @@ async function copyPairingLink() {
 }
 
 function toggleSmsPolling() {
-  state.smsPolling = !state.smsPolling;
-  const button = document.querySelector("#smsPollingBtn");
-  button.textContent = state.smsPolling ? t("stopPolling") : t("startPolling");
-  if (state.smsPolling) callApi("sms-list");
+  state.smsPolling = !state.smsPolling; renderSmsRefreshState();
+  if (state.smsPolling) refreshSmsQuietly();
 }
-
-setInterval(() => { if (state.smsPolling && !state.busy) callApi("sms-list"); }, 20000);
+setInterval(() => {if (state.smsPolling && document.querySelector("#sms").classList.contains("active")) refreshSmsQuietly();}, 20000);
 setInterval(refreshTrafficQuietly, 2000);
 setInterval(refreshCallStatusQuietly, 3500);
 
@@ -1671,15 +1896,13 @@ function selectView(target, updateHash = false) {
   document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
   button.classList.add("active");
   view.classList.add("active");
-  if (updateHash) history.replaceState(null, "", `#${target}`);
+  showFeedback("");
+  document.querySelectorAll(".nav-btn").forEach(item => item.setAttribute("aria-current", item === button ? "page" : "false"));
+  if (updateHash) { history.replaceState(null, "", `#${target}`); resetViewScroll(); }
   if (target === "calls" && !state.callMonitoring) toggleCallMonitoring(true);
   if (target === "calls" && !state.callCapabilityData) refreshVoiceSetup();
-  if (state.started && !state.busy && !state.autoLoadedViews.has(target)) {
-    state.autoLoadedViews.add(target);
-    if (target === "sms") { state.smsPolling = true; callApi("sms-list"); }
-    if (target === "network") callApi("network-traffic");
-    if (target === "euicc") callApi("euicc-inventory");
-  }
+  state.failedViews.delete(target);
+  ensureCurrentViewLoaded();
 }
 
 function resetViewScroll() {
@@ -1706,7 +1929,26 @@ document.querySelector("#sendAtBtn").addEventListener("click", sendAt);
 document.querySelector("#downloadProfileBtn").addEventListener("click", downloadProfile);
 document.querySelector("#addEuiccAidBtn").addEventListener("click", addEuiccAid);
 document.querySelector("#processNotificationsBtn").addEventListener("click", processNotifications);
+document.querySelector("#renameSelectedEidBtn").addEventListener("click", () => {if (state.activeEid && !state.busy) renameEuicc(state.activeEid);});
+document.querySelector("#callNextBtn").addEventListener("click", () => {
+  const next = document.querySelector("#callNextBtn").dataset.next;
+  if (next === "scan") document.querySelector("#autoScanBtn").click();
+  else if (next === "retry") refreshCallStatusQuietly(true);
+  else document.querySelector("#callNumberInput").focus();
+});
 document.querySelector("#sendSmsBtn").addEventListener("click", sendSmsMessage);
+document.querySelector("#newSmsBtn").addEventListener("click", () => selectSmsConversation(null));
+document.querySelector("#smsSearchInput").addEventListener("input", event => { state.smsQuery = event.target.value; renderSms(state.smsText); });
+document.querySelector("#smsNumberInput").addEventListener("input", () => {
+  if (!state.smsNewDraft && state.smsActiveSender) state.smsDrafts.set(state.smsActiveSender, {number:state.smsActiveSender, message:document.querySelector("#smsMessageInput").value});
+  state.smsNewDraft = true; state.smsActiveSender = null; saveSmsDraft(); renderSms(state.smsText);
+});
+document.querySelector("#smsMessageInput").addEventListener("input", saveSmsDraft);
+document.querySelector("#smsMessageInput").addEventListener("keydown", event => {if (event.ctrlKey && event.key === "Enter" && !event.isComposing) {event.preventDefault(); if (!document.querySelector("#sendSmsBtn").disabled) sendSmsMessage();}});
+document.querySelector("#smsRetryBtn").addEventListener("click", refreshSmsQuietly);
+document.querySelector("#dismissFeedbackBtn").addEventListener("click", () => showFeedback(""));
+document.querySelector("#callNumberInput").addEventListener("input", syncCallButtons);
+document.querySelector("#callNumberInput").addEventListener("keydown", event => {if (event.key === "Enter" && !event.isComposing && !document.querySelector("#dialCallBtn").disabled) runCallAction("dial");});
 document.querySelector("#callMonitorBtn")?.addEventListener("click", () => toggleCallMonitoring());
 document.querySelector("#dialCallBtn").addEventListener("click", () => runCallAction("dial"));
 document.querySelector("#answerCallBtn").addEventListener("click", () => runCallAction("answer"));
@@ -1723,12 +1965,12 @@ document.querySelector("#restoreVoiceUsbBtn").addEventListener("click", () => ru
 for (const button of document.querySelectorAll("[data-dial-key]")) button.addEventListener("click", () => {
   const activeCall = state.callStatusData?.voiceCalls?.[0];
   const target = activeCall ? document.querySelector("#dtmfInput") : document.querySelector("#callNumberInput");
-  target.value += button.dataset.dialKey;
+  target.value += button.dataset.dialKey; syncCallButtons();
 });
 document.querySelector("#dialBackspaceBtn").addEventListener("click", () => {
   const activeCall = state.callStatusData?.voiceCalls?.[0];
   const target = activeCall ? document.querySelector("#dtmfInput") : document.querySelector("#callNumberInput");
-  target.value = target.value.slice(0, -1);
+  target.value = target.value.slice(0, -1); syncCallButtons();
 });
 document.querySelector("#sendUssdBtn").addEventListener("click", sendUssdRequest);
 document.querySelector("#installEcmDriverBtn").addEventListener("click", installEcmDriver);

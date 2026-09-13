@@ -17,5 +17,12 @@ function refreshDesktopIcons() {
     icon.setAttribute("aria-hidden", "true");
     button.prepend(icon);
   }
+  for (const button of document.querySelectorAll("[data-open-view]")) {
+    if (button.querySelector("svg, [data-lucide]")) continue;
+    const icon = document.createElement("i");
+    icon.dataset.lucide = navigation[button.dataset.openView];
+    icon.setAttribute("aria-hidden", "true");
+    button.prepend(icon);
+  }
   lucide.createIcons();
 }
