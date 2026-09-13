@@ -1,6 +1,10 @@
-# iPhone / iPad 原生客户端安装说明
+# iOS 状态与实验性远程客户端
 
-DJI 4G Assistant 现在包含一个真正的 SwiftUI iOS / iPadOS 客户端。它会在同一局域网自动发现 Windows 主机，通过系统相机扫码配对，并把控制密码保存在 Apple Keychain。配对一次后，App 可打开完整的短信、eSIM、网络、电话和诊断界面。
+**模块直插 iPhone / iPad、无需 Windows 的独立管理 App 尚未实现。** 这是后续需要验证的目标，不是当前版本已有功能。现有 `ios/` 源码和 iOS 构建产物均不具备该能力。
+
+远程客户端会继续开发完善，直插独立版也保留为后续方向。前者用于从手机或平板管理电脑连接的模块，后者目标是离开电脑使用；两者分别说明进度，不以远程客户端的完成代替直插版。
+
+本文只供开发者测试已有的实验性远程客户端。它通过局域网连接 Windows 主机，扫码配对后显示管理界面，控制密码保存在 Apple Keychain。模块必须插在 Windows 电脑上，电脑保持运行。普通 Windows 用户无需安装它；手机和平板远程访问可使用浏览器。
 
 ## 先理解连接方式
 
@@ -10,7 +14,7 @@ DJI 4G 模块 -> Windows 电脑上的 DJI 4G Assistant -> 同一 Wi-Fi -> iPhone
 
 Windows 电脑仍负责 USB、AT 串口、lpac 和通话音频。iPhone/iPad 负责显示和控制，所以 Windows 程序必须保持运行。
 
-这不是“把普通 USB 模块直接插到 iPad 后读取 AT 串口”的 DriverKit 版本。直接 USB 驱动仍需要 Apple 授予 DriverKit entitlement、专门的驱动扩展和实机审核；当前 App 不会尝试绕过 iOS 权限。
+模块直插独立管理需要另行验证 iPhone 和 iPad 的设备接口访问能力、权限与硬件兼容性，尚未确定支持范围或发布时间。不能把某些设备直插能够上网，或远程客户端编译成功，当作直接读取短信、管理 eSIM 或接打电话已经可用的证据。
 
 ## 真机安装为什么多一步
 
@@ -24,9 +28,9 @@ Apple 要求 iPhone/iPad App 必须经过有效代码签名。仓库没有保存
 
 GitHub Actions 的最新绿色 **Build iOS companion** 任务会生成这些文件。它们暂时作为 Actions Artifact 保存，不会在没有确认的情况下自动发布到 Releases。
 
-## Windows 用户安装到 iPhone / iPad
+## 开发测试：安装远程客户端
 
-当前最直接的测试方式是使用 [Sideloadly 官方网站](https://sideloadly.io/)提供的 Windows 工具，用自己的 Apple ID 给未签名 IPA 签名：
+以下仅为实验性远程客户端的签名测试步骤；完成安装后仍需 Windows 主机。可使用 [Sideloadly 官方网站](https://sideloadly.io/)提供的 Windows 工具，用自己的 Apple ID 给未签名 IPA 签名：
 
 1. 在仓库的 **Actions** 页面打开最新成功的 **Build iOS companion**。
 2. 下载页面底部的 **DJI-4G-Assistant-iOS** Artifact 并解压。
@@ -63,7 +67,7 @@ App 会通过 Bonjour 自动发现 **_dji4g._tcp** 服务。桌面版控制密�
 
 当前不能：
 
-- 模块直插 iPad 后直接读取通用 USB AT 串口。
+- 模块直插 iPhone/iPad 后独立管理短信、eSIM、网络或电话。
 - 把 Windows USB 通话声音直接送到 iPad。电话可以远程控制，但声音仍在插着模块的 Windows 电脑上处理。
 - 在 Windows 程序关闭、电脑休眠或不在同一可达局域网时继续管理模块。
 - 绕过 Apple 代码签名直接安装 IPA。

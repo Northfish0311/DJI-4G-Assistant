@@ -1,6 +1,10 @@
 # DJI 4G Assistant（大疆 4G 助手）
 
-DJI 4G Assistant（大疆 4G 助手）是一套 Windows 主机程序与原生 iPhone/iPad 客户端，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
+DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
+
+**iPhone / iPad 直插独立版尚未实现。** 目标是模块直接插在 iPhone 或 iPad 上，由独立 App 管理短信、eSIM 和网络，无需 Windows。仓库现有的 `ios/` 代码仅为依赖 Windows 的实验性远程客户端，不能用来直接管理插在手机或平板上的模块。
+
+远程客户端会继续完善，方便在手机或平板上管理电脑连接的模块；直插独立版是另一条开发方向。两种方式用途不同，说明中的支持状态分别列出。
 
 这是目前唯一维护的完整版本。
 
@@ -42,12 +46,13 @@ Releases 页面中的文件用途如下：
 2. Windows 显示“Windows 已保护你的电脑”时，选择“更多信息”，再选择“仍要运行”。
 3. 如果文件不是从本仓库 Releases 下载，或者 SHA256 与发布页不一致，请停止安装并删除文件。
 
-[详细中文使用说明](docs/使用说明.md) · [iPhone/iPad 安装说明](docs/iOS安装说明.md) · [硬件安全说明](docs/safety.md) · [安全策略](SECURITY.md)
+[详细中文使用说明](docs/使用说明.md) · [iOS 状态与实验性远程客户端](docs/iOS安装说明.md) · [硬件安全说明](docs/safety.md) · [安全策略](SECURITY.md)
 
 ## 一个程序包含的功能
 
 - **设备发现**：USB 身份、COM 口、模块型号、SIM、运营商、信号、注册状态、APN、PDP 和模块 IP。
-- **iPhone/iPad 原生客户端**：Bonjour 自动发现 Windows 主机、系统相机扫码配对、Keychain 保存控制密码，并以原生导航打开完整管理界面。
+- **局域网浏览器访问**：手机和平板可访问 Windows 程序的管理页面；模块必须插在 Windows 电脑上，电脑保持运行。
+- **iPhone/iPad 远程客户端（实验性，继续完善）**：通过局域网发现 Windows 主机、扫码配对并保存连接信息，方便从手机或平板打开管理界面；同样依赖 Windows 主机。
 - **网络面板**：Windows 网卡状态、IPv4、网关、DHCP、驱动版本和本次运行的收发流量；可修复已验证设备的 Windows ECM 驱动。
 - **eSIM 管理**：自动发现并按 EID 去重多个 eUICC 空间，支持本地分类备注；在所选 EID 内列出 Profile、启用、停用、改昵称、下载、处理通知，并在双重确认后删除未启用 Profile。
 - **短信**：读取收件箱、发送 UCS2/PDU 中文和长短信、提取常见 4–8 位验证码，并显示存储容量；满仓时可逐条确认删除。
@@ -64,17 +69,19 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 桌面版第一次运行会为当前 Windows 用户生成一个随机控制密码，并只保存在应用数据目录。它会在以后启动时继续使用，让 iPhone/iPad 配对一次后无需每次重扫。源码版 Start-Web-Console.cmd 仍为每次启动生成临时密码。
 
-### iPhone / iPad 原生 App
+### iPhone / iPad 支持状态
 
-1. 让 Windows 电脑和 iPhone/iPad 连接同一可信 Wi-Fi。
-2. 保持 Windows DJI 4G Assistant 运行，点击顶部“连接 iPhone / iPad”。
-3. 在 iOS App 中点击“扫描配对码”，允许相机和本地网络权限。
-4. 扫描电脑显示的二维码，即可管理短信、eSIM、网络、电话和诊断。
-5. App 会把密码保存在 Apple Keychain；选择“忘记这台电脑”可清除。
+| 使用方式 | 模块插在哪里 | 当前状态 |
+| --- | --- | --- |
+| 手机或平板浏览器远程管理 | Windows 电脑 | 已提供，电脑需保持运行 |
+| iPhone/iPad App 远程管理 | Windows 电脑 | 实验性客户端，继续完善 |
+| iPhone/iPad App 直插独立管理 | iPhone 或 iPad | 尚未实现，需验证设备访问能力 |
 
-原生 App 的源码位于 **ios/**，GitHub 的绿色 **Build iOS companion** 工作流会生成模拟器包和明确标注的未签名真机 IPA。Apple 要求真机 App 必须签名，普通 Windows 用户可用自己的 Apple ID 通过 Sideloadly 签名测试；模拟器 ZIP 不能安装到真实设备。完整步骤见 [iPhone/iPad 安装说明](docs/iOS安装说明.md)。
+**模块直插、独立管理：尚未实现，也没有可供普通用户安装的直插版 App。** iPhone 和 iPad 的设备访问能力需要分别验证，当前不承诺支持范围或完成时间。
 
-iOS App 管理的是插在 Windows 上的模块。Windows 必须保持运行；拨号、接听等控制可远程操作，但 USB 通话声音仍在 Windows 电脑上处理。模块直插 iPad 后读取 AT/eSIM 仍需要 Apple 批准的 DriverKit 路线，当前没有冒充支持。
+现有 `ios/` 和 **Build iOS companion** 构建产物属于实验性远程客户端，管理的是插在 Windows 上的模块。Windows 必须保持运行；电话控制可远程操作，通话声音仍在 Windows 端处理。签名或安装这些产物不会增加模块直插管理能力。
+
+普通用户远程管理可直接使用浏览器，无需安装上述实验客户端。开发测试步骤单独保留在 [iOS 状态与实验性远程客户端](docs/iOS安装说明.md)。模块直插后能够上网，不代表 App 已能读取短信、管理 eSIM 或接打电话。
 
 **127.0.0.1** 永远表示当前设备自己，不能把电脑上的本机地址原样输入手机。不要把管理端口映射到公网或无认证隧道。
 
@@ -156,7 +163,7 @@ ESTK SE0/SE1 的协议标识来自 [ESTK 官方 OpenEUICC 厂商定义](https://
 - VoHive 的代理池、Linux 网络命名空间和 VoWiFi/IMS 实验依赖 Linux 驱动及网络栈，当前 Windows 版不提供虚假按钮。
 - 短信、USSD 和漫游数据最终取决于固件、运营商及套餐权限。
 - 电话控制需要 SIM/套餐支持语音或 VoLTE；能拨号不等于一定有声音。QDC507 声音向导只在用户确认后修改 ADB/UAC，并按需临时加载固定哈希运行时；未知固件不会开放。该声音路线仍属实验功能。
-- 原生 iPhone/iPad 客户端可以扫码管理插在 Windows 上的模块，但声音桥接仍只能在 Windows 本机启动。模块直插 iPad 后管理通用 USB AT/eSIM 仍需要 Apple 批准的 DriverKit 驱动扩展。
+- iPhone/iPad 直插独立管理尚未实现；现有实验性远程客户端依赖 Windows，通话声音也仍在 Windows 端处理。直接 USB 管理的可行性和设备支持范围需分别验证。
 - 本项目独立实现，没有复制 DJOneHub、VoHive 或 NetXD 的代码。
 
 ## 相关路线与致谢
@@ -184,13 +191,13 @@ npm run desktop
 npm run build
 ```
 
-推送 `v*` 标签后，GitHub Actions 会自动构建 Windows 安装版、免安装版和 SHA256 校验文件。iOS 工作流使用 macOS/Xcode 编译模拟器与未签名真机架构；开发者可在 macOS 中进入 `ios` 目录运行 `xcodegen generate`，再选择自己的 Apple Team 签名。
+推送 `v*` 标签后，GitHub Actions 会自动构建 Windows 安装版、免安装版和 SHA256 校验文件。iOS 工作流仅构建实验性远程客户端，构建成功不表示支持模块直插。开发者测试见 [iOS 状态与实验性远程客户端](docs/iOS安装说明.md)。
 
 ## English
 
 DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. The native SwiftUI iPhone/iPad companion discovers the Windows host over Bonjour, pairs by QR code, stores the token in Keychain, and opens the complete management surface. The Windows host still carries USB audio and must remain running. Direct generic USB modem access on iPadOS remains a separate Apple DriverKit entitlement path. Provider data allowance still requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. The experimental SwiftUI iPhone/iPad remote companion remains an ongoing development direction: it discovers the Windows host over Bonjour, pairs by QR code, stores the token in Keychain, and opens its management interface. The modem must be connected to Windows, which must remain running and handles USB call audio. A standalone app managing a modem plugged directly into an iPhone or iPad is a separate planned direction and is not implemented; device access and compatibility still need verification. Provider data allowance still requires a provider API.
 
 ## License
 
