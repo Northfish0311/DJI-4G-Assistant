@@ -94,7 +94,9 @@ private extension String {
             return value.hasPrefix("fe80:") || value.hasPrefix("fc") || value.hasPrefix("fd")
         }
 
-        let octets = value.split(separator: ".").compactMap { Int($0) }
+        let parts = value.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 4, parts.allSatisfy({ !$0.isEmpty && $0.allSatisfy({ $0.isASCII && $0.isNumber }) }) else { return false }
+        let octets = parts.compactMap { Int($0) }
         guard octets.count == 4, octets.allSatisfy({ (0...255).contains($0) }) else {
             return false
         }
@@ -114,7 +116,10 @@ actor PairingValidator {
         request.timeoutInterval = 12
         request.setValue(link.token, forHTTPHeaderField: "X-Console-Token")
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        // Never forward the pairing secret through an HTTP redirect.
+        let session = URLSession(configuration: .ephemeral, delegate: PairingRedirectPolicy(), delegateQueue: nil)
+        defer { session.invalidateAndCancel() }
+        let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw PairingFailure.server(NSLocalizedString("pairing.error.no_response", comment: ""))
         }
@@ -127,6 +132,15 @@ actor PairingValidator {
 
         let fallbackName = link.baseURL.host ?? NSLocalizedString("pairing.windows_host", comment: "")
         return PairedHost(name: payload?.name ?? fallbackName, baseURL: link.baseURL)
+    }
+}
+
+private final class PairingRedirectPolicy: NSObject, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask,
+                    willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest,
+                    completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
     }
 }
 
@@ -197,6 +211,7 @@ final class PairingStore: ObservableObject {
     }
 
     func pair(using url: URL) async {
+        guard !isPairing else { return }
         do {
             let link = try PairingLink(url: url)
             try await completePairing(link)
@@ -206,6 +221,7 @@ final class PairingStore: ObservableObject {
     }
 
     func pair(baseURL: String, token: String) async {
+        guard !isPairing else { return }
         do {
             let link = try PairingLink(baseURL: baseURL, token: token)
             try await completePairing(link)

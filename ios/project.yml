@@ -45,10 +45,22 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.northfish0311.dji4gassistant
         PRODUCT_NAME: DJI 4G Assistant
+        PRODUCT_MODULE_NAME: DJI4GAssistant
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: false
         ENABLE_USER_SCRIPT_SANDBOXING: true
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+  DJI4GAssistantTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: DJI4GAssistantTests
+    dependencies:
+      - target: DJI4GAssistant
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.northfish0311.dji4gassistant.tests
 schemes:
   DJI4GAssistant:
     build:
@@ -56,5 +68,8 @@ schemes:
         DJI4GAssistant: all
     run:
       config: Debug
+    test:
+      targets:
+        - DJI4GAssistantTests
     archive:
       config: Release

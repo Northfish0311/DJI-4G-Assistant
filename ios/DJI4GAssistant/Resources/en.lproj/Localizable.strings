@@ -33,9 +33,14 @@
 "scanner.hint" = "Point the camera at the code shown on Windows";
 "scanner.unavailable" = "Camera Unavailable";
 "scanner.permission_error" = "Allow camera access in Settings, or use manual pairing.";
-"console.connecting" = "Connecting securely to Windows...";
+"console.connecting" = "Connecting to Windows...";
 "console.unreachable" = "Windows Assistant Is Unreachable";
-"console.local" = "Local";
+"console.local" = "Remote control";
+"console.recovery_hint" = "Keep the Windows assistant running on the same trusted LAN. If the password has expired, forget this computer and scan its new code.";
+"console.auto_retry" = "Waiting to reconnect";
+"console.process_stopped" = "The page stopped. Reconnecting will not resend unfinished actions.";
+"console.confirm" = "Confirm action";
+"common.cancel" = "Cancel";
 "common.close" = "Close";
 "common.ok" = "OK";
 "common.retry" = "Try Again";

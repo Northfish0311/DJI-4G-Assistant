@@ -33,9 +33,14 @@
 "scanner.hint" = "把镜头对准 Windows 上显示的二维码";
 "scanner.unavailable" = "相机不可用";
 "scanner.permission_error" = "请在系统设置中允许相机权限，或改用手动配对。";
-"console.connecting" = "正在安全连接 Windows...";
+"console.connecting" = "正在连接 Windows...";
 "console.unreachable" = "无法连接 Windows 助手";
-"console.local" = "局域网安全连接";
+"console.local" = "远程管理";
+"console.recovery_hint" = "请保持电脑助手运行，并确认两台设备在同一可信局域网。密码已失效时，请忘记这台电脑后重新扫码。";
+"console.auto_retry" = "正在等待自动重连";
+"console.process_stopped" = "页面已暂停，将重新连接电脑。未完成的操作不会自动重发。";
+"console.confirm" = "确认操作";
+"common.cancel" = "取消";
 "common.close" = "关闭";
 "common.ok" = "好";
 "common.retry" = "重试";

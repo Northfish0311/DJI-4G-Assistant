@@ -160,9 +160,17 @@ struct PairingView: View {
                                 .lineLimit(1)
                         }
                         Spacer()
-                        Text("pairing.found")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
+                        Button {
+                            manualURL = host.baseURL.absoluteString
+                            manualToken = ""
+                            showingManual = true
+                        } label: {
+                            Image(systemName: "arrow.right.circle")
+                                .font(.title3)
+                                .frame(width: 44, height: 44)
+                        }
+                        .accessibilityLabel(Text("pairing.connect_manually"))
+                        .disabled(pairingStore.isPairing)
                     }
                     .frame(minHeight: 44)
                 }
@@ -273,12 +281,9 @@ struct PairingView: View {
 private extension View {
     func sectionSurface() -> some View {
         self
-            .padding(16)
-            .background(Color(uiColor: .secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.vertical, 16)
             .overlay {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(uiColor: .separator).opacity(0.35), lineWidth: 0.5)
+                VStack { Spacer(); Divider() }
             }
     }
 }
