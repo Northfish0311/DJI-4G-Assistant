@@ -2,6 +2,11 @@ name: Build iOS companion
 
 on:
   workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the unsigned iOS remote companion prerelease after checks pass
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -125,3 +130,30 @@ jobs:
             DJI-4G-Assistant-iOS-SHA256SUMS.txt
             ios/build/screenshots/*.png
           if-no-files-found: error
+  publish:
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    needs: ios
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: DJI-4G-Assistant-iOS
+          path: ios-release
+      - name: Publish iOS remote companion prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd ios-release
+          sha256sum --check DJI-4G-Assistant-iOS-SHA256SUMS.txt
+          gh release create ios-remote-v1.0.1 \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --prerelease --latest=false \
+            --title "iPhone / iPad 远程管理 v1.0.1（未签名测试版）" \
+            --notes-file ../docs/RELEASE-ios-remote-v1.0.1.md \
+            DJI-4G-Assistant-iOS-Unsigned.ipa \
+            DJI-4G-Assistant-iOS-Simulator.zip \
+            DJI-4G-Assistant-iOS-SHA256SUMS.txt \
+            ios/build/screenshots/*.png
