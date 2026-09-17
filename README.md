@@ -8,7 +8,17 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 这是目前唯一维护的完整版本。
 
-## 普通用户怎么用
+## 下载入口
+
+| 设备 | 下载与使用 |
+| --- | --- |
+| Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |
+| 安卓手机/平板 | [安卓 0.1.0 远程测试版发布入口](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.1.0)，下载 `.apk`；若发布页尚未出现，使用[已验证构建下载](https://github.com/Northfish0311/DJI-4G-Assistant/actions/runs/35221564045)中的 `DJI-4G-Remote-Android-test`。见[安卓中文说明](docs/Android使用说明.md) |
+| iPhone/iPad | 可用 Safari 访问电脑助手；TestFlight 尚未开放邀请，GitHub 的未签名 IPA 不能直接安装 |
+
+**手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
+
+## Windows 怎么用
 
 1. 打开 [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases)，找到最上方带 **Latest** 标记的版本。
 2. 只下载 `DJI-4G-Assistant-Setup-版本号-x64.exe`，这是普通用户使用的安装版。
@@ -69,9 +79,13 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 桌面版第一次运行会为当前 Windows 用户生成一个随机控制密码，并只保存在应用数据目录。它会在以后启动时继续使用，让 iPhone/iPad 配对一次后无需每次重扫。源码版 Start-Web-Console.cmd 仍为每次启动生成临时密码。
 
-### iPhone / iPad 支持状态
+### 安卓远程管理
 
-安卓远程客户端正在开发，源码位于 `android/`，目前尚未完成 APK 和真机验证。[安卓安装与构建说明](docs/Android使用说明.md)。它同样连接 Windows，不是 USB 直插版。
+安卓 0.1.0 测试 APK 已完成云端编译、单元测试、静态检查和模拟器启动截图，真实手机与模块操作仍需测试。最低 Android 7.0，安装后扫描电脑显示的配对码即可连接，无需 Apple 账号或 TestFlight。[完整中文安装说明](docs/Android使用说明.md)。
+
+现有 Windows 1.6.2 的扫码按钮仍叫“连接 iPhone / iPad”，其中的二维码安卓也能使用。网络、短信和 eSIM 能力由电脑助手提供；通话声音不传到安卓手机。
+
+### iPhone / iPad 支持状态
 
 计划通过 **TestFlight** 分发远程 App，普通测试者无需自行签名。**当前尚未开放邀请**，GitHub 的未签名 IPA 不是 TestFlight 安装包。[安装与发布准备说明](docs/TestFlight发布说明.md)。
 

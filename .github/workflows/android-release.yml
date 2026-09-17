@@ -1,0 +1,46 @@
+name: Publish verified Android 0.1.0 test APK
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-remote-v0.1.0-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify tested source and successful build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/35221564045" > "$RUNNER_TEMP/android-run.json"
+          jq -e '.conclusion == "success" and .head_sha == "38ae80bda862db381a3901a12e49314bb050c7ca" and .head_branch == "main" and .path == ".github/workflows/android.yml"' "$RUNNER_TEMP/android-run.json"
+      - uses: actions/download-artifact@v4
+        with:
+          name: DJI-4G-Remote-Android-test
+          run-id: 35221564045
+          github-token: ${{ github.token }}
+          path: verified-android
+      - name: Verify and publish original APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd verified-android/download
+          sha256sum --check SHA256SUMS.txt
+          test -s DJI-4G-Remote-Android-0.1.0-test.apk
+          test -s ../screenshots/phone.png
+          test -s ../screenshots/tablet-layout.png
+          gh release create android-remote-v0.1.0 \
+            --repo "$GITHUB_REPOSITORY" \
+            --target 38ae80bda862db381a3901a12e49314bb050c7ca \
+            --prerelease --latest=false \
+            --title "安卓远程助手 0.1.0（测试版）" \
+            --notes-file ../../docs/RELEASE-android-remote-v0.1.0.md \
+            DJI-4G-Remote-Android-0.1.0-test.apk SHA256SUMS.txt \
+            ../screenshots/phone.png ../screenshots/tablet-layout.png
