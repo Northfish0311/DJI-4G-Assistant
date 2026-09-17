@@ -71,6 +71,8 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 ### iPhone / iPad 支持状态
 
+安卓远程客户端正在开发，源码位于 `android/`，目前尚未完成 APK 和真机验证。[安卓安装与构建说明](docs/Android使用说明.md)。它同样连接 Windows，不是 USB 直插版。
+
 计划通过 **TestFlight** 分发远程 App，普通测试者无需自行签名。**当前尚未开放邀请**，GitHub 的未签名 IPA 不是 TestFlight 安装包。[安装与发布准备说明](docs/TestFlight发布说明.md)。
 
 | 使用方式 | 模块插在哪里 | 当前状态 |

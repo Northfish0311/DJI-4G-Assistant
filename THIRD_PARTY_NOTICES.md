@@ -48,3 +48,13 @@ No source code from DJOneHub, VoHive, NetXD, CellDock, or CardDock is included. 
 
 The Windows interface bundles Lucide icons from the `lucide` package (ISC license).
 Source and license: https://github.com/lucide-icons/lucide
+
+## Android remote companion
+
+- JourneyApps ZXing Android Embedded 4.3.0: https://github.com/journeyapps/zxing-android-embedded (Apache-2.0).
+- ZXing Core: https://github.com/zxing/zxing (Apache-2.0), used transitively for QR decoding.
+- AndroidX libraries: https://developer.android.com/jetpack/androidx (Apache-2.0), used transitively by the scanner.
+- JUnit 4.13.2 (test only): https://junit.org/junit4/ (EPL-1.0).
+- Apache-2.0 license: https://www.apache.org/licenses/LICENSE-2.0
+
+The Android app is a Windows remote client. These components do not provide a USB modem driver.

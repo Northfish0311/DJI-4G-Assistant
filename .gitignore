@@ -34,3 +34,12 @@ artifacts/
 ios/build/
 ios/*.xcodeproj/
 **/xcuserdata/
+android/.gradle/
+android/**/build/
+android/local.properties
+android/download/
+android/screenshots/
+*.apk
+*.aab
+*.jks
+*.keystore
