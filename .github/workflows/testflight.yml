@@ -1,0 +1,60 @@
+name: Upload iOS remote app to TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: New Apple build number (for example 3; never reuse an uploaded number)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight-upload
+  cancel-in-progress: false
+
+jobs:
+  upload:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 40
+    environment: testflight
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate configuration and select Xcode
+        env:
+          XCODE_PATH: ${{ vars.XCODE_PATH }}
+          BUILD_NUMBER: ${{ inputs.build_number }}
+        run: |
+          test -n "$XCODE_PATH" || { echo 'Set testflight environment variable XCODE_PATH to an installed, Apple-supported Xcode.app path.'; exit 1; }
+          test -d "$XCODE_PATH/Contents/Developer" || { echo 'Configured Xcode is not installed on this runner.'; exit 1; }
+          [[ "$BUILD_NUMBER" =~ ^[1-9][0-9]{0,3}$ ]] || { echo 'Build number must be an integer from 1 to 9999.'; exit 1; }
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+      - name: Generate project and run simulator tests
+        run: |
+          brew install xcodegen
+          (cd ios && xcodegen generate)
+          UDID="$(xcrun simctl list devices available -j | jq -r '[.devices[][] | select(.name | startswith("iPhone"))] | first | .udid // empty')"
+          test -n "$UDID"
+          xcodebuild -project ios/DJI4GAssistant.xcodeproj -scheme DJI4GAssistant \
+            -destination "platform=iOS Simulator,id=$UDID" \
+            -derivedDataPath ios/build/TestFlightTests CODE_SIGNING_ALLOWED=NO test
+      - name: Sign archive and upload to Apple
+        env:
+          BUILD_NUMBER: ${{ inputs.build_number }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROFILE_BASE64: ${{ secrets.APPLE_PROFILE_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY_BASE64: ${{ secrets.ASC_PRIVATE_KEY_BASE64 }}
+        run: node scripts/ios/upload-testflight.cjs
+      - name: Upload status
+        run: |
+          echo 'Apple accepted the upload command. Wait for processing in App Store Connect.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'This is NOT approval for external testing and does NOT create an invitation link.' >> "$GITHUB_STEP_SUMMARY"
