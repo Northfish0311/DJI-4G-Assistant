@@ -11,6 +11,7 @@
 "pairing.discovery_failed" = "自动发现不可用";
 "pairing.automatic" = "自动";
 "pairing.how_to" = "只需三步";
+"pairing.help" = "连接帮助";
 "pairing.step1.title" = "保持 Windows 程序运行";
 "pairing.step1.detail" = "DJI 4G 模块继续插在这台 Windows 电脑上。";
 "pairing.step2.title" = "显示配对二维码";

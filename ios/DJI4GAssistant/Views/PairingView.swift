@@ -5,6 +5,7 @@ struct PairingView: View {
     @StateObject private var discovery = BonjourDiscovery()
     @State private var showingScanner = false
     @State private var showingManual = false
+    @State private var showingHelp = false
     @State private var manualURL = ""
     @State private var manualToken = ""
 
@@ -15,7 +16,6 @@ struct PairingView: View {
                     brandHeader
                     primaryPairingSection
                     discoverySection
-                    stepsSection
                     manualSection
                 }
                 .frame(maxWidth: 680)
@@ -26,6 +26,34 @@ struct PairingView: View {
             .background(Color(uiColor: .systemGroupedBackground))
             .navigationTitle("app.title")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingHelp = true
+                    } label: {
+                        Image(systemName: "questionmark.circle")
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel(Text("pairing.help"))
+                }
+            }
+        }
+        .sheet(isPresented: $showingHelp) {
+            NavigationStack {
+                ScrollView {
+                    stepsSection
+                        .padding(20)
+                        .frame(maxWidth: 560)
+                        .frame(maxWidth: .infinity)
+                }
+                .navigationTitle("pairing.help")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("common.ok") { showingHelp = false }
+                    }
+                }
+            }
         }
         .fullScreenCover(isPresented: $showingScanner) {
             QRScannerSheet { code in
@@ -106,7 +134,7 @@ struct PairingView: View {
                         .opacity(0.8)
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(minHeight: 50)
                 .padding(.horizontal, 16)
                 .foregroundStyle(.white)
                 .background(Color.accentColor)
@@ -131,9 +159,14 @@ struct PairingView: View {
 
             if discovery.hosts.isEmpty {
                 HStack(spacing: 11) {
-                    ProgressView()
+                    if discovery.state == .failed {
+                        Image(systemName: "wifi.exclamationmark")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ProgressView()
+                    }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("pairing.searching")
+                        Text(discovery.state == .failed ? "pairing.discovery_failed" : "pairing.searching")
                             .font(.subheadline.weight(.semibold))
                         Text("pairing.same_wifi")
                             .font(.caption)

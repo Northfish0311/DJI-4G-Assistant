@@ -11,6 +11,7 @@
 "pairing.discovery_failed" = "Discovery unavailable";
 "pairing.automatic" = "Automatic";
 "pairing.how_to" = "Three quick steps";
+"pairing.help" = "Connection help";
 "pairing.step1.title" = "Keep the Windows app running";
 "pairing.step1.detail" = "The cellular dongle stays connected to that computer.";
 "pairing.step2.title" = "Show the pairing code";

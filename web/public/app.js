@@ -1,6 +1,7 @@
 const launchParameters = new URLSearchParams(location.search);
-const nativeIos = launchParameters.get("native") === "ios";
-if (nativeIos) document.documentElement.classList.add("native-ios");
+const nativePlatform = launchParameters.get("native");
+const nativeCompanion = nativePlatform === "ios" || nativePlatform === "android";
+if (nativeCompanion) document.documentElement.classList.add("native-companion", "native-" + nativePlatform);
 
 const output = document.querySelector("#output");
 const statusPill = document.querySelector("#statusPill");
@@ -1881,10 +1882,11 @@ setInterval(refreshTrafficQuietly, 2000);
 setInterval(refreshCallStatusQuietly, 3500);
 
 const launchToken = launchParameters.get("token") || "";
-tokenInput.value = launchToken || (nativeIos ? "" : localStorage.getItem("consoleToken") || "");
-if (launchToken && !nativeIos) localStorage.setItem("consoleToken", launchToken);
+tokenInput.value = launchToken || (nativeCompanion ? "" : localStorage.getItem("consoleToken") || "");
+if (nativeCompanion) localStorage.removeItem("consoleToken");
+if (launchToken && !nativeCompanion) localStorage.setItem("consoleToken", launchToken);
 tokenInput.addEventListener("change", () => {
-  if (!nativeIos) localStorage.setItem("consoleToken", tokenInput.value.trim());
+  if (!nativeCompanion) localStorage.setItem("consoleToken", tokenInput.value.trim());
 });
 languageBtn.addEventListener("click", () => { state.language = state.language === "zh" ? "en" : "zh"; localStorage.setItem("uiLanguage", state.language); applyLanguage(); });
 for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action));

@@ -3111,26 +3111,26 @@ button.danger-text:not(:disabled):hover {
 
 
 /* Native iOS container: SwiftUI owns the app bar, the web surface owns module tools. */
-html.native-ios .topbar {
+html.native-companion .topbar {
   display: none;
 }
 
-html.native-ios .shell {
+html.native-companion .shell {
   padding-top: max(8px, env(safe-area-inset-top));
   padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
-html.native-ios .rail {
+html.native-companion .rail {
   top: 0;
   margin-top: 0;
 }
 
-html.native-ios button,
-html.native-ios input,
-html.native-ios textarea {
+html.native-companion button,
+html.native-companion input,
+html.native-companion textarea {
   min-height: 44px;
 }
 
-html.native-ios .nav-btn {
+html.native-companion .nav-btn {
   min-height: 56px;
 }
