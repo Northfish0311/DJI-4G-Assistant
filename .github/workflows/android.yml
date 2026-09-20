@@ -42,6 +42,7 @@ jobs:
             mkdir -p android/screenshots
             adb shell pidof com.northfish0311.dji4gremote
             adb exec-out screencap -p > android/screenshots/phone.png
+            python3 android/scripts/check_pairing_ui.py
             adb shell wm size 1600x2560
             adb shell wm density 240
             adb shell am force-stop com.northfish0311.dji4gremote
@@ -54,6 +55,7 @@ jobs:
           mkdir -p android/download
           cp android/app/build/outputs/apk/debug/app-debug.apk android/download/DJI-4G-Remote-Android-0.1.0-test.apk
           cp docs/Android使用说明.md android/download/README-zh.md
+          printf 'Commit: %s\nBuild: %s/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > android/download/BUILD-SOURCE.txt
           cd android/download
           sha256sum *.apk > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
@@ -68,4 +70,10 @@ jobs:
         with:
           name: Android-test-reports
           path: android/app/build/reports/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Android-UI-failure-screenshots
+          path: android/screenshots/
           if-no-files-found: ignore

@@ -45,6 +45,52 @@ test("keeps mobile pairing compact and buttons free of legacy shadows", () => {
   assert.doesNotMatch(ios, /\.frame\(height: (44|50)\)/);
 });
 
+test("Android recovery keeps controls synchronized and detaches the console before disposal", () => {
+  const source = read("android/app/src/main/java/com/northfish0311/dji4gremote/MainActivity.java");
+  assert.match(source, /if \(message != null\).*setManualExpanded\(true\)/);
+  assert.match(source, /new View\[\]\{connect, scan, paste, address, password\}/);
+  assert.match(source, /setConnecting\(false\)/);
+  const expansion = source.split("private void setManualExpanded(boolean open)")[1].split("private void setConnecting")[0];
+  assert.match(expansion, /manual\.setVisibility/);
+  assert.match(expansion, /manualToggle\.setText/);
+  assert.match(expansion, /setStateDescription/);
+  const disposal = source.split("private void destroyConsole()")[1];
+  assert.ok(disposal.indexOf("removeView(web)") < disposal.indexOf("web.destroy()"));
+  assert.doesNotMatch(source, /密码失效时请断开/);
+});
+
+test("native clients remove stale browser tokens without persisting fresh credentials", () => {
+  const source = read("web/public/app.js");
+  const bootstrap = source.split("const output =")[0];
+  const start = source.indexOf('const launchToken =');
+  const end = source.indexOf('languageBtn.addEventListener', start);
+  assert.ok(start > 0 && end > start);
+  for (const platform of ["android", "ios", ""]) {
+    for (const supplied of ["", "fixture-pairing-token"]) {
+      const values = new Map([["consoleToken", "old-browser-token"], ["uiLanguage", "zh"]]);
+      const handlers = {};
+      const input = { value: "", addEventListener: (event, fn) => { handlers[event] = fn; } };
+      vm.runInNewContext(bootstrap + source.slice(start, end), {
+        URLSearchParams,
+        location: { search: "?" + new URLSearchParams({ native: platform, token: supplied }) },
+        document: { documentElement: { classList: { add() {} } } },
+        tokenInput: input,
+        localStorage: {
+          getItem: key => values.get(key) ?? null,
+          setItem: (key, value) => values.set(key, value),
+          removeItem: key => values.delete(key),
+        },
+      });
+      assert.equal(input.value, supplied || (platform ? "" : "old-browser-token"));
+      if (platform) assert.equal(values.has("consoleToken"), false);
+      input.value = " replacement-token ";
+      handlers.change();
+      assert.equal(values.get("consoleToken"), platform ? undefined : "replacement-token");
+      assert.equal(values.get("uiLanguage"), "zh");
+    }
+  }
+});
+
 test("loads the eSIM inventory using the actual navigation target", () => {
   const html = read("web/public/index.html");
   const app = read("web/public/app.js");

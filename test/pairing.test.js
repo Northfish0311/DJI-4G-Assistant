@@ -58,6 +58,9 @@ test("pairing API requires authentication and returns a scannable deep link", as
   await new Promise((resolve) => probe.close(resolve));
 
   const originalInterfaces = os.networkInterfaces;
+  const originalEnvironment = Object.fromEntries(
+    ["PORT", "HOST", "CONSOLE_TOKEN"].map((key) => [key, process.env[key]])
+  );
   os.networkInterfaces = () => ({
     WLAN: [{ family: "IPv4", internal: false, address: "192.168.50.20" }],
   });
@@ -68,8 +71,26 @@ test("pairing API requires authentication and returns a scannable deep link", as
 
   try {
     await startServer();
+    for (const platform of ["android", "ios"]) {
+      const page = await fetch(`http://127.0.0.1:${port}/?native=${platform}`);
+      assert.equal(page.status, 200);
+      assert.match(page.headers.get("content-type"), /text\/html/);
+      assert.match(await page.text(), /id="tokenInput"/);
+    }
+    for (const asset of ["/app.js", "/styles.css", "/vendor/lucide.js"]) {
+      const response = await fetch(`http://127.0.0.1:${port}${asset}`);
+      assert.equal(response.status, 200, asset);
+      assert.ok((await response.text()).length > 100, asset);
+    }
     const unauthorized = await fetch(`http://127.0.0.1:${port}/api/pairing`);
     assert.equal(unauthorized.status, 401);
+    assert.equal((await unauthorized.json()).authRequired, true);
+
+    const wrongToken = await fetch(`http://127.0.0.1:${port}/api/pairing`, {
+      headers: { "x-console-token": "invalid-token" },
+    });
+    assert.equal(wrongToken.status, 401);
+    assert.ok(!(await wrongToken.text()).includes(process.env.CONSOLE_TOKEN));
 
     const response = await fetch(`http://127.0.0.1:${port}/api/pairing`, {
       headers: { "x-console-token": process.env.CONSOLE_TOKEN },
@@ -80,8 +101,32 @@ test("pairing API requires authentication and returns a scannable deep link", as
     assert.equal(payload.url, `http://192.168.50.20:${port}`);
     assert.match(payload.qrDataUrl, /^data:image\/png;base64,/);
     assert.equal(new URL(payload.deepLink).searchParams.get("token"), process.env.CONSOLE_TOKEN);
+
+    os.networkInterfaces = () => ({
+      Loopback: [{ family: "IPv4", internal: true, address: "127.0.0.1" }],
+    });
+    const offline = await fetch(`http://127.0.0.1:${port}/api/pairing`, {
+      headers: { "x-console-token": process.env.CONSOLE_TOKEN },
+    });
+    assert.equal(offline.status, 409);
+    const offlinePayload = await offline.json();
+    assert.equal(offlinePayload.ok, false);
+    assert.equal(offlinePayload.qrDataUrl, undefined);
+
+    os.networkInterfaces = () => ({
+      WLAN: [{ family: "IPv4", internal: false, address: "192.168.50.21" }],
+    });
+    const retry = await fetch(`http://127.0.0.1:${port}/api/pairing`, {
+      headers: { "x-console-token": process.env.CONSOLE_TOKEN },
+    });
+    assert.equal(retry.status, 200);
+    assert.equal((await retry.json()).url, `http://192.168.50.21:${port}`);
   } finally {
     await new Promise((resolve) => server.close(resolve));
     os.networkInterfaces = originalInterfaces;
+    for (const [key, value] of Object.entries(originalEnvironment)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });

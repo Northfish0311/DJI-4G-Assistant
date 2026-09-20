@@ -29,7 +29,7 @@ public final class MainActivity extends Activity {
     private LinearLayout root;
     private TextView status;
     private EditText address, password;
-    private Button connect, scan;
+    private Button connect, scan, paste, manualToggle;
     private LinearLayout manual;
     private ProgressBar progress;
     private WebView web;
@@ -127,25 +127,17 @@ public final class MainActivity extends Activity {
         styleButton(scan, ACCENT, Color.WHITE, false); scan.setMinHeight(dp(54));
         scan.setTypeface(null, Typeface.BOLD);
         LinearLayout.LayoutParams scanSize = new LinearLayout.LayoutParams(-1, -2); scanSize.topMargin = dp(20); form.addView(scan, scanSize);
-        Button paste = button("粘贴配对链接", this::pastePairing);
+        paste = button("粘贴配对链接", this::pastePairing);
         styleButton(paste, Color.WHITE, INK, true); paste.setMinHeight(dp(54));
         LinearLayout.LayoutParams pasteSize = new LinearLayout.LayoutParams(-1, -2); pasteSize.topMargin = dp(12); form.addView(paste, pasteSize);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); progress.setVisibility(View.INVISIBLE);
         form.addView(progress, new LinearLayout.LayoutParams(-1, dp(4)));
         View divider = new View(this); divider.setBackgroundColor(Color.rgb(221, 228, 232));
         LinearLayout.LayoutParams lineSize = new LinearLayout.LayoutParams(-1, dp(1)); lineSize.topMargin = dp(20); lineSize.bottomMargin = dp(12); form.addView(divider, lineSize);
-        Button manualToggle = button("手动连接", () -> {});
+        manualToggle = button("手动连接", () -> {});
         manualToggle.setGravity(android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL);
         manualToggle.setPadding(0, dp(12), 0, dp(12));
-        android.graphics.drawable.Drawable expand = getDrawable(android.R.drawable.arrow_down_float).mutate();
-        expand.setTint(MUTED); expand.setBounds(0, 0, dp(18), dp(18));
-        manualToggle.setCompoundDrawablesRelative(null, null, expand, null);
-        manualToggle.setOnClickListener(v -> {
-            boolean open = manual.getVisibility() != View.VISIBLE;
-            manual.setVisibility(open ? View.VISIBLE : View.GONE);
-            manualToggle.setText(open ? "收起手动连接" : "手动连接");
-            if (android.os.Build.VERSION.SDK_INT >= 30) manualToggle.setStateDescription(open ? "已展开" : "已收起");
-        });
+        manualToggle.setOnClickListener(v -> setManualExpanded(manual.getVisibility() != View.VISIBLE));
         form.addView(manualToggle, new LinearLayout.LayoutParams(-1, -2));
         manual = new LinearLayout(this); manual.setOrientation(LinearLayout.VERTICAL); manual.setVisibility(View.GONE); form.addView(manual);
         manual.addView(text("电脑地址", 13, MUTED));
@@ -161,6 +153,20 @@ public final class MainActivity extends Activity {
         connect = button("连接电脑", () -> pair(address.getText().toString(), password.getText().toString())); manual.addView(connect, new LinearLayout.LayoutParams(-1, -2));
         password.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_GO);
         password.setOnEditorActionListener((v, action, event) -> { if (action != android.view.inputmethod.EditorInfo.IME_ACTION_GO) return false; pair(address.getText().toString(), password.getText().toString()); return true; });
+        setManualExpanded(false);
+    }
+    private void setManualExpanded(boolean open) {
+        manual.setVisibility(open ? View.VISIBLE : View.GONE);
+        manualToggle.setText(open ? "收起手动连接" : "手动连接");
+        android.graphics.drawable.Drawable arrow = getDrawable(open ? android.R.drawable.arrow_up_float : android.R.drawable.arrow_down_float).mutate();
+        arrow.setTint(MUTED); arrow.setBounds(0, 0, dp(18), dp(18));
+        manualToggle.setCompoundDrawablesRelative(null, null, arrow, null);
+        if (android.os.Build.VERSION.SDK_INT >= 30) manualToggle.setStateDescription(open ? "已展开" : "已收起");
+    }
+    private void setConnecting(boolean busy) {
+        connecting = busy;
+        for (View control : new View[]{connect, scan, paste, address, password}) control.setEnabled(!busy);
+        progress.setVisibility(busy ? View.VISIBLE : View.INVISIBLE);
     }
     private void pastePairing() {
         if (connecting) return;
@@ -174,8 +180,8 @@ public final class MainActivity extends Activity {
         final URI base;
         final String secret = rawToken.trim();
         try { base = PairingAddress.normalize(rawAddress); PairingAddress.validateToken(secret); }
-        catch (IllegalArgumentException error) { status.setText(error.getMessage()); return; }
-        connecting = true; connect.setEnabled(false); scan.setEnabled(false); progress.setVisibility(View.VISIBLE); status.setText("正在验证电脑…");
+        catch (IllegalArgumentException error) { status.setText(error.getMessage()); setManualExpanded(true); return; }
+        setConnecting(true); status.setText("正在验证电脑…");
         final int request = ++generation;
         worker.execute(() -> {
             HttpURLConnection connection = null;
@@ -198,10 +204,10 @@ public final class MainActivity extends Activity {
             final String message = failure;
             runOnUiThread(() -> {
                 if (isDestroyed() || request != generation) return;
-                connecting = false; connect.setEnabled(true); scan.setEnabled(true); progress.setVisibility(View.INVISIBLE);
-                if (message != null) { status.setText(message); manual.setVisibility(View.VISIBLE); return; }
+                setConnecting(false);
+                if (message != null) { status.setText(message); setManualExpanded(true); return; }
                 try { vault.save(base.toString(), secret); }
-                catch (Exception error) { status.setText("无法安全保存配对，请重试。"); return; }
+                catch (Exception error) { status.setText("无法安全保存配对，请重试。"); setManualExpanded(true); return; }
                 host = base; token = secret; password.setText("");
                 ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(password.getWindowToken(), 0);
                 showConsole();
@@ -240,7 +246,7 @@ public final class MainActivity extends Activity {
             }
             @Override public void onPageFinished(WebView view, String url) { if (!loadFailed) status.setVisibility(View.GONE); }
             @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) { if (request.isForMainFrame()) failed("连接中断，请保持电脑助手运行，然后点击重连。"); }
-            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) { if (request.isForMainFrame()) failed("电脑返回错误。密码失效时请断开后重新扫码。"); }
+            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) { if (request.isForMainFrame()) failed("电脑返回错误。密码失效时，请在右上角更多操作中选择“忘记这台电脑”，再重新扫码。"); }
         });
         root.addView(web, new LinearLayout.LayoutParams(-1, 0, 1)); reload();
     }
@@ -259,7 +265,8 @@ public final class MainActivity extends Activity {
     }
     private void forget() {
         generation++; vault.clear(); token = null; host = null;
-        if (web != null) { web.stopLoading(); web.clearCache(true); web.clearHistory(); web.destroy(); web = null; }
+        if (web != null) { web.clearCache(true); web.clearHistory(); }
+        destroyConsole();
         WebStorage.getInstance().deleteAllData(); CookieManager.getInstance().removeAllCookies(null); connecting = false; showPairing();
     }
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -278,5 +285,12 @@ public final class MainActivity extends Activity {
             address.setText(raw); password.setText(secret); pair(raw, secret);
         } catch (Exception error) { status.setText("配对码无效，请扫描或复制电脑助手显示的配对链接。"); }
     }
-    @Override protected void onDestroy() { generation++; worker.shutdownNow(); if (web != null) web.destroy(); super.onDestroy(); }
+    private void destroyConsole() {
+        if (web == null) return;
+        web.stopLoading();
+        web.setWebViewClient(new WebViewClient()); web.setWebChromeClient(null);
+        if (web.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) web.getParent()).removeView(web);
+        web.destroy(); web = null;
+    }
+    @Override protected void onDestroy() { generation++; worker.shutdownNow(); destroyConsole(); super.onDestroy(); }
 }

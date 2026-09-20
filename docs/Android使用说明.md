@@ -10,11 +10,11 @@
 
 ## 安装和使用
 
-1. 打开[安卓测试版发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.1.0)，展开 Assets，下载 `DJI-4G-Remote-Android-0.1.0-test.apk`。如果该页还未发布，可在[已验证构建](https://github.com/Northfish0311/DJI-4G-Assistant/actions/runs/35221564045)底部 Artifacts 下载 `DJI-4G-Remote-Android-test`（通常需要登录 GitHub），解压后在 `download` 文件夹找到 APK。两种入口应为同一份 APK。
+1. 打开[安卓测试版发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.1.0)，展开 Assets，下载 `DJI-4G-Remote-Android-0.1.0-test.apk`。这是已发布的测试包，不会随着源码更新而自动变化。需要测试开发中的修改时，可在[安卓构建列表](https://github.com/Northfish0311/DJI-4G-Assistant/actions/workflows/android.yml)选择对应提交且结果为绿色成功的构建，在底部 Artifacts 下载 `DJI-4G-Remote-Android-test`（通常需要登录 GitHub），解压后在 `download` 文件夹找到 APK。开发包可能与发布页不同，不能只凭 APK 文件名判断新旧。
 2. 将 APK 传到安卓手机，打开安装。系统如要求，只给本次使用的浏览器或文件管理器允许“安装未知应用”，装完可关闭该权限；不要求关闭系统安全扫描。
 3. 打开 Windows 助手，模块留在电脑上。两台设备连接同一可信局域网。
 4. 安卓 App 点击“扫描配对码”，扫描 Windows 顶部“连接 iPhone / iPad”里的二维码（当前共用此入口，标题尚未改成安卓）。也可填写电脑的局域网地址和配对密码。
-5. 断线后确认电脑仍运行，再点“重连”。密码失效时选择“断开 → 忘记”，然后重新扫码。
+5. 断线后确认电脑仍运行，再点右上角的重新连接图标。密码失效时，点击右上角“更多操作”，选择“忘记这台电脑”，确认后重新扫码。忘记电脑只清除手机里的配对信息，不会删除 eSIM 套餐，也不会修改模块设置。
 
 当前最低 Android 7.0（API 24），需要可用且及时更新的 Android System WebView。不是所有老设备和定制系统都已经验证。建议在受安全更新支持的系统上测试。
 
@@ -24,6 +24,7 @@
 | --- | --- |
 | `DJI-4G-Remote-Android-0.1.0-test.apk` | 安卓安装包，手机用户下载这个 |
 | `SHA256SUMS.txt` | 安装包完整性校验，不用安装 |
+| `BUILD-SOURCE.txt` | 新开发包附带的源码提交和构建地址，用来确认包来自哪次更新 |
 | `phone.png` / `tablet-layout.png` | 配对页的模拟器截图，不是安装包 |
 | `Source code (zip/tar.gz)` | 开发者源码，不能在手机上安装 |
 
@@ -48,6 +49,8 @@
 - 云端截图只验证配对页布局，不代表真实扫码、模块操作或手机兼容性通过。
 
 ## 开发构建
+
+源码中的自动化流程已加入手动连接展开/收起、空地址校验和大字体截图检查。是否通过要看对应提交的 Actions 结果；不要把已添加测试当成真机验证完成。截图不覆盖真实扫码、电话音频和模块操作。
 
 使用 JDK 17、Gradle 8.11.1、Android SDK 35，在 `android/` 执行：
 
