@@ -1,11 +1,11 @@
 "app.title" = "DJI 4G Assistant";
-"pairing.subtitle" = "Your DJI cellular dongle, from iPhone and iPad";
-"pairing.ready_title" = "Ready to pair";
+"pairing.subtitle" = "Windows remote management";
+"pairing.ready_title" = "Connect your computer";
 "pairing.ready_detail" = "Open DJI 4G Assistant on Windows, choose Connect iPhone / iPad, then scan the code shown there.";
 "pairing.scan" = "Scan Pairing Code";
 "pairing.connecting" = "Connecting...";
-"pairing.nearby" = "Nearby Windows Computers";
-"pairing.searching" = "Looking for DJI 4G Assistant";
+"pairing.nearby" = "Nearby computers";
+"pairing.searching" = "Looking for computers";
 "pairing.same_wifi" = "Keep both devices on the same trusted Wi-Fi.";
 "pairing.found" = "Found";
 "pairing.discovery_failed" = "Discovery unavailable";

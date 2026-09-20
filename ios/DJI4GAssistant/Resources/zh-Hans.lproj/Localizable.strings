@@ -1,11 +1,11 @@
 "app.title" = "DJI 4G 助手";
-"pairing.subtitle" = "在 iPhone 和 iPad 上管理 DJI 4G 模块";
-"pairing.ready_title" = "可以开始配对";
+"pairing.subtitle" = "Windows 远程管理";
+"pairing.ready_title" = "连接你的电脑";
 "pairing.ready_detail" = "在 Windows 上打开 DJI 4G Assistant，点击“连接 iPhone / iPad”，然后扫描电脑上显示的二维码。";
 "pairing.scan" = "扫描配对码";
 "pairing.connecting" = "正在连接...";
-"pairing.nearby" = "附近的 Windows 电脑";
-"pairing.searching" = "正在查找 DJI 4G Assistant";
+"pairing.nearby" = "附近的电脑";
+"pairing.searching" = "正在查找电脑";
 "pairing.same_wifi" = "请让两台设备连接同一个可信 Wi-Fi。";
 "pairing.found" = "已发现";
 "pairing.discovery_failed" = "自动发现不可用";

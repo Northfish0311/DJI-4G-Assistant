@@ -12,14 +12,14 @@ struct PairingView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 18) {
+                VStack(spacing: 12) {
                     brandHeader
                     primaryPairingSection
                     discoverySection
                     manualSection
                 }
-                .frame(maxWidth: 680)
-                .padding(.horizontal, 16)
+                .frame(maxWidth: 520)
+                .padding(.horizontal, 24)
                 .padding(.vertical, 20)
                 .frame(maxWidth: .infinity)
             }
@@ -85,37 +85,32 @@ struct PairingView: View {
     }
 
     private var brandHeader: some View {
-        HStack(spacing: 14) {
+        VStack(spacing: 12) {
             Image(systemName: "antenna.radiowaves.left.and.right")
-                .font(.system(size: 25, weight: .semibold))
+                .font(.system(size: 24, weight: .medium))
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 58, height: 58)
+                .frame(width: 52, height: 52)
                 .background(Color.accentColor.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("app.title")
+            VStack(spacing: 6) {
+                Text("pairing.ready_title")
                     .font(.title2.bold())
                 Text("pairing.subtitle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
-            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity)
+        .multilineTextAlignment(.center)
+        .padding(.top, 12)
+        .padding(.bottom, 8)
         .accessibilityElement(children: .combine)
     }
 
     private var primaryPairingSection: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Label("pairing.ready_title", systemImage: "iphone.and.arrow.forward")
-                .font(.headline)
-
-            Text("pairing.ready_detail")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
             Button {
                 showingScanner = true
             } label: {
@@ -128,10 +123,8 @@ struct PairingView: View {
                     }
                     Text(pairingStore.isPairing ? "pairing.connecting" : "pairing.scan")
                         .fontWeight(.semibold)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.footnote.weight(.bold))
-                        .opacity(0.8)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 50)
@@ -142,17 +135,25 @@ struct PairingView: View {
             }
             .buttonStyle(.plain)
             .disabled(pairingStore.isPairing)
+            .accessibilityHint(Text("pairing.ready_detail"))
         }
         .sectionSurface()
     }
 
     private var discoverySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("pairing.nearby", systemImage: "desktopcomputer")
-                    .font(.headline)
-                Spacer()
-                discoveryStatus
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Label("pairing.nearby", systemImage: "desktopcomputer")
+                        .font(.headline)
+                    Spacer()
+                    discoveryStatus
+                }
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("pairing.nearby", systemImage: "desktopcomputer")
+                        .font(.headline)
+                    discoveryStatus
+                }
             }
 
             Divider()
@@ -297,7 +298,7 @@ struct PairingView: View {
                 } label: {
                     Label("pairing.connect_manually", systemImage: "link")
                         .frame(maxWidth: .infinity)
-                        .frame(height: 44)
+                        .frame(minHeight: 44)
                 }
                 .buttonStyle(.bordered)
                 .disabled(pairingStore.isPairing || manualURL.isEmpty || manualToken.isEmpty)

@@ -67,8 +67,24 @@ public final class MainActivity extends Activity {
     }
     private Button button(String title, Runnable action) {
         Button button = new Button(this); button.setText(title); button.setAllCaps(false); button.setMinHeight(dp(48));
-        button.setTextSize(16); button.setTextColor(ACCENT); button.setLetterSpacing(0);
+        button.setTextSize(15); button.setLetterSpacing(0);
+        button.setStateListAnimator(null); button.setElevation(0);
+        button.setPadding(dp(16), dp(12), dp(16), dp(12));
+        styleButton(button, Color.TRANSPARENT, ACCENT, false);
         button.setOnClickListener(v -> action.run()); return button;
+    }
+    private void styleButton(Button button, int fill, int foreground, boolean bordered) {
+        int[][] states = new int[][]{new int[]{-android.R.attr.state_enabled}, new int[]{}};
+        GradientDrawable normal = surface(fill);
+        if (bordered) normal.setStroke(dp(1), Color.rgb(225, 230, 237));
+        android.graphics.drawable.StateListDrawable backgrounds = new android.graphics.drawable.StateListDrawable();
+        backgrounds.addState(states[0], surface(Color.rgb(237, 240, 245)));
+        backgrounds.addState(states[1], normal);
+        button.setBackgroundTintList(null);
+        button.setBackground(new android.graphics.drawable.RippleDrawable(
+            android.content.res.ColorStateList.valueOf(Color.argb(28, 23, 100, 237)),
+            backgrounds, surface(Color.WHITE)));
+        button.setTextColor(new android.content.res.ColorStateList(states, new int[]{MUTED, foreground}));
     }
     private ImageButton icon(int resource, String label, Runnable action) {
         ImageButton button = new ImageButton(this); button.setImageResource(resource); button.setColorFilter(MUTED);
@@ -95,32 +111,42 @@ public final class MainActivity extends Activity {
         shell();
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); root.addView(scroll, new LinearLayout.LayoutParams(-1, -1));
         FrameLayout container = new FrameLayout(this); scroll.addView(container);
-        LinearLayout form = new LinearLayout(this); form.setOrientation(LinearLayout.VERTICAL); form.setPadding(dp(24), dp(32), dp(24), dp(32));
-        FrameLayout.LayoutParams formSize = new FrameLayout.LayoutParams(dp(Math.min(getResources().getConfiguration().screenWidthDp, 600)), -2, android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL);
+        LinearLayout form = new LinearLayout(this); form.setOrientation(LinearLayout.VERTICAL); form.setPadding(dp(24), dp(20), dp(24), dp(32));
+        FrameLayout.LayoutParams formSize = new FrameLayout.LayoutParams(dp(Math.min(getResources().getConfiguration().screenWidthDp, 520)), -2, android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL);
         container.addView(form, formSize);
         LinearLayout branding = new LinearLayout(this); branding.setGravity(android.view.Gravity.CENTER_VERTICAL);
         ImageView mark = new ImageView(this); mark.setImageResource(R.drawable.ic_launcher);
-        branding.addView(mark, new LinearLayout.LayoutParams(dp(44), dp(44)));
+        branding.addView(mark, new LinearLayout.LayoutParams(dp(36), dp(36)));
         TextView brand = text("大疆 4G 助手", 16, INK); brand.setTypeface(null, Typeface.BOLD); brand.setPadding(dp(12), 0, 0, 0);
         branding.addView(brand, new LinearLayout.LayoutParams(0, -2, 1));
         branding.addView(icon(android.R.drawable.ic_menu_help, "连接帮助", this::help)); form.addView(branding);
-        TextView heading = text("连接你的电脑", 27, INK); heading.setTypeface(null, Typeface.BOLD); heading.setGravity(android.view.Gravity.CENTER); heading.setPadding(0, dp(56), 0, dp(8)); form.addView(heading);
-        TextView mode = text("WINDOWS · 局域网远程管理", 12, MUTED); mode.setGravity(android.view.Gravity.CENTER); form.addView(mode);
+        TextView heading = text("连接你的电脑", 26, INK); heading.setTypeface(null, Typeface.BOLD); heading.setGravity(android.view.Gravity.CENTER); heading.setPadding(0, dp(40), 0, dp(8)); form.addView(heading);
+        TextView mode = text("Windows 远程管理", 13, MUTED); mode.setGravity(android.view.Gravity.CENTER); form.addView(mode);
         status = text("等待配对", 13, MUTED); status.setGravity(android.view.Gravity.CENTER); status.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE); form.addView(status);
         scan = button("扫描配对码", () -> new IntentIntegrator(this).setDesiredBarcodeFormats(IntentIntegrator.QR_CODE).setPrompt("扫描电脑助手的配对二维码").setBeepEnabled(false).initiateScan());
-        scan.setTextColor(Color.WHITE); scan.setBackground(surface(ACCENT)); scan.setMinHeight(dp(54));
+        styleButton(scan, ACCENT, Color.WHITE, false); scan.setMinHeight(dp(54));
         scan.setTypeface(null, Typeface.BOLD);
         LinearLayout.LayoutParams scanSize = new LinearLayout.LayoutParams(-1, -2); scanSize.topMargin = dp(20); form.addView(scan, scanSize);
         Button paste = button("粘贴配对链接", this::pastePairing);
-        GradientDrawable pasteSurface = surface(Color.WHITE); pasteSurface.setStroke(dp(1), Color.rgb(232, 235, 239));
-        paste.setBackground(pasteSurface); paste.setTextColor(INK); paste.setMinHeight(dp(54));
+        styleButton(paste, Color.WHITE, INK, true); paste.setMinHeight(dp(54));
         LinearLayout.LayoutParams pasteSize = new LinearLayout.LayoutParams(-1, -2); pasteSize.topMargin = dp(12); form.addView(paste, pasteSize);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); progress.setVisibility(View.INVISIBLE);
         form.addView(progress, new LinearLayout.LayoutParams(-1, dp(4)));
         View divider = new View(this); divider.setBackgroundColor(Color.rgb(221, 228, 232));
         LinearLayout.LayoutParams lineSize = new LinearLayout.LayoutParams(-1, dp(1)); lineSize.topMargin = dp(20); lineSize.bottomMargin = dp(12); form.addView(divider, lineSize);
-        Button manualToggle = button("手动连接", () -> manual.setVisibility(manual.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
-        manualToggle.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.ic_menu_edit, 0, 0, 0); form.addView(manualToggle, new LinearLayout.LayoutParams(-1, -2));
+        Button manualToggle = button("手动连接", () -> {});
+        manualToggle.setGravity(android.view.Gravity.START | android.view.Gravity.CENTER_VERTICAL);
+        manualToggle.setPadding(0, dp(12), 0, dp(12));
+        android.graphics.drawable.Drawable expand = getDrawable(android.R.drawable.arrow_down_float).mutate();
+        expand.setTint(MUTED); expand.setBounds(0, 0, dp(18), dp(18));
+        manualToggle.setCompoundDrawablesRelative(null, null, expand, null);
+        manualToggle.setOnClickListener(v -> {
+            boolean open = manual.getVisibility() != View.VISIBLE;
+            manual.setVisibility(open ? View.VISIBLE : View.GONE);
+            manualToggle.setText(open ? "收起手动连接" : "手动连接");
+            if (android.os.Build.VERSION.SDK_INT >= 30) manualToggle.setStateDescription(open ? "已展开" : "已收起");
+        });
+        form.addView(manualToggle, new LinearLayout.LayoutParams(-1, -2));
         manual = new LinearLayout(this); manual.setOrientation(LinearLayout.VERTICAL); manual.setVisibility(View.GONE); form.addView(manual);
         manual.addView(text("电脑地址", 13, MUTED));
         address = new EditText(this); address.setHint("http://192.168.1.10:8787"); address.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI); address.setSingleLine(true); manual.addView(address);

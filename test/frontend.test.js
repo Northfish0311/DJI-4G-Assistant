@@ -31,6 +31,20 @@ test("keeps iOS connection help off the main pairing surface", () => {
   }
 });
 
+test("keeps mobile pairing compact and buttons free of legacy shadows", () => {
+  const android = read("android/app/src/main/java/com/northfish0311/dji4gremote/MainActivity.java");
+  const ios = read("ios/DJI4GAssistant/Views/PairingView.swift");
+  assert.match(android, /setStateListAnimator\(null\)/);
+  assert.match(android, /setElevation\(0\)/);
+  assert.match(android, /RippleDrawable/);
+  assert.doesNotMatch(android, /ic_menu_edit/);
+  const header = ios.split("private var brandHeader:")[1].split("private var primaryPairingSection:")[0];
+  assert.doesNotMatch(header, /Text\("app.title"\)/);
+  assert.match(header, /Text\("pairing.ready_title"\)/);
+  assert.match(ios, /ViewThatFits\(in: \.horizontal\)/);
+  assert.doesNotMatch(ios, /\.frame\(height: (44|50)\)/);
+});
+
 test("loads the eSIM inventory using the actual navigation target", () => {
   const html = read("web/public/index.html");
   const app = read("web/public/app.js");
