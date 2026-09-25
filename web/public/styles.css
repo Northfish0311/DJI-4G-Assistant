@@ -2067,6 +2067,38 @@ textarea:focus {
   margin-top: 12px;
 }
 
+.audio-device-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  gap: 9px;
+  align-items: end;
+}
+
+.audio-device-grid label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.audio-device-grid select {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 30px 7px 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  text-overflow: ellipsis;
+}
+
+.audio-device-grid button { min-height: 38px; }
+
 .audio-status {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2424,6 +2456,8 @@ button.active-monitor {
   .call-inline-control {
     grid-template-columns: 1fr;
   }
+
+  .audio-device-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 

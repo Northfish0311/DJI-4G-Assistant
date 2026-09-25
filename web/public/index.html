@@ -18,7 +18,7 @@
       </div>
       </div><div class="top-actions">
         <div class="status-pill" id="statusPill" data-i18n="idle">Idle</div>
-        <button id="pairIosBtn" class="secondary pair-ios-button" data-i18n="pairIos">Connect iPhone / iPad</button>
+        <button id="pairIosBtn" class="secondary pair-ios-button" data-i18n="pairIos">Connect Phone / Tablet</button>
         <button id="languageBtn" class="secondary">中文</button>
         <button id="autoScanBtn" data-i18n="autoScan">Auto Scan</button>
       </div>
@@ -63,6 +63,7 @@
               <article class="metric"><span data-i18n="carrier">Carrier</span><strong id="carrierValue" data-i18n="unknown">Unknown</strong></article>
               <article class="metric"><span data-i18n="radio">Radio</span><strong id="radioValue" data-i18n="unknown">Unknown</strong></article>
               <article class="metric signal-metric"><span data-i18n="csq">CSQ</span><strong id="signalValue">--</strong></article>
+              <article class="metric temperature-metric"><span data-i18n="moduleTemperature">Temperature</span><strong id="temperatureValue">--</strong></article>
             </div>
           </section>
 
@@ -313,6 +314,11 @@
                 <button id="sendDtmfBtn" class="secondary" data-call-action data-i18n="sendDtmf">Send DTMF</button>
               </div>
               <div class="call-audio-actions">
+                <div class="audio-device-grid">
+                  <label><span data-i18n="callMicrophone">Microphone</span><select id="callMicrophoneSelect"></select></label>
+                  <label><span data-i18n="callSpeaker">Speaker</span><select id="callSpeakerSelect"></select></label>
+                  <button id="refreshAudioDevicesBtn" class="secondary" data-i18n="refreshAudioDevices">Refresh devices</button>
+                </div>
                 <button id="startAudioBridgeBtn" class="secondary" data-i18n="startAudio">Start Audio</button>
                 <button id="stopAudioBridgeBtn" class="secondary" data-i18n="stopAudio" disabled>Stop Audio</button>
               </div>
@@ -489,7 +495,7 @@
         <header class="pairing-header">
           <div>
             <p class="eyebrow" data-i18n="iosCompanion">iOS Companion</p>
-            <h2 id="pairingTitle" data-i18n="pairingTitle">Connect iPhone or iPad</h2>
+            <h2 id="pairingTitle" data-i18n="pairingTitle">Connect Phone or Tablet</h2>
           </div>
           <button id="closePairingBtn" class="icon-button" value="cancel" aria-label="Close" title="Close">&times;</button>
         </header>

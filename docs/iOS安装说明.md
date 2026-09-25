@@ -69,7 +69,7 @@ Apple ID 和密码只应输入你自己选择的签名工具，绝对不要发�
 1. 在 Windows 上安装并打开最新 DJI 4G Assistant。
 2. 插好模块，确认 Windows 程序可以读取设备。
 3. 让 Windows 电脑和 iPhone/iPad 连接同一可信 Wi-Fi。
-4. 点击 Windows 顶部的“连接 iPhone / iPad”。
+4. 点击 Windows 顶部的“连接手机 / 平板”。
 5. 在 iOS App 中点击“扫描配对码”，允许相机和本地网络权限。
 6. 扫描 Windows 显示的二维码。看到管理界面后即完成。
 

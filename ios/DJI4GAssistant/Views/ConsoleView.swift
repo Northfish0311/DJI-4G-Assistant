@@ -22,7 +22,8 @@ struct ConsoleView: View {
                         launchURL: launchURL,
                         allowedBaseURL: host.baseURL,
                         isLoading: $isLoading,
-                        errorMessage: $loadError
+                        errorMessage: $loadError,
+                        retryCount: $retryCount
                     )
                     .id(reloadID)
                 }
@@ -71,9 +72,9 @@ struct ConsoleView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Label("console.local", systemImage: "network")
+                    Label(connectionLabel, systemImage: connectionIcon)
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(connectionColor)
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
@@ -127,6 +128,21 @@ struct ConsoleView: View {
         return components.url
     }
 
+    private var connectionLabel: LocalizedStringKey {
+        if loadError != nil { return "console.disconnected" }
+        return isLoading ? "console.connecting_short" : "console.connected"
+    }
+
+    private var connectionIcon: String {
+        if loadError != nil { return "wifi.exclamationmark" }
+        return isLoading ? "arrow.triangle.2.circlepath" : "network"
+    }
+
+    private var connectionColor: Color {
+        if loadError != nil { return .orange }
+        return isLoading ? .secondary : .green
+    }
+
     private func retry() {
         retryCount = 0
         reload()
@@ -144,12 +160,14 @@ private struct WebConsoleView: UIViewRepresentable {
     let allowedBaseURL: URL
     @Binding var isLoading: Bool
     @Binding var errorMessage: String?
+    @Binding var retryCount: Int
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
             allowedBaseURL: allowedBaseURL,
             isLoading: $isLoading,
-            errorMessage: $errorMessage
+            errorMessage: $errorMessage,
+            retryCount: $retryCount
         )
     }
 
@@ -176,15 +194,18 @@ private struct WebConsoleView: UIViewRepresentable {
         private let allowedBaseURL: URL
         private var isLoading: Binding<Bool>
         private var errorMessage: Binding<String?>
+        private var retryCount: Binding<Int>
 
         init(
             allowedBaseURL: URL,
             isLoading: Binding<Bool>,
-            errorMessage: Binding<String?>
+            errorMessage: Binding<String?>,
+            retryCount: Binding<Int>
         ) {
             self.allowedBaseURL = allowedBaseURL
             self.isLoading = isLoading
             self.errorMessage = errorMessage
+            self.retryCount = retryCount
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -195,6 +216,7 @@ private struct WebConsoleView: UIViewRepresentable {
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             isLoading.wrappedValue = false
             errorMessage.wrappedValue = nil
+            retryCount.wrappedValue = 0
         }
 
         func webView(

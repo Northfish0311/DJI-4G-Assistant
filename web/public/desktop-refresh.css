@@ -9,7 +9,7 @@ button:not(:disabled):hover { filter: none; }
 button.secondary:not(:disabled):hover { background: #edf5f0; border-color: #b7d5c6; }
 button:disabled { opacity: .5; }
 input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa; }
-.panel, .overview-panel { border-color: var(--line); border-radius: 14px; box-shadow: 0 2px 5px #173c2503; }
+.panel, .overview-panel { border-color: var(--line); border-radius: 8px; box-shadow: 0 2px 5px #173c2503; }
 .panel-head { padding: 20px 22px; background: transparent; }
 .panel-head h2 { font-size: 16px; font-weight: 650; }
 .panel-subtitle, .hint { line-height: 1.7; }
@@ -32,7 +32,7 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
 .thread-copy strong { font-size: 13px; font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .thread-copy small { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .thread-count { font-size: 11px; color: #527062; background: #fff; border-radius: 6px; padding: 2px 5px; }
-.sms-conversation { min-width: 0; display: grid; align-content: start; gap: 0; border: 1px solid var(--line); border-radius: 14px; background: #fff; overflow: hidden; }
+.sms-conversation { min-width: 0; display: grid; align-content: start; gap: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; overflow: hidden; }
 .sms-conversation > .panel { border: 0; border-radius: 0; box-shadow: none; }
 .sms-conversation .sms-inbox-panel { min-height: 300px; }
 .sms-conversation .sms-inbox-panel > .panel-head { padding: 16px 22px; }
@@ -85,7 +85,7 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .view-heading h2 { font-size: 28px; line-height: 1.4; font-weight: 650; letter-spacing: -.7px; }
   .view-heading .eyebrow { display: block; font-size: 10px; color: #6d8576; letter-spacing: 1.5px; margin-bottom: 4px; }
   .view-heading .panel-subtitle { margin-top: 5px; font-size: 12px; }
-  .view > .panel, .overview-panel, .euicc-library-band, .active-euicc-band, .tool-stack > .panel { border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 2px 5px #173c2503; }
+  .view > .panel, .overview-panel, .euicc-library-band, .active-euicc-band, .tool-stack > .panel { border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: 0 2px 5px #173c2503; }
   .hero-panel { padding: 28px; min-height: 152px; background: #193f35; gap: 20px; border: 0; }
   .hero-panel h2 { color: #fff; font-size: 26px; font-weight: 600; letter-spacing: -.6px; }
   .hero-panel p { color: #b5cfc2; margin-top: 8px; font-size: 12px; overflow-wrap: anywhere; }
@@ -97,7 +97,8 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .metric-grid .metric > span { color: #819084; font-size: 11px; }
   .metric-grid .metric strong { font-size: 17px; font-weight: 600; margin-top: 9px; overflow-wrap: anywhere; }
   .metric-grid .metric:nth-child(n+5) { border-bottom: 0; }
-  .metric-grid .signal-metric { grid-column: span 2; }
+  .metric-grid .temperature-metric strong[data-tone="warm"] { color:#a86318; }
+  .metric-grid .temperature-metric strong[data-tone="hot"] { color:#b33b31; }
   .action-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 0 22px 22px; gap: 12px; }
   .action-grid button { padding: 16px 12px; min-height: 70px; border: 1px solid #e1e9df; border-radius: 10px; background: #f8faf6; color: #325b46; font-size: 13px; }
   .action-grid button:not(:disabled):hover { background: #eaf3e7; border-color: #bcd5bb; }
@@ -106,7 +107,7 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .output-panel { opacity: .85; }
   .euicc-library-band .section-heading-row { padding: 20px 22px 16px; border: 0; }
   .euicc-slot-grid { padding: 0 22px 18px; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
-  .euicc-slot-card { min-height: 174px; border: 1px solid #e0e7de; border-radius: 12px; background: #fafbf8; padding: 16px 18px; }
+  .euicc-slot-card { min-height: 174px; border: 1px solid #e0e7de; border-radius: 8px; background: #fafbf8; padding: 16px 18px; }
   .euicc-slot-card.active { border-color: #78ae8b; background: #f0f7eb; box-shadow: inset 0 0 0 1px #78ae8b; }
   .euicc-slot-index { border-radius: 8px; background: #e3ece0; color: #426648; }
   .euicc-slot-stats { display: flex; gap: 25px; padding: 0; border: 0; background: transparent; }
@@ -127,8 +128,8 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .profile-source-note { display: block; margin: -6px 2px 0; font-size: 11px; }
   .esim-workspace { grid-template-columns: minmax(0, 1fr) 278px; gap: 20px; }
   .profile-panel .profile-list { padding: 18px; gap: 12px; }
-  .esim-workspace > .profile-panel { border: 1px solid var(--line); border-radius: 14px; background: #fff; }
-  .profile-card { border-radius: 10px; border-color: #e2e8de; }
+  .esim-workspace > .profile-panel { border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+  .profile-card { border-radius: 8px; border-color: #e2e8de; }
   .profile-card.active { border-color: #82b99a; }
   .profile-title strong { font-size: 18px; }
   .profile-card-head { padding: 18px; }
@@ -149,7 +150,7 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .sms-conversation .sms-compose-panel .field-row label { padding-top: 10px; }
   #newSmsBtn { font-size: 11px; min-height: 30px; }
   .call-workspace { grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; }
-  .call-stage { min-height: 488px; padding: 24px; background: #fff; border-radius: 14px; }
+  .call-stage { min-height: 488px; padding: 24px; background: #fff; border-radius: 8px; }
   .call-state-line { font-size: 11px; flex-wrap: wrap; }
   .call-avatar { width: 86px; height: 86px; border-radius: 50%; background: #eef5ec; color: #548466; box-shadow: 0 0 0 14px #f8faf5; margin-bottom: 20px; font-weight: 500; }
   .call-identity { padding: 36px 12px; }
@@ -157,7 +158,8 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .call-side { gap: 14px; }
   .dialer-panel .panel-head { padding: 18px 22px 10px; }
   .dial-number-row { padding: 0 22px; }
-  .dial-number-row input { font-size: 20px; text-align: center; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: #fff; }
+  .dial-number-row input { font-size: 16px; font-weight: 550; text-align: center; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: #fff; }
+  .dial-number-row input::placeholder { color: #8b9690; font-weight: 500; opacity: 1; }
   .dial-pad { padding: 10px 28px 12px; gap: 8px; }
   .dial-key { height: 52px; background: #f4f7f0; border: 0; border-radius: 12px; }
   .dial-key strong { font-size: 22px; font-weight: 500; }
@@ -292,4 +294,91 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .profile-primary-actions button {font-size:12px;}
   .profile-more {grid-column:1 / -1;}
 }
-@media (max-width:879px) {.euicc-slot-grid{padding:0 14px;}.call-workspace{grid-template-columns:minmax(0,1fr);}.call-main .call-stage{padding:18px;}.call-side{grid-template-columns:minmax(0,1fr);}.sms-reply-target{font-size:10px;}}
+/* Final mobile guard. Keep the four daily tools first, while advanced tools remain
+   reachable in the same horizontally scrollable rail. This block intentionally
+   comes after every desktop refinement so later rules cannot squeeze eSIM cards. */
+@media (max-width:879px) {
+  .shell {padding-inline:12px;}
+  .rail {
+    top:0;
+    display:flex;
+    gap:6px;
+    margin-inline:-12px;
+    padding:8px 12px;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    scroll-snap-type:x proximity;
+    scrollbar-width:none;
+    border-bottom:1px solid var(--line);
+    background:rgba(247,249,247,.96);
+    backdrop-filter:blur(16px);
+  }
+  .rail::-webkit-scrollbar {display:none;}
+  .rail .nav-btn {
+    position:relative;
+    flex:0 0 86px;
+    width:86px;
+    min-width:86px;
+    min-height:54px;
+    display:grid;
+    grid-template-rows:20px auto;
+    place-items:center;
+    gap:3px;
+    padding:7px 8px;
+    scroll-snap-align:start;
+    border:1px solid transparent;
+    border-radius:8px;
+  }
+  .rail .nav-btn > svg.lucide {display:block;width:19px;height:19px;}
+  .rail .nav-btn .nav-title {font-size:12px;line-height:1.15;white-space:nowrap;}
+  .rail .nav-btn .nav-subtitle {display:none;}
+  .rail .nav-btn.active {border-color:#b8d8ca;background:#e7f2ec;color:#135d4d;}
+  .rail .nav-btn[data-target="network"] {margin-left:8px;}
+  .rail .nav-btn[data-target="network"]::before {
+    content:"";
+    position:absolute;
+    top:10px;
+    left:-5px;
+    width:1px;
+    height:34px;
+    background:var(--line);
+  }
+  .view-heading {align-items:center;}
+  .view-heading h2 {font-size:21px;}
+  .panel,
+  .overview-panel,
+  .euicc-library-band,
+  .active-euicc-band,
+  .sms-conversation,
+  .call-main > .panel {border-radius:8px;}
+  .esim-workspace,
+  .sms-workspace,
+  .call-workspace {grid-template-columns:minmax(0,1fr);}
+  .esim-workspace > *,
+  .profile-panel,
+  .profile-list,
+  .profile-card,
+  .profile-card-head,
+  .profile-title {min-width:0;max-width:100%;}
+  .profile-panel .profile-list {grid-template-columns:minmax(0,1fr);padding:10px;gap:10px;}
+  .profile-card {width:100%;}
+  .profile-title strong,
+  .profile-title span,
+  .profile-title code {overflow-wrap:anywhere;word-break:break-word;}
+  .profile-primary-actions {display:flex;flex-wrap:wrap;gap:8px;}
+  .profile-primary-actions button {flex:1 1 112px;min-width:0;}
+  .tool-stack {grid-template-columns:minmax(0,1fr);}
+  .euicc-slot-grid {grid-template-columns:minmax(0,1fr);padding:0 14px;}
+  .euicc-slot-card {align-items:flex-start;}
+  .call-main .call-stage {padding:18px;}
+  .call-side {grid-template-columns:minmax(0,1fr);}
+  .sms-reply-target {font-size:10px;}
+}
+
+@media (max-width:420px) {
+  .shell {padding-inline:10px;}
+  .rail {margin-inline:-10px;padding-inline:10px;}
+  .rail .nav-btn {flex-basis:78px;width:78px;min-width:78px;}
+  .euicc-slot-card {display:grid;grid-template-columns:minmax(0,1fr) auto;}
+  .profile-card-head {padding:14px;}
+}

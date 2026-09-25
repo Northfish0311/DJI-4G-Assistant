@@ -8,6 +8,8 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.content.ClipboardManager;
 import android.content.ClipData;
+import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -35,9 +37,12 @@ public final class MainActivity extends Activity {
     private WebView web;
     private PairingVault vault;
     private URI host;
+    private String hostName;
     private String token;
     private int generation;
     private boolean connecting;
+    private boolean reconnectScheduled;
+    private ConnectivityManager.NetworkCallback networkCallback;
     private static final int INK = Color.rgb(32, 37, 44);
     private static final int MUTED = Color.rgb(116, 123, 134);
     private static final int ACCENT = Color.rgb(23, 100, 237);
@@ -54,6 +59,51 @@ public final class MainActivity extends Activity {
                 pair(address.getText().toString(), password.getText().toString());
             }
         } catch (Exception error) { vault.clear(); status.setText("保存的配对已失效，请重新扫码。"); }
+    }
+
+    @Override protected void onStart() {
+        super.onStart();
+        startNetworkMonitor();
+    }
+
+    @Override protected void onStop() {
+        stopNetworkMonitor();
+        super.onStop();
+    }
+
+    private void startNetworkMonitor() {
+        if (networkCallback != null) return;
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (manager == null) return;
+        networkCallback = new ConnectivityManager.NetworkCallback() {
+            @Override public void onAvailable(Network network) {
+                runOnUiThread(() -> {
+                    if (!loadFailed || reconnectScheduled || web == null) return;
+                    reconnectScheduled = true;
+                    status.setText("网络已恢复，正在重新连接…");
+                    status.setVisibility(View.VISIBLE);
+                    web.postDelayed(() -> {
+                        reconnectScheduled = false;
+                        if (loadFailed && web != null) reload();
+                    }, 700);
+                });
+            }
+        };
+        try {
+            manager.registerDefaultNetworkCallback(networkCallback);
+        } catch (RuntimeException error) {
+            networkCallback = null;
+        }
+    }
+
+    private void stopNetworkMonitor() {
+        if (networkCallback == null) return;
+        ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        try {
+            if (manager != null) manager.unregisterNetworkCallback(networkCallback);
+        } catch (RuntimeException ignored) {
+        }
+        networkCallback = null;
     }
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
@@ -186,6 +236,7 @@ public final class MainActivity extends Activity {
         worker.execute(() -> {
             HttpURLConnection connection = null;
             String failure = null;
+            String verifiedName = base.getHost();
             try {
                 connection = (HttpURLConnection) base.resolve("/api/pairing").toURL().openConnection();
                 connection.setInstanceFollowRedirects(false); connection.setConnectTimeout(12000); connection.setReadTimeout(12000);
@@ -197,18 +248,22 @@ public final class MainActivity extends Activity {
                     byte[] buffer = new byte[4096]; int size;
                     while ((size = input.read(buffer)) != -1) { output.write(buffer, 0, size); if (output.size() > 65536) throw new Exception("电脑响应异常。"); }
                 }
-                if (!new JSONObject(output.toString("UTF-8")).optBoolean("ok")) throw new Exception("电脑未接受配对。");
+                JSONObject payload = new JSONObject(output.toString("UTF-8"));
+                if (!payload.optBoolean("ok")) throw new Exception("电脑未接受配对。");
+                String suppliedName = payload.optString("name", "").trim();
+                if (!suppliedName.isEmpty()) verifiedName = suppliedName;
             } catch (Exception error) {
                 failure = error instanceof java.io.IOException ? "无法连接电脑。请检查同一 Wi-Fi、电脑助手和防火墙，然后重试。" : error.getMessage();
             } finally { if (connection != null) connection.disconnect(); }
             final String message = failure;
+            final String computerName = verifiedName;
             runOnUiThread(() -> {
                 if (isDestroyed() || request != generation) return;
                 setConnecting(false);
                 if (message != null) { status.setText(message); setManualExpanded(true); return; }
-                try { vault.save(base.toString(), secret); }
+                try { vault.save(base.toString(), secret, computerName); }
                 catch (Exception error) { status.setText("无法安全保存配对，请重试。"); setManualExpanded(true); return; }
-                host = base; token = secret; password.setText("");
+                host = base; hostName = computerName; token = secret; password.setText("");
                 ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(password.getWindowToken(), 0);
                 showConsole();
             });
@@ -219,7 +274,8 @@ public final class MainActivity extends Activity {
         LinearLayout toolbar = new LinearLayout(this); toolbar.setPadding(dp(12), 0, dp(12), 0); toolbar.setGravity(android.view.Gravity.CENTER_VERTICAL);
         LinearLayout labels = new LinearLayout(this); labels.setOrientation(LinearLayout.VERTICAL);
         TextView title = text("大疆 4G 助手", 17, INK); title.setTypeface(null, Typeface.BOLD); title.setPadding(0, dp(4), 0, 0); labels.addView(title);
-        TextView subtitle = text(host.getHost(), 12, MUTED); subtitle.setPadding(0, 0, 0, dp(4)); subtitle.setSingleLine(true); subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END); labels.addView(subtitle);
+        String identity = hostName == null || hostName.equals(host.getHost()) ? host.getHost() : hostName + " · " + host.getHost();
+        TextView subtitle = text(identity, 12, MUTED); subtitle.setPadding(0, 0, 0, dp(4)); subtitle.setSingleLine(true); subtitle.setEllipsize(android.text.TextUtils.TruncateAt.END); labels.addView(subtitle);
         toolbar.addView(labels, new LinearLayout.LayoutParams(0, -2, 1));
         toolbar.addView(icon(android.R.drawable.ic_popup_sync, "重新连接", this::requestReload));
         ImageButton more = icon(android.R.drawable.ic_menu_more, "更多操作", () -> {});
@@ -256,15 +312,15 @@ public final class MainActivity extends Activity {
         new AlertDialog.Builder(this).setTitle("重新加载页面？").setMessage("未保存的输入可能丢失。已提交的操作不会自动重发。")
             .setNegativeButton("取消", null).setPositiveButton("重新加载", (d, w) -> reload()).show();
     }
-    private void failed(String message) { loadFailed = true; status.setText(message); status.setVisibility(View.VISIBLE); }
+    private void failed(String message) { loadFailed = true; reconnectScheduled = false; status.setText(message); status.setVisibility(View.VISIBLE); }
     private void reload() {
         if (web == null || host == null) return;
-        loadFailed = false; status.setText("正在连接…"); status.setVisibility(View.VISIBLE);
+        reconnectScheduled = false; loadFailed = false; status.setText("正在连接…"); status.setVisibility(View.VISIBLE);
         Uri url = Uri.parse(host.toString()).buildUpon().appendQueryParameter("token", token).appendQueryParameter("native", "android").fragment("overview").build();
         web.loadUrl(url.toString());
     }
     private void forget() {
-        generation++; vault.clear(); token = null; host = null;
+        generation++; vault.clear(); token = null; host = null; hostName = null;
         if (web != null) { web.clearCache(true); web.clearHistory(); }
         destroyConsole();
         WebStorage.getInstance().deleteAllData(); CookieManager.getInstance().removeAllCookies(null); connecting = false; showPairing();

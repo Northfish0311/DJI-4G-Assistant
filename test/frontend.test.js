@@ -47,6 +47,7 @@ test("keeps mobile pairing compact and buttons free of legacy shadows", () => {
 
 test("Android recovery keeps controls synchronized and detaches the console before disposal", () => {
   const source = read("android/app/src/main/java/com/northfish0311/dji4gremote/MainActivity.java");
+  const vault = read("android/app/src/main/java/com/northfish0311/dji4gremote/PairingVault.java");
   assert.match(source, /if \(message != null\).*setManualExpanded\(true\)/);
   assert.match(source, /new View\[\]\{connect, scan, paste, address, password\}/);
   assert.match(source, /setConnecting\(false\)/);
@@ -57,6 +58,10 @@ test("Android recovery keeps controls synchronized and detaches the console befo
   const disposal = source.split("private void destroyConsole()")[1];
   assert.ok(disposal.indexOf("removeView(web)") < disposal.indexOf("web.destroy()"));
   assert.doesNotMatch(source, /密码失效时请断开/);
+  assert.match(source, /registerDefaultNetworkCallback/);
+  assert.match(source, /网络已恢复，正在重新连接/);
+  assert.match(source, /payload\.optString\("name"/);
+  assert.match(vault, /put\("name", name\)/);
 });
 
 test("native clients remove stale browser tokens without persisting fresh credentials", () => {
@@ -116,6 +121,19 @@ test("keeps the SMS workspace single-column below 1000px after desktop refinemen
   assert.match(css.slice(responsiveGuard), /@media \(max-width: 1000px\)[\s\S]*\.sms-workspace\s*\{[\s\S]*grid-template-columns: minmax\(0, 1fr\)/);
 });
 
+test("keeps mobile eSIM profiles readable after desktop refinements", () => {
+  const css = read("web/public/desktop-refresh.css");
+  const desktopRule = css.lastIndexOf("grid-template-columns:minmax(0,1fr) 270px");
+  const responsiveGuard = css.lastIndexOf("/* Final mobile guard.");
+  assert.ok(desktopRule >= 0);
+  assert.ok(responsiveGuard > desktopRule);
+  const mobile = css.slice(responsiveGuard);
+  assert.match(mobile, /@media \(max-width:879px\)[\s\S]*\.esim-workspace,[\s\S]*grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(mobile, /\.profile-panel \.profile-list \{grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(mobile, /\.profile-card \{width:100%/);
+  assert.match(mobile, /\.rail \{[\s\S]*overflow-x:auto/);
+});
+
 test("ships one source launcher with the complete guarded console", () => {
   const cmd = read("Start-Web-Console.cmd");
   const ps = read("scripts/windows/start-console.ps1");
@@ -151,6 +169,53 @@ test("contains the SMS capacity and three-step voice setup surfaces", () => {
   assert.match(html, /id="voicePrepareStep"/);
 });
 
+test("shows module temperature without polling during calls or write operations", () => {
+  const html = read("web/public/index.html");
+  const app = read("web/public/app.js");
+  const server = read("web/server.js");
+  assert.match(html, /id="temperatureValue"/);
+  assert.match(server, /AT\+QTEMP/);
+  assert.match(server, /\/api\/module-temperature/);
+  assert.match(app, /refreshModuleTemperatureQuietly/);
+  assert.match(app, /state\.callActionInFlight/);
+  assert.match(app, /state\.callStatusData\?\.voiceCalls\?\.length/);
+});
+
+test("verifies a live ICCID and IMSI after enabling an eSIM profile", () => {
+  const app = read("web/public/app.js");
+  const server = read("web/server.js");
+  assert.match(server, /verifyProfileActivation/);
+  assert.match(server, /\["AT\+QCCID", "AT\+CIMI"\]/);
+  assert.doesNotMatch(server.split("async function verifyProfileActivation")[1].split("function profileNickname")[0], /AT\+CFUN/);
+  assert.match(app, /profileSwitchVerified/);
+  assert.match(app, /profileSwitchNetworkPending/);
+  assert.match(app, /profileSwitchPending/);
+});
+
+test("sends post-dial extension keys only after an outgoing call connects", () => {
+  const app = read("web/public/app.js");
+  assert.match(app, /function parseDialInput/);
+  assert.match(app, /call\?\.direction !== "outgoing"/);
+  assert.match(app, /!\["active", "held"\]\.includes\(call\.state\)/);
+  assert.match(app, /token === ","[\s\S]*setTimeout\(resolve, 2000\)/);
+  assert.match(app, /postDialFailed/);
+  assert.match(app, /state\.postDialAbortController\?\.abort\(\)/);
+});
+
+test("lets Windows users choose call microphone and speaker independently", () => {
+  const html = read("web/public/index.html");
+  const app = read("web/public/app.js");
+  assert.match(html, /id="callMicrophoneSelect"/);
+  assert.match(html, /id="callSpeakerSelect"/);
+  assert.match(html, /id="refreshAudioDevicesBtn"/);
+  assert.match(app, /localStorage\.setItem\("callMicrophoneId"/);
+  assert.match(app, /localStorage\.setItem\("callSpeakerId"/);
+  assert.match(app, /downlinkAudio\.setSinkId\(systemOutput\.deviceId\)/);
+  assert.match(app, /uplinkAudio\.setSinkId\(moduleOutput\.deviceId\)/);
+  const bridge = app.split("async function startAudioBridge()")[1].split("function syncCallButtons")[0];
+  assert.ok(bridge.indexOf("getUserMedia({ audio: true })") < bridge.indexOf("/api/voice-route-start"));
+});
+
 test("ignores Bluetooth COM ports during modem discovery", () => {
   const finder = read("scripts/windows/find-at-port.ps1");
   const diagnostics = read("scripts/windows/read-only-device-check.ps1");
@@ -159,11 +224,15 @@ test("ignores Bluetooth COM ports during modem discovery", () => {
     assert.match(source, /Win32_SerialPort/);
   }
   assert.match(finder, /Skipping Bluetooth serial port/);
+  assert.match(finder, /Quectel\|QDC507\|Baiwang/);
+  assert.match(finder, /for \(\$pass = 1; \$pass -le 2/);
+  assert.match(finder, /foreach \(\$command in @\("AT", "ATI"\)\)/);
+  assert.match(finder, /Waiting briefly for newly attached USB serial interfaces/);
   assert.match(diagnostics, /none are USB modem interfaces/);
 });
 
 
-test("includes a bilingual responsive iOS pairing surface", () => {
+test("includes a bilingual responsive mobile pairing surface", () => {
   const html = read("web/public/index.html");
   const app = read("web/public/app.js");
   const css = read("web/public/styles.css");
@@ -171,7 +240,8 @@ test("includes a bilingual responsive iOS pairing surface", () => {
   assert.match(html, /id="pairingDialog"/);
   assert.match(html, /id="pairingQr"/);
   assert.match(app, /fetch\("\/api\/pairing"/);
-  assert.match(app, /连接 iPhone \/ iPad/);
+  assert.match(app, /连接手机 \/ 平板/);
+  assert.doesNotMatch(app, /连接 iPhone \/ iPad/);
   assert.match(app, /launchToken && !nativeCompanion/);
   assert.match(app, /nativePlatform === "ios" \|\| nativePlatform === "android"/);
   assert.match(app, /if \(nativeCompanion\) localStorage.removeItem\("consoleToken"\)/);
@@ -195,4 +265,6 @@ test("ships the native iPhone and iPad companion project", () => {
   assert.match(scanner, /AVMetadataObject\.ObjectType|metadataOutputTypes|metadataObjectTypes = \[\.qr\]/);
   assert.match(consoleView, /allowedBaseURL/);
   assert.match(consoleView, /native", value: "ios"/);
+  assert.match(consoleView, /retryCount\.wrappedValue = 0/);
+  assert.match(consoleView, /console\.disconnected/);
 });

@@ -438,6 +438,46 @@ function profileId(value) {
   return /^[0-9a-f]+$/i.test(id) ? id : null;
 }
 
+function normalizeIccid(value) {
+  const candidate = String(value || "").replace(/[\s"']/g, "").toUpperCase();
+  return /^\d{18,22}F*$/.test(candidate) ? candidate.replace(/F+$/, "") : null;
+}
+
+function parseSimIdentity(text) {
+  const lines = String(text || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const iccidLine = lines.find((line) => /^\+(?:QCCID|CCID):/i.test(line));
+  const iccid = normalizeIccid(iccidLine?.replace(/^\+(?:QCCID|CCID):\s*/i, ""));
+  let imsi = null;
+  let waitingForImsi = false;
+  for (const line of lines) {
+    if (/^(?:-+\s*)?AT\+CIMI(?:\s*-+)?$/i.test(line)) {
+      waitingForImsi = true;
+      continue;
+    }
+    if (waitingForImsi && /^\d{14,16}$/.test(line)) {
+      imsi = line;
+      break;
+    }
+    if (waitingForImsi && /^(?:OK|ERROR|\+CME ERROR)/i.test(line)) waitingForImsi = false;
+  }
+  return { iccid, imsi, imsiReady: Boolean(imsi) };
+}
+
+async function verifyProfileActivation(portName, targetId, attempts = 4) {
+  const targetIccid = normalizeIccid(targetId);
+  if (!targetIccid) return { status: "not-applicable", matched: null, imsiReady: null, attempts: 0 };
+  let identity = { iccid: null, imsi: null, imsiReady: false };
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const result = await enqueueAt(portName, ["AT+QCCID", "AT+CIMI"], 20000);
+    identity = parseSimIdentity(result.stdout);
+    const matched = identity.iccid === targetIccid;
+    if (matched && identity.imsiReady) return { status: "verified", matched: true, imsiReady: true, attempts: attempt };
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+  const matched = identity.iccid === targetIccid;
+  return { status: matched ? "network-pending" : "profile-pending", matched, imsiReady: identity.imsiReady, attempts };
+}
+
 function profileNickname(value) {
   const nickname = String(value || "").trim();
   return nickname && nickname.length <= 64 && !/[\r\n\x00-\x1f]/.test(nickname) ? nickname : null;
@@ -573,6 +613,15 @@ function callNumber(value) {
   return /^\+?[0-9]{3,20}$/.test(number) ? number : null;
 }
 
+function parseDialString(value) {
+  const compact = String(value || "").trim().replace(/[\s()-]/g, "");
+  const separator = compact.indexOf(",");
+  const number = callNumber(separator < 0 ? compact : compact.slice(0, separator));
+  const postDial = separator < 0 ? "" : compact.slice(separator);
+  if (!number || (postDial && (postDial.length > 64 || !/^[,0-9*#]+$/.test(postDial) || !/[0-9*#]/.test(postDial)))) return null;
+  return { number, postDial };
+}
+
 function dtmfDigits(value) {
   const digits = String(value || "").trim();
   return /^[0-9*#]{1,32}$/.test(digits) ? digits : null;
@@ -609,12 +658,37 @@ function parseClcc(text) {
   return calls;
 }
 
+function parseModuleTemperature(text) {
+  const sensors = [];
+  const source = String(text || "");
+  const named = /\+QTEMP:\s*"([^"]+)"\s*,\s*(-?\d+(?:\.\d+)?)/gi;
+  for (const match of source.matchAll(named)) {
+    const valueC = Number(match[2]);
+    if (Number.isFinite(valueC) && valueC >= -50 && valueC <= 150) sensors.push({ name: match[1], valueC });
+  }
+  if (!sensors.length) {
+    const line = source.match(/\+QTEMP:\s*([^\r\n]+)/i)?.[1] || "";
+    for (const [index, raw] of [...line.matchAll(/-?\d+(?:\.\d+)?/g)].entries()) {
+      const valueC = Number(raw[0]);
+      if (Number.isFinite(valueC) && valueC >= -50 && valueC <= 150) sensors.push({ name: `sensor${index + 1}`, valueC });
+    }
+  }
+  if (!sensors.length) return null;
+  const values = sensors.map((sensor) => sensor.valueC);
+  return {
+    maxC: Math.max(...values),
+    averageC: Math.round((values.reduce((total, value) => total + value, 0) / values.length) * 10) / 10,
+    sensors,
+  };
+}
+
 function buildCallAction(body = {}) {
   const action = String(body.action || "").trim().toLowerCase();
   const confirm = String(body.confirm || "").trim().toUpperCase();
   if (action === "dial") {
-    const number = callNumber(body.number);
-    return number && confirm === "DIAL" ? { action, commands: ["ATD" + number + ";"] } : null;
+    const dial = parseDialString(body.number);
+    if (!dial || confirm !== "DIAL") return null;
+    return { action, commands: ["ATD" + dial.number + ";"], ...(dial.postDial ? { postDial: dial.postDial } : {}) };
   }
   if (action === "answer") return confirm === "ANSWER" ? { action, commands: ["ATA"] } : null;
   if (["hangup", "reject"].includes(action)) return confirm === "HANGUP" ? { action, commands: ["ATH"] } : null;
@@ -1035,6 +1109,7 @@ async function handleApi(req, res, url) {
       "AT+CEREG?",
       "AT+CGREG?",
       "AT+CSQ",
+      "AT+QTEMP",
       "AT+QNWINFO",
       "AT+QENG=\"servingcell\"",
       "AT+CGDCONT?",
@@ -1044,7 +1119,13 @@ async function handleApi(req, res, url) {
       "AT+QNETDEVSTATUS?",
     ];
     const result = await enqueueAt(portArg(url), commands, 60000);
-    sendJson(res, 200, result);
+    sendJson(res, 200, { ...result, temperature: parseModuleTemperature(result.stdout) });
+    return;
+  }
+
+  if (url.pathname === "/api/module-temperature") {
+    const result = await enqueueAt(portArg(url), ["AT+QTEMP"], 15000);
+    sendJson(res, 200, { ...result, temperature: parseModuleTemperature(result.stdout) });
     return;
   }
 
@@ -1314,7 +1395,7 @@ async function handleApi(req, res, url) {
     if (accepted && ["hangup", "reject"].includes(callAction.action) && voiceRuntime.routeActive) {
       enqueueVoice(() => voiceRuntime.stopRoute()).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
     }
-    sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, action: callAction.action });
+    sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, action: callAction.action, postDial: callAction.postDial || "" });
     return;
   }
 
@@ -1665,7 +1746,8 @@ $items | ConvertTo-Json -Depth 4 -Compress
     }
     const args = action === "delete" ? ["profile", "delete", id] : ["profile", action, id, "1"];
     const result = await runLpac(lpac, portArg(url), args, 90000, { aid });
-    sendJson(res, result.ok ? 200 : 502, result);
+    const verification = action === "enable" && result.ok ? await verifyProfileActivation(portArg(url), id) : null;
+    sendJson(res, result.ok ? 200 : 502, { ...result, verification });
     return;
   }
 
@@ -1812,4 +1894,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, buildCallAction, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };

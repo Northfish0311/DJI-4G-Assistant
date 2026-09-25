@@ -1,7 +1,7 @@
 "app.title" = "DJI 4G Assistant";
 "pairing.subtitle" = "Windows remote management";
 "pairing.ready_title" = "Connect your computer";
-"pairing.ready_detail" = "Open DJI 4G Assistant on Windows, choose Connect iPhone / iPad, then scan the code shown there.";
+"pairing.ready_detail" = "Open DJI 4G Assistant on Windows, choose Connect Phone / Tablet, then scan the code shown there.";
 "pairing.scan" = "Scan Pairing Code";
 "pairing.connecting" = "Connecting...";
 "pairing.nearby" = "Nearby computers";
@@ -15,7 +15,7 @@
 "pairing.step1.title" = "Keep the Windows app running";
 "pairing.step1.detail" = "The cellular dongle stays connected to that computer.";
 "pairing.step2.title" = "Show the pairing code";
-"pairing.step2.detail" = "Tap Connect iPhone / iPad in the Windows toolbar.";
+"pairing.step2.detail" = "Tap Connect Phone / Tablet in the Windows toolbar.";
 "pairing.step3.title" = "Scan once";
 "pairing.step3.detail" = "This app saves the control token in Keychain for future use.";
 "pairing.manual" = "Enter address manually";
@@ -37,6 +37,9 @@
 "console.connecting" = "Connecting to Windows...";
 "console.unreachable" = "Windows Assistant Is Unreachable";
 "console.local" = "Remote control";
+"console.connected" = "Connected";
+"console.connecting_short" = "Connecting";
+"console.disconnected" = "Disconnected";
 "console.recovery_hint" = "Keep the Windows assistant running on the same trusted LAN. If the password has expired, forget this computer and scan its new code.";
 "console.auto_retry" = "Waiting to reconnect";
 "console.process_stopped" = "The page stopped. Reconnecting will not resend unfinished actions.";

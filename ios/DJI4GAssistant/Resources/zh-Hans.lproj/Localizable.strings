@@ -1,7 +1,7 @@
 "app.title" = "DJI 4G 助手";
 "pairing.subtitle" = "Windows 远程管理";
 "pairing.ready_title" = "连接你的电脑";
-"pairing.ready_detail" = "在 Windows 上打开 DJI 4G Assistant，点击“连接 iPhone / iPad”，然后扫描电脑上显示的二维码。";
+"pairing.ready_detail" = "在 Windows 上打开 DJI 4G Assistant，点击“连接手机 / 平板”，然后扫描电脑上显示的二维码。";
 "pairing.scan" = "扫描配对码";
 "pairing.connecting" = "正在连接...";
 "pairing.nearby" = "附近的电脑";
@@ -15,7 +15,7 @@
 "pairing.step1.title" = "保持 Windows 程序运行";
 "pairing.step1.detail" = "DJI 4G 模块继续插在这台 Windows 电脑上。";
 "pairing.step2.title" = "显示配对二维码";
-"pairing.step2.detail" = "点击 Windows 工具栏中的“连接 iPhone / iPad”。";
+"pairing.step2.detail" = "点击 Windows 工具栏中的“连接手机 / 平板”。";
 "pairing.step3.title" = "扫码一次";
 "pairing.step3.detail" = "控制密码会安全保存在系统 Keychain 中，以后不必重复扫码。";
 "pairing.manual" = "手动输入地址";
@@ -37,6 +37,9 @@
 "console.connecting" = "正在连接 Windows...";
 "console.unreachable" = "无法连接 Windows 助手";
 "console.local" = "远程管理";
+"console.connected" = "已连接";
+"console.connecting_short" = "连接中";
+"console.disconnected" = "连接中断";
 "console.recovery_hint" = "请保持电脑助手运行，并确认两台设备在同一可信局域网。密码已失效时，请忘记这台电脑后重新扫码。";
 "console.auto_retry" = "正在等待自动重连";
 "console.process_stopped" = "页面已暂停，将重新连接电脑。未完成的操作不会自动重发。";

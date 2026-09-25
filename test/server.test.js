@@ -7,7 +7,11 @@ const {
   buildSmsPdus,
   localIps,
   parseClcc,
+  parseModuleTemperature,
+  parseDialString,
   buildCallAction,
+  normalizeIccid,
+  parseSimIdentity,
   normalizeIsdrAid,
   parseLpacData,
   mergeEuiccRecords,
@@ -17,6 +21,35 @@ const {
   parseSmsStorage,
   redactModemIdentifiers,
 } = require("../web/server");
+
+test("parses named and compact Quectel temperature responses", () => {
+  assert.deepEqual(parseModuleTemperature('+QTEMP: "xo_therm",34\r\n+QTEMP: "pa_therm0",41'), {
+    maxC: 41,
+    averageC: 37.5,
+    sensors: [{ name: "xo_therm", valueC: 34 }, { name: "pa_therm0", valueC: 41 }],
+  });
+  assert.equal(parseModuleTemperature("ERROR"), null);
+  assert.equal(parseModuleTemperature("+QTEMP: 31,33,32").maxC, 33);
+});
+
+test("normalizes padded ICCIDs and reads the post-switch SIM identity", () => {
+  assert.equal(normalizeIccid("890123456789012345F"), "890123456789012345");
+  assert.equal(normalizeIccid("A0000005591010"), null);
+  assert.deepEqual(parseSimIdentity([
+    "----- AT+QCCID -----",
+    "AT+QCCID",
+    "+QCCID: 890123456789012345F",
+    "OK",
+    "----- AT+CIMI -----",
+    "AT+CIMI",
+    "460001234567890",
+    "OK",
+  ].join("\r\n")), {
+    iccid: "890123456789012345",
+    imsi: "460001234567890",
+    imsiReady: true,
+  });
+});
 
 test("encodes Chinese SMS in UCS2 PDU mode", () => {
   const [part] = buildSmsPdus("+447700900123", "\u6d4b\u8bd5\u77ed\u4fe1");
@@ -72,6 +105,17 @@ test("builds guarded call commands and rejects AT injection", () => {
   });
   assert.equal(buildCallAction({ action: "dial", number: "10086;AT+CFUN=1", confirm: "DIAL" }), null);
   assert.equal(buildCallAction({ action: "hangup", confirm: "DIAL" }), null);
+});
+
+test("separates post-dial extension keys from the phone number", () => {
+  assert.deepEqual(parseDialString("010-12345678,,123#"), { number: "01012345678", postDial: ",,123#" });
+  assert.deepEqual(buildCallAction({ action: "dial", number: "10086,,1#", confirm: "DIAL" }), {
+    action: "dial",
+    commands: ["ATD10086;"],
+    postDial: ",,1#",
+  });
+  assert.equal(parseDialString("10086,,"), null);
+  assert.equal(parseDialString("10086,1;AT+CFUN=1"), null);
 });
 
 test("prefers a Wi-Fi console URL over the modem ECM subnet", () => {

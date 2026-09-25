@@ -25,10 +25,10 @@ final class PairingVault {
         }
         return (SecretKey) store.getKey(ALIAS, null);
     }
-    void save(String host, String token) throws Exception {
+    void save(String host, String token, String name) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, key());
-        String payload = new JSONObject().put("host", host).put("token", token).toString();
+        String payload = new JSONObject().put("host", host).put("token", token).put("name", name).toString();
         String data = Base64.encodeToString(cipher.doFinal(payload.getBytes(java.nio.charset.StandardCharsets.UTF_8)), Base64.NO_WRAP);
         String iv = Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP);
         if (!context.getSharedPreferences("pairing", 0).edit().putString("data", data).putString("iv", iv).commit()) throw new Exception("无法保存配对");

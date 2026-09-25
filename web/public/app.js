@@ -37,7 +37,7 @@ const copy = {
     title: "DJI 4G Assistant", hostLocal: "Local control page for the module connected to this computer.",
     idle: "Idle", running: "Running", checking: "Checking", starting: "Starting", at: "AT",
     autoScan: "Auto Scan", automatic: "Auto", switchToChinese: "中文", switchToEnglish: "English",
-    pairIos: "Connect iPhone / iPad", iosCompanion: "iOS Companion", pairingTitle: "Connect iPhone or iPad", pairingScanTitle: "Scan once in the DJI 4G Assistant app", pairingDescription: "The app discovers this Windows computer automatically. The QR code securely adds the address and control token.", sameNetwork: "Trusted local network", windowsHost: "Windows host", pairingLoading: "Preparing a secure pairing code...", pairingReady: "Ready to scan.", pairingFailed: "Pairing is unavailable: {error}", pairingQrAlt: "DJI 4G Assistant pairing QR code", copyPairingLink: "Copy pairing link", pairingCopied: "Pairing link copied.", done: "Done", close: "Close", pairingSecurity: "Anyone with this code can control the connected module. Only scan it on a trusted network and never publish it online.",
+    pairIos: "Connect Phone / Tablet", iosCompanion: "Mobile Companion", pairingTitle: "Connect Phone or Tablet", pairingScanTitle: "Scan once in the DJI 4G Assistant app", pairingDescription: "The Android and iOS apps discover this Windows computer automatically. The QR code securely adds the address and control token.", sameNetwork: "Trusted local network", windowsHost: "Windows host", pairingLoading: "Preparing a secure pairing code...", pairingReady: "Ready to scan.", pairingFailed: "Pairing is unavailable: {error}", pairingQrAlt: "DJI 4G Assistant pairing QR code", copyPairingLink: "Copy pairing link", pairingCopied: "Pairing link copied.", done: "Done", close: "Close", pairingSecurity: "Anyone with this code can control the connected module. Only scan it on a trusted network and never publish it online.",
     overview: "Overview", networkCenter: "Network", esim: "eSIM", sms: "SMS", atLab: "AT Lab", system: "System",
     calls: "Calls", dialAndAnswer: "Dial & Answer", callPageSubtitle: "Enter a number and tap Call", monitorCalls: "Monitor Calls", stopCallMonitor: "Stop Monitor", checkCallCapabilities: "Check Audio", callNumberPlaceholder: "Enter phone number", callReadyFeedback: "Enter a number to call.", advancedDetails: "Advanced details", callSending: "Sending to the module...", dialAccepted: "Dial command accepted. Waiting for the network.", answerAccepted: "Call answered.", hangupAccepted: "Call ended.", dtmfAccepted: "Key sent.", callRejected: "The module rejected the call. This SIM or network may not support voice.", callRequestFailed: "The call request failed.",
     callIdle: "Ready", noActiveCall: "No active voice call", waitingForCall: "Waiting for a call", answerCall: "Answer", hangupCall: "Hang Up", dtmfPlaceholder: "DTMF 0-9 * #", sendDtmf: "Send DTMF",
@@ -97,7 +97,7 @@ const copy = {
     title: "DJI 4G Assistant", hostLocal: "管理连接在这台 Windows 电脑上的模块。",
     idle: "空闲", running: "运行中", checking: "检查中", starting: "开始扫描", at: "AT 指令",
     autoScan: "自动扫描", automatic: "自动", switchToChinese: "中文", switchToEnglish: "English",
-    pairIos: "连接 iPhone / iPad", iosCompanion: "iOS 客户端", pairingTitle: "连接 iPhone 或 iPad", pairingScanTitle: "在 DJI 4G Assistant App 中扫码一次", pairingDescription: "App 会自动发现这台 Windows 电脑，二维码会安全添加管理地址和控制密码。", sameNetwork: "可信局域网", windowsHost: "Windows 主机", pairingLoading: "正在生成安全配对码...", pairingReady: "配对码已就绪，请用 App 扫描。", pairingFailed: "暂时无法配对：{error}", pairingQrAlt: "DJI 4G Assistant 配对二维码", copyPairingLink: "复制配对链接", pairingCopied: "配对链接已复制。", done: "完成", close: "关闭", pairingSecurity: "拿到此配对码的人可以控制已连接的模块。只在可信网络中扫码，绝对不要把二维码或链接公开到网上。",
+    pairIos: "连接手机 / 平板", iosCompanion: "移动端客户端", pairingTitle: "连接手机或平板", pairingScanTitle: "在 DJI 4G Assistant App 中扫码一次", pairingDescription: "Android 和 iOS App 都会自动发现这台 Windows 电脑，二维码会安全添加管理地址和控制密码。", sameNetwork: "可信局域网", windowsHost: "Windows 主机", pairingLoading: "正在生成安全配对码...", pairingReady: "配对码已就绪，请用 App 扫描。", pairingFailed: "暂时无法配对：{error}", pairingQrAlt: "DJI 4G Assistant 配对二维码", copyPairingLink: "复制配对链接", pairingCopied: "配对链接已复制。", done: "完成", close: "关闭", pairingSecurity: "拿到此配对码的人可以控制已连接的模块。只在可信网络中扫码，绝对不要把二维码或链接公开到网上。",
     overview: "概览", networkCenter: "网络", esim: "eSIM", sms: "短信", atLab: "AT 工具", system: "系统",
     calls: "电话", dialAndAnswer: "接打电话", callPageSubtitle: "输入号码，点拨打即可", monitorCalls: "监听来电", stopCallMonitor: "停止监听", checkCallCapabilities: "检查音频", callNumberPlaceholder: "请输入电话号码", callReadyFeedback: "输入号码后点“拨打”。", advancedDetails: "高级信息", callSending: "正在发送给模块...", dialAccepted: "模块已接受拨号，正在等待网络响应。", answerAccepted: "已接听。", hangupAccepted: "通话已结束。", dtmfAccepted: "按键已发送。", callRejected: "模块拒绝拨号，当前 SIM 或网络可能不支持语音。", callRequestFailed: "拨号请求失败。",
     callIdle: "可以拨号", noActiveCall: "当前没有语音通话", waitingForCall: "等待来电或输入号码", answerCall: "接听", hangupCall: "挂断", dtmfPlaceholder: "DTMF 0-9 * #", sendDtmf: "发送按键",
@@ -149,6 +149,14 @@ Object.assign(copy.zh, {"draftKept":"草稿已保留在当前会话，关闭页�
 
 Object.assign(copy.en, {callReadFailed: "Could not refresh call status. The last known state is kept; retrying automatically.", callStatusUncertain: "Call status unavailable"});
 Object.assign(copy.zh, {callReadFailed: "通话状态刷新失败，已保留上次状态，稍后自动重试。", callStatusUncertain: "暂时无法确认通话状态"});
+Object.assign(copy.en, {moduleTemperature: "Temperature"});
+Object.assign(copy.zh, {moduleTemperature: "模块温度"});
+Object.assign(copy.en, {profileSwitchVerified: "Profile switched and the live ICCID/IMSI check passed.", profileSwitchNetworkPending: "Profile ICCID switched; the mobile network is still registering.", profileSwitchPending: "The profile command completed, but the live ICCID has not changed yet. No automatic restart was performed; refresh before retrying."});
+Object.assign(copy.zh, {profileSwitchVerified: "套餐已切换，当前 ICCID 和 IMSI 核对通过。", profileSwitchNetworkPending: "当前 ICCID 已切换，移动网络仍在注册。", profileSwitchPending: "切换命令已完成，但当前 ICCID 还没有变化。程序没有自动重启模块，请稍后刷新确认后再操作。"});
+Object.assign(copy.en, {callNumberPlaceholder: "Number, optionally ,,extension#", invalidCallNumber: "Enter a phone number, optionally followed by commas and extension keys.", postDialWaiting: "Main call started. Extension keys will send after the call connects.", postDialSending: "Call connected. Sending extension keys once…", postDialComplete: "Extension keys sent.", postDialFailed: "Extension keys were not confirmed and were not retried.", postDialLabel: "Post-dial extension"});
+Object.assign(copy.zh, {callNumberPlaceholder: "电话号码，可选 ,,分机号#", invalidCallNumber: "请输入电话号码；需要分机时可在号码后加逗号和分机按键。", postDialWaiting: "主号码已拨出，接通后会自动发送分机按键。", postDialSending: "电话已接通，正在单次发送分机按键…", postDialComplete: "分机按键已发送。", postDialFailed: "分机按键未确认成功，程序没有自动重试。", postDialLabel: "分机按键"});
+Object.assign(copy.en, {callMicrophone: "Microphone", callSpeaker: "Speaker", refreshAudioDevices: "Refresh devices", audioDevicesReady: "Audio devices refreshed.", microphoneOption: "Microphone {index}", speakerOption: "Speaker {index}"});
+Object.assign(copy.zh, {callMicrophone: "麦克风", callSpeaker: "扬声器", refreshAudioDevices: "刷新设备", audioDevicesReady: "音频设备已刷新。", microphoneOption: "麦克风 {index}", speakerOption: "扬声器 {index}"});
 Object.assign(copy.en, {"replyTo":"Reply to {number}","writeMessage":"Write a message…","replyMessage":"Write a reply…","chooseEidCompact":"View card space","compactProfiles":"{count} profiles · {active} enabled","callNextReady":"Enter or paste a number in the dialer. Incoming calls appear here.","callNextLocked":"You can view call status. Calling and answering require call control to be enabled on the local service.","callNextDisconnected":"Connect the module by USB, then scan to find it.","callNextWaiting":"The next call status check will run automatically.","callFocusDialer":"Enter a number","callRetryStatus":"Check again","voiceSummaryUnknown":"Check audio before your first call","voiceSummaryReady":"Ready · Start audio after the call connects","voiceSummaryRuntime":"Next: download the verified audio files","voiceSummaryUsb":"Next: set up the module audio interface","voiceSummaryPrepare":"Ready to prepare · Start Audio can do this for you","voiceSummaryUnsupported":"Automatic audio setup is unavailable for this module","voiceSummaryRemote":"Audio runs on the connected Windows computer"});
 Object.assign(copy.zh, {"replyTo":"回复给 {number}","writeMessage":"输入短信内容…","replyMessage":"输入回复内容…","chooseEidCompact":"查看卡片空间","compactProfiles":"{count} 个套餐 · {active} 个已启用","callNextReady":"在拨号盘输入或粘贴号码。有来电时，这里会显示接听按钮。","callNextLocked":"当前可以查看通话状态。拨号和接听需要先在本地服务中开放电话控制。","callNextDisconnected":"用 USB 连接模块，再扫描查找设备。","callNextWaiting":"正在等待下一次自动状态检查。","callFocusDialer":"输入号码","callRetryStatus":"重新检查","voiceSummaryUnknown":"首次通话前，检查声音是否就绪","voiceSummaryReady":"声音已就绪 · 接通后可启动","voiceSummaryRuntime":"下一步：下载已校验的语音文件","voiceSummaryUsb":"下一步：设置模块声音接口","voiceSummaryPrepare":"可准备声音 · 接通后也可自动完成","voiceSummaryUnsupported":"当前模块不支持自动声音设置","voiceSummaryRemote":"声音由连接模块的 Windows 电脑处理"});
 const state = {
@@ -156,7 +164,7 @@ const state = {
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
   smsActiveSender: null, smsQuery: "", smsNewDraft: false, smsStorage: null,
   authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, smsDeleteEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, voiceRuntimeEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
-  primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, voiceRuntimeStatus: null, voiceSetupBusy: false, callHistory: [], lastCallKey: "", lastVoiceCall: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
+  primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, voiceRuntimeStatus: null, voiceSetupBusy: false, callHistory: [], lastCallKey: "", lastVoiceCall: null, pendingPostDial: null, postDialRunning: false, postDialGeneration: 0, postDialAbortController: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", temperature: null, temperatureSensors: [], temperatureSupported: null, trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
 
 function t(key, params = {}) {
@@ -200,6 +208,7 @@ function applyLanguage() {
   syncCallButtons(); renderSmsRefreshState(); updateSmsComposer();
   if (state.smsFeedback) setSmsFeedback(state.smsFeedback.key, state.smsFeedback.tone, state.smsFeedback.params);
   document.querySelector("#callNumberInput").setAttribute("aria-label", t("callNumberLabel"));
+  refreshAudioDeviceOptions(false).catch(() => {});
   window.refreshDesktopIcons?.();
 }
 
@@ -219,6 +228,8 @@ function clearCardView() {
   state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms");
   state.chipText = ""; state.profileText = ""; state.discoveryText = ""; state.notificationText = "";
   state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = "";
+  state.temperature = null; state.temperatureSensors = []; state.temperatureSupported = null;
+  state.postDialGeneration += 1; state.postDialAbortController?.abort(); state.postDialAbortController = null; state.pendingPostDial = null; state.postDialRunning = false;
   state.cardSignature = null;
   state.networkKind = "";
   renderEuiccInventory({ eids: [], probes: [], candidatesChecked: 0 });
@@ -264,7 +275,7 @@ function append(title, text) {
 }
 
 function actionTitle(action) {
-  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "euicc-inventory": t("esimLibrary"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "call-status": t("callStatus"), "call-capabilities": t("callCapabilities"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
+  return ({ "device-check": t("deviceCheck"), "find-at": t("findAt"), "module-status": t("moduleStatus"), "module-temperature": t("moduleTemperature"), "euicc-inventory": t("esimLibrary"), "lpac-chip": t("euiccInfo"), "lpac-discovery": t("checkPendingProfiles"), "lpac-profiles": t("esimProfiles"), "lpac-notifications": t("profileNotifications"), "sms-list": t("readSms"), "call-status": t("callStatus"), "call-capabilities": t("callCapabilities"), "windows-network": t("windowsNetwork"), "network-traffic": t("networkTraffic"), "stock-module-probe": t("stockProbe"), baseline: t("baseline"), health: t("connection"), ports: t("ports") }[action] || action);
 }
 
 function apiHeaders(extra = {}) {
@@ -287,6 +298,10 @@ function renderSummary() {
   document.querySelector("#simState").textContent = state.sim || t("unknown");
   carrierValue.textContent = state.carrier || t("unknown");
   radioValue.textContent = state.radio || t("unknown");
+  const temperatureValue = document.querySelector("#temperatureValue");
+  temperatureValue.textContent = Number.isFinite(state.temperature) ? `${state.temperature} °C` : state.temperatureSupported === false ? t("unsupported") : "--";
+  temperatureValue.dataset.tone = Number.isFinite(state.temperature) && state.temperature >= 80 ? "hot" : Number.isFinite(state.temperature) && state.temperature >= 65 ? "warm" : "normal";
+  temperatureValue.title = state.temperatureSensors.map((sensor) => `${sensor.name}: ${sensor.valueC} °C`).join("\n");
   document.querySelector("#deviceTitle").textContent = state.deviceModel || t("waitingScan");
   document.querySelector("#deviceSubtitle").textContent = state.deviceRevision ? t("revision", { value: state.deviceRevision }) : t("insertScan");
   document.querySelector("#netState").textContent = registration || (state.moduleIp ? `${t("online")} · ${state.moduleIp}` : state.networkKind === "disconnected" ? t("adapterDisconnected") : state.networkKind === "present" ? t("adapterPresent") : t("unknown"));
@@ -295,6 +310,21 @@ function renderSummary() {
   connectionBadge.classList.toggle("online", Boolean(state.moduleIp));
   connectionBadge.classList.toggle("registered", !state.moduleIp && Boolean(registration));
   renderConnectionState();
+}
+
+function updateTemperature(data) {
+  if (!data || !Object.hasOwn(data, "temperature")) return;
+  const temperature = data.temperature;
+  if (temperature && Number.isFinite(Number(temperature.maxC))) {
+    state.temperature = Number(temperature.maxC);
+    state.temperatureSensors = Array.isArray(temperature.sensors) ? temperature.sensors : [];
+    state.temperatureSupported = true;
+  } else {
+    state.temperature = null;
+    state.temperatureSensors = [];
+    state.temperatureSupported = false;
+  }
+  renderSummary();
 }
 
 function updateSummary(text) {
@@ -317,6 +347,14 @@ function updateSummary(text) {
     state.radio = fields.filter((field, index) => index === 0 || /BAND|NR5G|LTE/i.test(field)).join(" / ") || fields[0] || qnwinfo[1].trim();
   }
   const csq = text.match(/\+CSQ:\s*(\d+)/); if (csq) state.signal = csq[1];
+  const temperatures = [...text.matchAll(/\+QTEMP:\s*"([^"]+)"\s*,\s*(-?\d+(?:\.\d+)?)/gi)]
+    .map((match) => ({ name: match[1], valueC: Number(match[2]) }))
+    .filter((sensor) => Number.isFinite(sensor.valueC) && sensor.valueC >= -50 && sensor.valueC <= 150);
+  if (temperatures.length) {
+    state.temperatureSensors = temperatures;
+    state.temperature = Math.max(...temperatures.map((sensor) => sensor.valueC));
+    state.temperatureSupported = true;
+  }
   const model = text.match(/Baiwang[\s\S]*?QDC507[\s\S]*?Revision:\s*([^\r\n]+)/i);
   if (model) { state.deviceModel = "Baiwang / QDC507"; state.deviceRevision = model[1].trim(); }
   const ip = text.match(/\+CGPADDR:\s*1,"?([^"\r\n]+)"?/); if (ip) state.moduleIp = ip[1];
@@ -754,6 +792,16 @@ function normalizePhone(value) {
   return String(value).trim().replace(/[\s()-]/g, "");
 }
 
+function parseDialInput(value) {
+  const compact = normalizePhone(value);
+  const separator = compact.indexOf(",");
+  const number = separator < 0 ? compact : compact.slice(0, separator);
+  const postDial = separator < 0 ? "" : compact.slice(separator);
+  if (!/^\+?[0-9]{3,20}$/.test(number)) return null;
+  if (postDial && (postDial.length > 64 || !/^[,0-9*#]+$/.test(postDial) || !/[0-9*#]/.test(postDial))) return null;
+  return { number, postDial, compact };
+}
+
 function smsDraftKey() { return state.smsNewDraft ? "new" : (state.smsActiveSender || "new"); }
 
 function saveSmsDraft() {
@@ -1124,6 +1172,55 @@ function isModuleAudioDevice(device) {
   return moduleAudioPattern.test(String(device?.label || ""));
 }
 
+function fillAudioDeviceSelect(select, devices, storageKey, labelKey) {
+  const preferred = select.value || localStorage.getItem(storageKey) || "default";
+  select.replaceChildren();
+  devices.forEach((device, index) => {
+    const option = document.createElement("option");
+    option.value = device.deviceId;
+    option.textContent = device.label || t(labelKey, { index: index + 1 });
+    select.appendChild(option);
+  });
+  const selected = devices.find((device) => device.deviceId === preferred)
+    || devices.find((device) => device.deviceId === "default")
+    || devices[0];
+  select.value = selected?.deviceId || "";
+  select.disabled = !localAudioBridgeHost || !selected || Boolean(state.audioBridge) || state.audioBridgeStarting;
+  if (selected) localStorage.setItem(storageKey, selected.deviceId);
+}
+
+function renderAudioDeviceOptions(devices) {
+  const systemInputs = devices.filter((device) => device.kind === "audioinput" && !isModuleAudioDevice(device));
+  const systemOutputs = devices.filter((device) => device.kind === "audiooutput" && !isModuleAudioDevice(device));
+  fillAudioDeviceSelect(document.querySelector("#callMicrophoneSelect"), systemInputs, "callMicrophoneId", "microphoneOption");
+  fillAudioDeviceSelect(document.querySelector("#callSpeakerSelect"), systemOutputs, "callSpeakerId", "speakerOption");
+  return { systemInputs, systemOutputs };
+}
+
+async function refreshAudioDeviceOptions(requestPermission = false) {
+  if (!localAudioBridgeHost || !navigator.mediaDevices?.enumerateDevices) return [];
+  let permissionStream = null;
+  try {
+    if (requestPermission) permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    renderAudioDeviceOptions(devices);
+    return devices;
+  } finally {
+    stopStream(permissionStream);
+  }
+}
+
+async function refreshAudioDevicesFromButton() {
+  try {
+    await refreshAudioDeviceOptions(true);
+    setCallFeedback(t("audioDevicesReady"), "success");
+  } catch (error) {
+    setCallFeedback(t("audioPermissionFailed"), "error");
+    append(t("audioBridge"), error.message || String(error));
+  }
+  syncCallButtons();
+}
+
 function stopStream(stream) {
   for (const track of stream?.getTracks?.() || []) track.stop();
 }
@@ -1182,6 +1279,23 @@ async function startAudioBridge() {
   let uplinkAudio = null;
 
   try {
+    permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const { systemInputs, systemOutputs } = renderAudioDeviceOptions(devices);
+    const microphoneId = document.querySelector("#callMicrophoneSelect").value;
+    const speakerId = document.querySelector("#callSpeakerSelect").value;
+    const moduleInput = devices.find((device) => device.kind === "audioinput" && isModuleAudioDevice(device));
+    const moduleOutput = devices.find((device) => device.kind === "audiooutput" && isModuleAudioDevice(device));
+    const systemInput = systemInputs.find((device) => device.deviceId === microphoneId)
+      || systemInputs.find((device) => device.deviceId === "default")
+      || systemInputs[0];
+    const systemOutput = systemOutputs.find((device) => device.deviceId === speakerId)
+      || systemOutputs.find((device) => device.deviceId === "default")
+      || systemOutputs[0];
+    stopStream(permissionStream);
+    permissionStream = null;
+    if (!moduleInput || !moduleOutput || !systemInput) throw new Error(t("audioEndpointMissing"));
+
     const port = encodeURIComponent(portInput.value.trim());
     const routeResponse = await fetch("/api/voice-route-start?port=" + port, {
       method: "POST",
@@ -1191,20 +1305,6 @@ async function startAudioBridge() {
     const routeData = await routeResponse.json();
     if (!routeResponse.ok) throw new Error(routeData.error || t("audioRouteFailed"));
     moduleRouteStarted = true;
-
-    permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    stopStream(permissionStream);
-    permissionStream = null;
-
-    const moduleInput = devices.find((device) => device.kind === "audioinput" && isModuleAudioDevice(device));
-    const moduleOutput = devices.find((device) => device.kind === "audiooutput" && isModuleAudioDevice(device));
-    const systemInputs = devices.filter((device) => device.kind === "audioinput" && !isModuleAudioDevice(device));
-    const systemOutputs = devices.filter((device) => device.kind === "audiooutput" && !isModuleAudioDevice(device));
-    const systemInput = systemInputs.find((device) => device.deviceId === "default") || systemInputs[0];
-    const systemOutput = systemOutputs.find((device) => device.deviceId === "default") || systemOutputs[0];
-
-    if (!moduleInput || !moduleOutput || !systemInput) throw new Error(t("audioEndpointMissing"));
 
     moduleDownlink = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -1216,7 +1316,7 @@ async function startAudioBridge() {
     });
     microphoneStream = await navigator.mediaDevices.getUserMedia({
       audio: {
-        deviceId: { exact: systemInput.deviceId },
+        ...(systemInput.deviceId && systemInput.deviceId !== "default" ? { deviceId: { exact: systemInput.deviceId } } : {}),
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
@@ -1266,6 +1366,9 @@ function syncCallButtons() {
   const callerId = document.querySelector("#enableCallerIdBtn");
   const startAudio = document.querySelector("#startAudioBridgeBtn");
   const stopAudio = document.querySelector("#stopAudioBridgeBtn");
+  const refreshAudioDevices = document.querySelector("#refreshAudioDevicesBtn");
+  const microphoneSelect = document.querySelector("#callMicrophoneSelect");
+  const speakerSelect = document.querySelector("#callSpeakerSelect");
   const refreshSetup = document.querySelector("#refreshVoiceSetupBtn");
   const audioReady = Boolean(
     localAudioBridgeHost &&
@@ -1274,13 +1377,84 @@ function syncCallButtons() {
   );
   if (answer) answer.disabled = locked || !incoming;
   if (hangup) hangup.disabled = locked || !call;
-  if (dial) dial.disabled = locked || state.callStatusReadError || state.callStatusData?.ok !== true || Boolean(call) || !/^\+?[0-9]{3,20}$/.test(normalizePhone(document.querySelector("#callNumberInput").value));
-  if (dtmf) dtmf.disabled = locked || !connected;
+  if (dial) dial.disabled = locked || state.postDialRunning || state.callStatusReadError || state.callStatusData?.ok !== true || Boolean(call) || !parseDialInput(document.querySelector("#callNumberInput").value);
+  if (dtmf) dtmf.disabled = locked || state.postDialRunning || !connected;
   if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
   if (startAudio) startAudio.disabled = state.audioBridgeStarting || Boolean(state.audioBridge) || !connected || !audioReady;
   if (stopAudio) stopAudio.disabled = !state.audioBridge && !state.callStatusData?.voiceRouteActive;
+  if (refreshAudioDevices) refreshAudioDevices.disabled = !localAudioBridgeHost || state.audioBridgeStarting || Boolean(state.audioBridge) || !connected;
+  if (microphoneSelect) microphoneSelect.disabled = !localAudioBridgeHost || state.audioBridgeStarting || Boolean(state.audioBridge) || !microphoneSelect.options.length;
+  if (speakerSelect) speakerSelect.disabled = !localAudioBridgeHost || state.audioBridgeStarting || Boolean(state.audioBridge) || !speakerSelect.options.length;
   if (refreshSetup) refreshSetup.disabled = state.voiceSetupBusy;
   renderCallGuidance();
+}
+
+function cancelPendingPostDial() {
+  state.postDialGeneration += 1;
+  state.postDialAbortController?.abort();
+  state.postDialAbortController = null;
+  state.pendingPostDial = null;
+  state.postDialRunning = false;
+  syncCallButtons();
+}
+
+function schedulePostDial(sequence) {
+  cancelPendingPostDial();
+  state.pendingPostDial = { sequence, generation: state.postDialGeneration, createdAt: Date.now() };
+  setCallFeedback(t("postDialWaiting"), "working");
+  syncCallButtons();
+}
+
+async function runPendingPostDial(call) {
+  const plan = state.pendingPostDial;
+  if (!plan || state.postDialRunning || call?.direction !== "outgoing" || !["active", "held"].includes(call.state)) return;
+  state.postDialRunning = true;
+  setCallFeedback(t("postDialSending"), "working");
+  syncCallButtons();
+  let sent = 0;
+  try {
+    for (const token of plan.sequence) {
+      if (plan.generation !== state.postDialGeneration) return;
+      if (token === ",") {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        continue;
+      }
+      const active = state.callStatusData?.voiceCalls?.[0];
+      if (!active || !["active", "held"].includes(active.state)) throw new Error("Call is no longer connected.");
+      const controller = new AbortController();
+      state.postDialAbortController = controller;
+      const timer = setTimeout(() => controller.abort(), 15000);
+      let response;
+      try {
+        response = await fetch(`/api/call-action?port=${encodeURIComponent(portInput.value.trim())}`, {
+          method: "POST",
+          headers: apiHeaders({ "content-type": "application/json" }),
+          body: JSON.stringify({ action: "dtmf", digits: token, confirm: "DTMF" }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+        if (state.postDialAbortController === controller) state.postDialAbortController = null;
+      }
+      const data = await response.json();
+      if (!response.ok || data.ok === false) throw new Error(data.error || "DTMF was not accepted.");
+      sent += 1;
+    }
+    if (plan.generation === state.postDialGeneration) {
+      state.pendingPostDial = null;
+      setCallFeedback(t("postDialComplete"), "success");
+      append(t("postDialLabel"), `${sent} key(s)`);
+    }
+  } catch (error) {
+    if (plan.generation === state.postDialGeneration) {
+      state.pendingPostDial = null;
+      setCallFeedback(t("postDialFailed"), "error");
+      append(t("postDialLabel"), error.message);
+    }
+  } finally {
+    if (plan.generation === state.postDialGeneration) state.postDialRunning = false;
+    syncCallButtons();
+  }
 }
 
 function renderCallStatus(data) {
@@ -1297,8 +1471,12 @@ function renderCallStatus(data) {
     state.lastVoiceCall = null;
   }
   if (!call && state.audioBridge) stopAudioBridge();
-  if (call) setCallFeedback(callStateText(call), ["active", "incoming", "waiting"].includes(call.state) ? "success" : "working");
+  if (!call && state.pendingPostDial && (endedCall || Date.now() - state.pendingPostDial.createdAt > 90000)) cancelPendingPostDial();
+  if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
+  else if (state.pendingPostDial) setCallFeedback(t("postDialWaiting"), "working");
+  else if (call) setCallFeedback(callStateText(call), ["active", "incoming", "waiting"].includes(call.state) ? "success" : "working");
   else if (endedCall) setCallFeedback(t("hangupAccepted"), "neutral");
+  if (call) runPendingPostDial(call);
 
   const stage = document.querySelector("#callStatus");
   stage.dataset.state = call?.state || "idle";
@@ -1389,11 +1567,12 @@ async function runCallAction(action) {
   let label = t("calls");
   let successKey = "dialAccepted";
   if (action === "dial") {
-    body.number = normalizePhone(document.querySelector("#callNumberInput").value);
-    if (!/^\+?[0-9]{3,20}$/.test(body.number)) {
+    const dial = parseDialInput(document.querySelector("#callNumberInput").value);
+    if (!dial) {
       setCallFeedback(t("invalidCallNumber"), "error");
       return;
     }
+    body.number = dial.compact;
     body.confirm = "DIAL";
     label = t("dialCall");
   } else if (action === "answer") {
@@ -1401,6 +1580,7 @@ async function runCallAction(action) {
     label = t("answerCall");
     successKey = "answerAccepted";
   } else if (action === "hangup") {
+    cancelPendingPostDial();
     body.confirm = "HANGUP";
     label = t("hangupCall");
     successKey = "hangupAccepted";
@@ -1433,7 +1613,8 @@ async function runCallAction(action) {
     const raw = textFromResult(data) || JSON.stringify(data, null, 2);
     append(label, raw);
     if (res.ok) {
-      setCallFeedback(t(successKey), "success");
+      if (action === "dial" && data.postDial) schedulePostDial(data.postDial);
+      else setCallFeedback(t(successKey), "success");
       if (action === "dtmf") document.querySelector("#dtmfInput").value = "";
       await new Promise((resolve) => setTimeout(resolve, 500));
       await refreshCallStatusQuietly(true);
@@ -1469,7 +1650,7 @@ async function fetchJson(path, timeoutMs = 90000) {
 async function requestAction(action) {
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
+  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, "module-temperature": `/api/module-temperature?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const data = await fetchJson(paths[action], action === "euicc-inventory" ? 600000 : 90000);
   if (action === "find-at" && Object.hasOwn(data, "port")) {
     state.atPort = data.port || "";
@@ -1493,7 +1674,24 @@ async function callApi(action) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") {if (data.ok === false) throw new Error(data.error || "SMS read failed"); state.smsLastRead = Date.now(); state.smsReadError = false; renderSms(text, data);} if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+    const { data, text } = await requestAction(action);
+    append(actionTitle(action), text);
+    updateSummary(text);
+    if (action === "module-status" || action === "module-temperature") updateTemperature(data);
+    if (action === "health") applyHealth(data);
+    if (action === "euicc-inventory") renderEuiccInventory(data);
+    if (action === "lpac-chip") renderChip(text);
+    if (action === "lpac-discovery") renderDiscovery(text);
+    if (action === "lpac-profiles") renderProfiles(text);
+    if (action === "lpac-notifications") renderNotifications(text);
+    if (action === "sms-list") {
+      if (data.ok === false) throw new Error(data.error || "SMS read failed");
+      state.smsLastRead = Date.now(); state.smsReadError = false; renderSms(text, data);
+    }
+    if (action === "call-status") renderCallStatus(data);
+    if (action === "call-capabilities") renderCallCapabilities(data);
+    if (action === "network-traffic") renderTraffic(data.stdout || "");
+  }
   catch (error) {
     state.failedViews.add(view); state.autoLoadedViews.delete(view);
     if (action === "sms-list") state.smsReadError = true;
@@ -1530,7 +1728,22 @@ async function autoScan() {
   try {
     for (let index = 0; index < actions.length; index += 1) {
       const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try { const { data, text } = await requestAction(action); append(actionTitle(action), text); updateSummary(text); if (action === "health") applyHealth(data); if (action === "euicc-inventory") renderEuiccInventory(data); if (action === "lpac-chip") renderChip(text); if (action === "lpac-discovery") renderDiscovery(text); if (action === "lpac-profiles") renderProfiles(text); if (action === "lpac-notifications") renderNotifications(text); if (action === "sms-list") renderSms(text, data); if (action === "call-status") renderCallStatus(data); if (action === "call-capabilities") renderCallCapabilities(data); if (action === "network-traffic") renderTraffic(data.stdout || ""); }
+      try {
+        const { data, text } = await requestAction(action);
+        append(actionTitle(action), text);
+        updateSummary(text);
+        if (action === "module-status") updateTemperature(data);
+        if (action === "health") applyHealth(data);
+        if (action === "euicc-inventory") renderEuiccInventory(data);
+        if (action === "lpac-chip") renderChip(text);
+        if (action === "lpac-discovery") renderDiscovery(text);
+        if (action === "lpac-profiles") renderProfiles(text);
+        if (action === "lpac-notifications") renderNotifications(text);
+        if (action === "sms-list") renderSms(text, data);
+        if (action === "call-status") renderCallStatus(data);
+        if (action === "call-capabilities") renderCallCapabilities(data);
+        if (action === "network-traffic") renderTraffic(data.stdout || "");
+      }
       catch (error) { append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message); }
     }
   } finally { setBusy(false); }
@@ -1556,6 +1769,7 @@ async function quickStart() {
       const { data, text } = await requestAction(action);
       append(actionTitle(action), text);
       updateSummary(text);
+      if (action === "module-status") updateTemperature(data);
       if (action === "network-traffic") renderTraffic(data.stdout || "");
       if (action === "euicc-inventory") {
         renderEuiccInventory(data);
@@ -1631,7 +1845,16 @@ async function runProfileAction(action, id) {
     if (!res.ok || data.ok === false) throw new Error(data.error || "Profile action failed");
     const refreshed = await requestAction("lpac-profiles");
     if (!refreshed.data.ok || !Array.isArray(parseLpaData(refreshed.text))) throw new Error("Could not confirm profile state");
-    renderProfiles(refreshed.text); showFeedback(t("profileActionDone", {action:label}), "success", "euicc");
+    renderProfiles(refreshed.text);
+    const verification = data.verification;
+    const feedback = action !== "enable" || !verification || verification.status === "not-applicable"
+      ? { message: t("profileActionDone", {action:label}), tone: "success" }
+      : verification.status === "verified"
+        ? { message: t("profileSwitchVerified"), tone: "success" }
+        : verification.status === "network-pending"
+          ? { message: t("profileSwitchNetworkPending"), tone: "neutral" }
+          : { message: t("profileSwitchPending"), tone: "neutral" };
+    showFeedback(feedback.message, feedback.tone, "euicc");
   } catch (error) {showFeedback(t("profileActionFailed"), "error", "euicc"); append(label, error.message);}
   finally {setBusy(false);}
 }
@@ -1822,6 +2045,13 @@ async function refreshTrafficQuietly() {
     renderTraffic(data.stdout || "");
   } catch {}
 }
+async function refreshModuleTemperatureQuietly() {
+  if (state.busy || state.callActionInFlight || state.temperatureSupported === false || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
+  try {
+    const { data } = await requestAction("module-temperature");
+    updateTemperature(data);
+  } catch {}
+}
 async function openPairingDialog() {
   pairingDeepLink = "";
   pairingQr.hidden = true;
@@ -1880,6 +2110,7 @@ function toggleSmsPolling() {
 setInterval(() => {if (state.smsPolling && document.querySelector("#sms").classList.contains("active")) refreshSmsQuietly();}, 20000);
 setInterval(refreshTrafficQuietly, 2000);
 setInterval(refreshCallStatusQuietly, 3500);
+setInterval(refreshModuleTemperatureQuietly, 10000);
 
 const launchToken = launchParameters.get("token") || "";
 tokenInput.value = launchToken || (nativeCompanion ? "" : localStorage.getItem("consoleToken") || "");
@@ -1959,6 +2190,10 @@ document.querySelector("#sendDtmfBtn").addEventListener("click", () => runCallAc
 document.querySelector("#enableCallerIdBtn")?.addEventListener("click", () => runCallAction("caller-id"));
 document.querySelector("#startAudioBridgeBtn").addEventListener("click", startAudioBridge);
 document.querySelector("#stopAudioBridgeBtn").addEventListener("click", () => stopAudioBridge());
+document.querySelector("#refreshAudioDevicesBtn").addEventListener("click", refreshAudioDevicesFromButton);
+document.querySelector("#callMicrophoneSelect").addEventListener("change", (event) => localStorage.setItem("callMicrophoneId", event.target.value));
+document.querySelector("#callSpeakerSelect").addEventListener("change", (event) => localStorage.setItem("callSpeakerId", event.target.value));
+navigator.mediaDevices?.addEventListener?.("devicechange", () => refreshAudioDeviceOptions(false).catch(() => {}));
 document.querySelector("#refreshVoiceSetupBtn").addEventListener("click", refreshVoiceSetup);
 document.querySelector("#downloadVoiceRuntimeBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-runtime-download", "DOWNLOADVOICE", "confirmVoiceDownload"));
 document.querySelector("#enableVoiceUsbBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-usb-enable", "VOICEUSB", "confirmVoiceUsb"));
