@@ -20,13 +20,19 @@ def nodes():
     return list(ET.fromstring(adb("shell", "cat", UI_DUMP)).iter("node"))
 
 
-def find(text):
-    for _ in range(4):
-        matches = [node for node in nodes() if node.get("text") == text]
-        if matches:
-            return matches[0]
-        time.sleep(1)
-    raise AssertionError("UI text missing: " + text)
+def find(text, attempts=8):
+    last_error = None
+    for _ in range(attempts):
+        try:
+            matches = [node for node in nodes() if node.get("text") == text]
+            if matches:
+                return matches[0]
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, ET.ParseError) as error:
+            # A newly booted CI emulator can briefly return an empty accessibility tree.
+            last_error = error
+        time.sleep(2)
+    suffix = " (last dump error: " + str(last_error) + ")" if last_error else ""
+    raise AssertionError("UI text missing: " + text + suffix)
 
 
 def tap(text):
@@ -44,8 +50,10 @@ def capture(name):
 
 def launch():
     adb("shell", "am", "force-stop", APP)
-    adb("shell", "am", "start", "-W", "-n", APP + "/.MainActivity")
-    find("扫描配对码")
+    # Avoid am start -W: software-rendered CI emulators can time out even while
+    # the activity continues to launch successfully.
+    adb("shell", "am", "start", "-n", APP + "/.MainActivity")
+    find("扫描配对码", attempts=15)
 
 
 def main():

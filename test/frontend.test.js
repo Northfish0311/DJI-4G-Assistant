@@ -68,6 +68,9 @@ test("Android recovery keeps controls synchronized and detaches the console befo
   assert.match(manifest, /android\.permission\.ACCESS_NETWORK_STATE/);
   assert.match(uiCheck, /\/data\/local\/tmp\/dji4g-pairing-ui\.xml/);
   assert.doesNotMatch(uiCheck, /\/sdcard\/pairing-ui\.xml/);
+  assert.match(uiCheck, /find\("扫描配对码", attempts=15\)/);
+  assert.doesNotMatch(uiCheck, /"start", "-W"/);
+  assert.match(workflow, /api-level: 34/);
   assert.ok(workflow.indexOf("hide_error_dialogs 1") < workflow.indexOf("adb install"));
 });
 

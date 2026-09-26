@@ -32,7 +32,10 @@ jobs:
       - name: Capture phone layout
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          # The app still compiles and targets API 35. API 34 is used here
+          # because GitHub's software-rendered API 35 image intermittently
+          # loses its color buffer before UiAutomator can inspect the screen.
+          api-level: 34
           arch: x86_64
           profile: pixel_6
           script: |
