@@ -48,6 +48,7 @@ test("keeps mobile pairing compact and buttons free of legacy shadows", () => {
 test("Android recovery keeps controls synchronized and detaches the console before disposal", () => {
   const source = read("android/app/src/main/java/com/northfish0311/dji4gremote/MainActivity.java");
   const vault = read("android/app/src/main/java/com/northfish0311/dji4gremote/PairingVault.java");
+  const manifest = read("android/app/src/main/AndroidManifest.xml");
   assert.match(source, /if \(message != null\).*setManualExpanded\(true\)/);
   assert.match(source, /new View\[\]\{connect, scan, paste, address, password\}/);
   assert.match(source, /setConnecting\(false\)/);
@@ -62,6 +63,7 @@ test("Android recovery keeps controls synchronized and detaches the console befo
   assert.match(source, /网络已恢复，正在重新连接/);
   assert.match(source, /payload\.optString\("name"/);
   assert.match(vault, /put\("name", name\)/);
+  assert.match(manifest, /android\.permission\.ACCESS_NETWORK_STATE/);
 });
 
 test("native clients remove stale browser tokens without persisting fresh credentials", () => {
