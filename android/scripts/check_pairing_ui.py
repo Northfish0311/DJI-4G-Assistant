@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 
 APP = "com.northfish0311.dji4gremote"
 OUTPUT = pathlib.Path("android/screenshots")
+UI_DUMP = "/data/local/tmp/dji4g-pairing-ui.xml"
 
 
 def adb(*args):
@@ -15,8 +16,8 @@ def adb(*args):
 
 
 def nodes():
-    adb("shell", "uiautomator", "dump", "/sdcard/pairing-ui.xml")
-    return list(ET.fromstring(adb("shell", "cat", "/sdcard/pairing-ui.xml")).iter("node"))
+    adb("shell", "uiautomator", "dump", UI_DUMP)
+    return list(ET.fromstring(adb("shell", "cat", UI_DUMP)).iter("node"))
 
 
 def find(text):
