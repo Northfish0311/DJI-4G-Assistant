@@ -50,6 +50,7 @@ test("Android recovery keeps controls synchronized and detaches the console befo
   const vault = read("android/app/src/main/java/com/northfish0311/dji4gremote/PairingVault.java");
   const manifest = read("android/app/src/main/AndroidManifest.xml");
   const uiCheck = read("android/scripts/check_pairing_ui.py");
+  const workflow = read(".github/workflows/android.yml");
   assert.match(source, /if \(message != null\).*setManualExpanded\(true\)/);
   assert.match(source, /new View\[\]\{connect, scan, paste, address, password\}/);
   assert.match(source, /setConnecting\(false\)/);
@@ -67,6 +68,7 @@ test("Android recovery keeps controls synchronized and detaches the console befo
   assert.match(manifest, /android\.permission\.ACCESS_NETWORK_STATE/);
   assert.match(uiCheck, /\/data\/local\/tmp\/dji4g-pairing-ui\.xml/);
   assert.doesNotMatch(uiCheck, /\/sdcard\/pairing-ui\.xml/);
+  assert.ok(workflow.indexOf("hide_error_dialogs 1") < workflow.indexOf("adb install"));
 });
 
 test("native clients remove stale browser tokens without persisting fresh credentials", () => {
