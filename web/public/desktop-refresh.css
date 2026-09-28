@@ -78,7 +78,8 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .rail .nav-btn.active { background: #1b5545; color: #fff; box-shadow: 0 4px 10px #1c574515; }
   .rail .nav-btn.active .nav-subtitle { color: #c1dbcd; }
   .rail .nav-btn:not(.active):hover { background: #e8eee7; color: #294b38; }
-  .rail .nav-btn[data-target="atlab"] { margin-top: 34px; border-top: 1px solid var(--line); border-radius: 0 0 11px 11px; }
+  .rail .nav-btn[data-target="atlab"] { position: relative; margin-top: 34px; }
+  .rail .nav-btn[data-target="atlab"]::before { content: ""; position: absolute; top: -18px; left: 12px; right: 12px; height: 1px; background: var(--line); pointer-events: none; }
   .content { padding: 0; gap: 20px; }
   .view { gap: 20px; }
   .view-heading { border: 0; min-height: 52px; padding: 0; margin: 0 0 4px; align-items: center; }

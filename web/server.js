@@ -950,13 +950,27 @@ function normalizeNetworkTrafficResult(result) {
     const parsed = JSON.parse(result.stdout);
     const items = Array.isArray(parsed) ? parsed : [parsed];
     for (const item of items) {
-      const received = Number(item.receivedBytes);
-      const sent = Number(item.sentBytes);
+      const validCounter = (value) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value < 2 ** 50;
+      // Raw performance counters are cumulative bytes, despite the Persec field names.
+      const performance = item.performanceCounters;
+      const usePerformance = performance?.name === item.description && performance?.unique === true
+        && validCounter(performance.receivedBytes) && validCounter(performance.sentBytes);
+      if (usePerformance) {
+        item.receivedBytes = performance.receivedBytes;
+        item.sentBytes = performance.sentBytes;
+        item.statisticsReliable = true;
+      }
+      delete item.performanceCounters;
+      const received = item.receivedBytes;
+      const sent = item.sentBytes;
       const driverSentinel = (received === 4294967297 && sent === 0) || (sent === 4294967297 && received === 0);
-      if (!driverSentinel) continue;
-      item.receivedBytes = 0;
-      item.sentBytes = 0;
-      item.statisticsReliable = false;
+      item.statisticsReliable = item.statisticsReliable !== false && validCounter(received) && validCounter(sent) && !driverSentinel;
+      item.statisticsSource = item.statisticsReliable ? (usePerformance ? "windows-performance" : "adapter") : "unavailable";
+      item.sampledAt = Date.now();
+      if (!item.statisticsReliable) {
+        item.receivedBytes = 0;
+        item.sentBytes = 0;
+      }
     }
     return { ...result, stdout: JSON.stringify(Array.isArray(parsed) ? items : items[0]) };
   } catch {
@@ -1122,7 +1136,8 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/module-status") {
-    const commands = [
+    const brief = url.searchParams.get("brief") === "1";
+    const commands = brief ? ["AT+CPIN?", "AT+COPS?", "AT+CEREG?", "AT+CSQ", "AT+QTEMP", "AT+QNWINFO", "AT+CGPADDR=1"] : [
       "ATI",
       "AT+CPIN?",
       "AT+CIMI",
@@ -1139,7 +1154,7 @@ async function handleApi(req, res, url) {
       "AT+QCFG=\"usbnet\"",
       "AT+QNETDEVSTATUS?",
     ];
-    const result = await enqueueAt(portArg(url), commands, 60000);
+    const result = await enqueueAt(portArg(url), commands, brief ? 30000 : 60000);
     sendJson(res, 200, { ...result, temperature: parseModuleTemperature(result.stdout) });
     return;
   }
@@ -1537,6 +1552,7 @@ $items = @()
 $adapters = @(Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Where-Object {
   $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular|Remote NDIS|USB Ethernet'
 })
+$performance = @(Get-CimInstance Win32_PerfRawData_Tcpip_NetworkInterface -ErrorAction SilentlyContinue)
 if (-not $targetPresent) {
   $adapters = @($adapters | Where-Object { $_.InterfaceDescription -ne 'Quectel ECM Adapter' })
 }
@@ -1544,9 +1560,20 @@ foreach ($adapter in $adapters) {
   $stats = Get-NetAdapterStatistics -Name $adapter.Name -ErrorAction SilentlyContinue
   $receivedRaw = if ($stats) { [uint64]$stats.ReceivedBytes } else { [uint64]0 }
   $sentRaw = if ($stats) { [uint64]$stats.SentBytes } else { [uint64]0 }
-  $statisticsReliable = [bool]($receivedRaw -lt [uint64]1PB -and $sentRaw -lt [uint64]1PB)
+  $statisticsReliable = [bool]($stats -and $receivedRaw -lt [uint64]1PB -and $sentRaw -lt [uint64]1PB)
   $receivedBytes = if ($statisticsReliable) { [int64]$receivedRaw } else { [int64]0 }
   $sentBytes = if ($statisticsReliable) { [int64]$sentRaw } else { [int64]0 }
+  $matchingPerformance = @($performance | Where-Object { $_.Name -ceq $adapter.InterfaceDescription })
+  $matchingAdapters = @($adapters | Where-Object { $_.InterfaceDescription -ceq $adapter.InterfaceDescription })
+  $performanceCounters = $null
+  if ($matchingPerformance.Count -eq 1 -and $matchingAdapters.Count -eq 1) {
+    $performanceCounters = [pscustomobject]@{
+      name = [string]$matchingPerformance[0].Name
+      unique = $true
+      receivedBytes = $matchingPerformance[0].BytesReceivedPersec
+      sentBytes = $matchingPerformance[0].BytesSentPersec
+    }
+  }
   $ipAddress = Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object {
     $_.IPAddress -notlike '169.254.*'
   } | Select-Object -First 1
@@ -1555,12 +1582,14 @@ foreach ($adapter in $adapters) {
   $items += [pscustomobject]@{
     name = $adapter.Name
     description = $adapter.InterfaceDescription
+    interfaceIndex = $adapter.ifIndex
     status = [string]$adapter.Status
     mediaState = [string]$adapter.MediaConnectionState
     linkSpeed = [string]$adapter.LinkSpeed
     receivedBytes = $receivedBytes
     sentBytes = $sentBytes
     statisticsReliable = $statisticsReliable
+    performanceCounters = $performanceCounters
     ipv4 = [string]$ipAddress.IPAddress
     gateway = [string]$defaultRoute.NextHop
     dhcp = [string]($ipInterface.Dhcp)

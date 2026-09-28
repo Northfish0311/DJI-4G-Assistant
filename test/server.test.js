@@ -191,16 +191,56 @@ test("rejects the Quectel ECM traffic counter sentinel", () => {
     ok: true,
     stdout: JSON.stringify({ receivedBytes: 4294967297, sentBytes: 0, statisticsReliable: true }),
   });
-  assert.deepEqual(JSON.parse(normalized.stdout), {
-    receivedBytes: 0,
-    sentBytes: 0,
-    statisticsReliable: false,
-  });
+  const rejected = JSON.parse(normalized.stdout);
+  assert.equal(rejected.receivedBytes, 0);
+  assert.equal(rejected.sentBytes, 0);
+  assert.equal(rejected.statisticsReliable, false);
+  assert.equal(rejected.statisticsSource, "unavailable");
+  assert.ok(rejected.sampledAt > 0);
   const regular = normalizeNetworkTrafficResult({
     ok: true,
     stdout: JSON.stringify({ receivedBytes: 1200, sentBytes: 300, statisticsReliable: true }),
   });
   assert.equal(JSON.parse(regular.stdout).receivedBytes, 1200);
+});
+
+test("prefers uniquely matched USB performance counters to corrupt driver statistics", () => {
+  const result = normalizeNetworkTrafficResult({ ok: true, stdout: JSON.stringify({
+    description: "Quectel ECM Adapter", receivedBytes: 0, sentBytes: 0, statisticsReliable: false,
+    performanceCounters: { name: "Quectel ECM Adapter", unique: true, receivedBytes: 1463641, sentBytes: 811014 },
+  }) });
+  const data = JSON.parse(result.stdout);
+  assert.equal(data.statisticsSource, "windows-performance");
+  assert.equal(data.statisticsReliable, true);
+  assert.equal(data.receivedBytes, 1463641);
+  assert.equal(data.sentBytes, 811014);
+  assert.equal(data.performanceCounters, undefined);
+});
+
+test("never substitutes Wi-Fi, ambiguous interfaces or invalid performance counters", () => {
+  for (const changes of [
+    { name: "Intel[R] Wi-Fi 6 AX201 160MHz" }, { unique: false }, { unique: undefined },
+    { receivedBytes: null }, { sentBytes: -1 }, { receivedBytes: 2 ** 60 }, { sentBytes: "123" },
+  ]) {
+    const data = JSON.parse(normalizeNetworkTrafficResult({ ok: true, stdout: JSON.stringify({
+      description: "Quectel ECM Adapter", receivedBytes: 0, sentBytes: 0, statisticsReliable: false,
+      performanceCounters: { name: "Quectel ECM Adapter", unique: true, receivedBytes: 123, sentBytes: 456, ...changes },
+    }) }).stdout);
+    assert.equal(data.statisticsReliable, false);
+    assert.equal(data.statisticsSource, "unavailable");
+  }
+});
+
+test("falls back to valid adapter counters and rejects malformed totals", () => {
+  for (const receivedBytes of [null, -1, 2 ** 60, "500"]) {
+    const data = JSON.parse(normalizeNetworkTrafficResult({ ok: true, stdout: JSON.stringify({ receivedBytes, sentBytes: 42 }) }).stdout);
+    assert.equal(data.statisticsReliable, false);
+  }
+  const data = JSON.parse(normalizeNetworkTrafficResult({ ok: true, stdout: JSON.stringify([
+    { receivedBytes: 123, sentBytes: 456, performanceCounters: null },
+  ]) }).stdout)[0];
+  assert.equal(data.statisticsSource, "adapter");
+  assert.equal(data.receivedBytes, 123);
 });
 
 test("compares every USB composition field", () => {

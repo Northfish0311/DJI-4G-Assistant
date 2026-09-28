@@ -59,7 +59,7 @@ test("desktop smoke test waits for a fully usable pairing code", () => {
 
 test("network polling never stacks slow Windows adapter reads", () => {
   const source = read("web/public/app.js");
-  const refresh = source.split("async function refreshTrafficQuietly()")[1].split("async function refreshModuleTemperatureQuietly")[0];
+  const refresh = source.split("async function refreshTrafficQuietly()")[1].split("async function refreshModuleStatusQuietly")[0];
   assert.match(refresh, /state\.trafficRefreshInFlight/);
   assert.match(refresh, /state\.trafficRefreshInFlight = true/);
   assert.match(refresh, /finally \{ state\.trafficRefreshInFlight = false; \}/);
@@ -223,7 +223,7 @@ test("shows module temperature without polling during calls or write operations"
   assert.match(html, /id="temperatureValue"/);
   assert.match(server, /AT\+QTEMP/);
   assert.match(server, /\/api\/module-temperature/);
-  assert.match(app, /refreshModuleTemperatureQuietly/);
+  assert.match(app, /refreshModuleStatusQuietly/);
   assert.match(app, /state\.callActionInFlight/);
   assert.match(app, /state\.callStatusData\?\.voiceCalls\?\.length/);
 });

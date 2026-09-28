@@ -23,6 +23,7 @@ const connectionBadge = document.querySelector("#connectionBadge");
 
 const copy = {
   en: {
+    trafficWaiting: "Measuring speed...", trafficCountersUnavailable: "This adapter is not reporting usable traffic counters.", trafficActive: "Live USB adapter statistics", trafficScope: "USB adapter traffic only, including local traffic. Not your plan balance.",
     conversations: "Conversations", newMessage: "New message", searchMessages: "Search number or message", noMatchingThreads: "No matching conversations", conversationMessage: "1 message", conversationMessages: "{count} messages", newMessageHint: "Enter a recipient and write your first message below.", discardSmsDraft: "Discard the current draft and change conversation?",
     commonTasks: "Everyday tasks", moreProfile: "More options & card details",
     cardConnecting: "Reading module and SIM...", cardNotConnected: "Waiting for the module",
@@ -83,6 +84,7 @@ const copy = {
     deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
   },
   zh: {
+    trafficWaiting: "正在采样速度…", trafficCountersUnavailable: "此网卡暂未返回有效流量计数。", trafficActive: "正在统计 USB 网卡流量", trafficScope: "仅统计电脑经过此 USB 网卡的流量，含局域网通信；不代表套餐剩余流量。",
     conversations: "会话", newMessage: "新建短信", searchMessages: "搜索号码或短信内容", noMatchingThreads: "没有匹配的会话", conversationMessage: "1 条短信", conversationMessages: "{count} 条短信", newMessageHint: "在下方填写收件人，开始新的对话。", discardSmsDraft: "切换会话会放弃当前草稿，是否继续？",
     commonTasks: "常用操作", moreProfile: "更多操作与卡号",
     cardConnecting: "正在识别模块和卡片…", cardNotConnected: "等待连接模块",
@@ -151,6 +153,8 @@ Object.assign(copy.en, {callReadFailed: "Could not refresh call status. The last
 Object.assign(copy.zh, {callReadFailed: "通话状态刷新失败，已保留上次状态，稍后自动重试。", callStatusUncertain: "暂时无法确认通话状态"});
 Object.assign(copy.en, {moduleTemperature: "Temperature"});
 Object.assign(copy.zh, {moduleTemperature: "模块温度"});
+Object.assign(copy.en, {noService: "No service", networkStatusUnavailable: "Network status unavailable", addressAssigned: "IP assigned", cellularConnected: "Cellular data connected"});
+Object.assign(copy.zh, {noService: "无服务", networkStatusUnavailable: "网络状态待确认", addressAssigned: "已获得 IP", cellularConnected: "蜂窝数据已连接"});
 Object.assign(copy.en, {profileSwitchVerified: "Profile switched and the live ICCID/IMSI check passed.", profileSwitchNetworkPending: "Profile ICCID switched; the mobile network is still registering.", profileSwitchPending: "The profile command completed, but the live ICCID has not changed yet. No automatic restart was performed; refresh before retrying."});
 Object.assign(copy.zh, {profileSwitchVerified: "套餐已切换，当前 ICCID 和 IMSI 核对通过。", profileSwitchNetworkPending: "当前 ICCID 已切换，移动网络仍在注册。", profileSwitchPending: "切换命令已完成，但当前 ICCID 还没有变化。程序没有自动重启模块，请稍后刷新确认后再操作。"});
 Object.assign(copy.en, {callNumberPlaceholder: "Number, optionally ,,extension#", invalidCallNumber: "Enter a phone number, optionally followed by commas and extension keys.", postDialWaiting: "Main call started. Extension keys will send after the call connects.", postDialSending: "Call connected. Sending extension keys once…", postDialComplete: "Extension keys sent.", postDialFailed: "Extension keys were not confirmed and were not retried.", postDialLabel: "Post-dial extension"});
@@ -160,6 +164,7 @@ Object.assign(copy.zh, {callMicrophone: "麦克风", callSpeaker: "扬声器", r
 Object.assign(copy.en, {"replyTo":"Reply to {number}","writeMessage":"Write a message…","replyMessage":"Write a reply…","chooseEidCompact":"View card space","compactProfiles":"{count} profiles · {active} enabled","callNextReady":"Enter or paste a number in the dialer. Incoming calls appear here.","callNextLocked":"You can view call status. Calling and answering require call control to be enabled on the local service.","callNextDisconnected":"Connect the module by USB, then scan to find it.","callNextWaiting":"The next call status check will run automatically.","callFocusDialer":"Enter a number","callRetryStatus":"Check again","voiceSummaryUnknown":"Check audio before your first call","voiceSummaryReady":"Ready · Start audio after the call connects","voiceSummaryRuntime":"Next: download the verified audio files","voiceSummaryUsb":"Next: set up the module audio interface","voiceSummaryPrepare":"Ready to prepare · Start Audio can do this for you","voiceSummaryUnsupported":"Automatic audio setup is unavailable for this module","voiceSummaryRemote":"Audio runs on the connected Windows computer"});
 Object.assign(copy.zh, {"replyTo":"回复给 {number}","writeMessage":"输入短信内容…","replyMessage":"输入回复内容…","chooseEidCompact":"查看卡片空间","compactProfiles":"{count} 个套餐 · {active} 个已启用","callNextReady":"在拨号盘输入或粘贴号码。有来电时，这里会显示接听按钮。","callNextLocked":"当前可以查看通话状态。拨号和接听需要先在本地服务中开放电话控制。","callNextDisconnected":"用 USB 连接模块，再扫描查找设备。","callNextWaiting":"正在等待下一次自动状态检查。","callFocusDialer":"输入号码","callRetryStatus":"重新检查","voiceSummaryUnknown":"首次通话前，检查声音是否就绪","voiceSummaryReady":"声音已就绪 · 接通后可启动","voiceSummaryRuntime":"下一步：下载已校验的语音文件","voiceSummaryUsb":"下一步：设置模块声音接口","voiceSummaryPrepare":"可准备声音 · 接通后也可自动完成","voiceSummaryUnsupported":"当前模块不支持自动声音设置","voiceSummaryRemote":"声音由连接模块的 Windows 电脑处理"});
 const state = {
+  overviewRefreshInFlight: false, moduleReadError: false,
   smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
   smsActiveSender: null, smsQuery: "", smsNewDraft: false, smsStorage: null,
@@ -227,7 +232,7 @@ function clearCardView() {
   state.euiccCandidatesChecked = 0;
   state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms");
   state.chipText = ""; state.profileText = ""; state.discoveryText = ""; state.notificationText = "";
-  state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = "";
+  state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = ""; state.signal = ""; state.moduleReadError = false;
   state.temperature = null; state.temperatureSensors = []; state.temperatureSupported = null;
   state.postDialGeneration += 1; state.postDialAbortController?.abort(); state.postDialAbortController = null; state.pendingPostDial = null; state.postDialRunning = false;
   state.cardSignature = null;
@@ -292,23 +297,26 @@ function registrationLabel(code) {
 
 function renderSummary() {
   const registration = registrationLabel(state.registrationCode);
+  const registered = ["1", "5"].includes(state.registrationCode);
+  const noService = /no service/i.test(state.radio);
+  const connected = registered && !noService && Boolean(state.moduleIp) && !state.moduleReadError;
   document.querySelector("#vidPid").textContent = state.usb || t("unknown");
   document.querySelector("#atPort").textContent = state.atPort || t("unknown");
-  document.querySelector("#signalValue").textContent = state.signal || "--";
+  document.querySelector("#signalValue").textContent = state.signal && Number(state.signal) <= 31 ? `${state.signal}/31` : t("unknown");
   document.querySelector("#simState").textContent = state.sim || t("unknown");
   carrierValue.textContent = state.carrier || t("unknown");
-  radioValue.textContent = state.radio || t("unknown");
+  radioValue.textContent = noService ? t("noService") : state.radio || t("unknown");
   const temperatureValue = document.querySelector("#temperatureValue");
   temperatureValue.textContent = Number.isFinite(state.temperature) ? `${state.temperature} °C` : state.temperatureSupported === false ? t("unsupported") : "--";
   temperatureValue.dataset.tone = Number.isFinite(state.temperature) && state.temperature >= 80 ? "hot" : Number.isFinite(state.temperature) && state.temperature >= 65 ? "warm" : "normal";
   temperatureValue.title = state.temperatureSensors.map((sensor) => `${sensor.name}: ${sensor.valueC} °C`).join("\n");
   document.querySelector("#deviceTitle").textContent = state.deviceModel || t("waitingScan");
   document.querySelector("#deviceSubtitle").textContent = state.deviceRevision ? t("revision", { value: state.deviceRevision }) : t("insertScan");
-  document.querySelector("#netState").textContent = registration || (state.moduleIp ? `${t("online")} · ${state.moduleIp}` : state.networkKind === "disconnected" ? t("adapterDisconnected") : state.networkKind === "present" ? t("adapterPresent") : t("unknown"));
-  const status = state.moduleIp ? `${t("online")} · ${state.moduleIp}` : registration ? `${t("registered")} · ${registration}` : t("noNetwork");
+  document.querySelector("#netState").textContent = state.moduleReadError ? t("networkStatusUnavailable") : registration || (state.networkKind === "disconnected" ? t("adapterDisconnected") : state.networkKind === "present" ? t("adapterPresent") : t("unknown"));
+  const status = state.moduleReadError ? t("networkStatusUnavailable") : connected ? `${t("cellularConnected")} · ${state.moduleIp}` : registration ? registered ? `${t("registered")} · ${registration}` : registration : noService ? t("noService") : state.moduleIp ? `${t("addressAssigned")} · ${state.moduleIp}` : t("noNetwork");
   connectionBadge.textContent = status;
-  connectionBadge.classList.toggle("online", Boolean(state.moduleIp));
-  connectionBadge.classList.toggle("registered", !state.moduleIp && Boolean(registration));
+  connectionBadge.classList.toggle("online", connected);
+  connectionBadge.classList.toggle("registered", registered && !connected && !state.moduleReadError);
   renderConnectionState();
 }
 
@@ -337,10 +345,10 @@ function updateSummary(text) {
   if (cereg) {
     const registrationFields = cereg[1].split(",").map((field) => field.trim());
     state.registrationCode = registrationFields.length > 1 ? registrationFields[1] : registrationFields[0];
+    state.moduleReadError = false;
   }
   if (cops) {
-    const carrier = cops[1].match(/"([^"]+)"/) || cops[1].match(/([^,\s]+)/);
-    if (carrier) state.carrier = carrier[1].trim();
+    state.carrier = parseAtCsv(cops[1])[2] || "";
   }
   if (qnwinfo) {
     const fields = [...qnwinfo[1].matchAll(/"([^"]+)"/g)].map((match) => match[1]);
@@ -357,8 +365,25 @@ function updateSummary(text) {
   }
   const model = text.match(/Baiwang[\s\S]*?QDC507[\s\S]*?Revision:\s*([^\r\n]+)/i);
   if (model) { state.deviceModel = "Baiwang / QDC507"; state.deviceRevision = model[1].trim(); }
-  const ip = text.match(/\+CGPADDR:\s*1,"?([^"\r\n]+)"?/); if (ip) state.moduleIp = ip[1];
+  const ip = text.match(/\+CGPADDR:\s*1\s*,([^\r\n]*)/);
+  if (ip) state.moduleIp = parseAtCsv(ip[1]).flatMap((field) => field.split(",")).map(normalizeModuleAddress).filter(Boolean).join(" / ");
+  if ((state.registrationCode && !["1", "5"].includes(state.registrationCode)) || /no service/i.test(state.radio)) state.moduleIp = "";
   renderSummary();
+}
+
+function normalizeModuleAddress(value) {
+  const address = value.trim();
+  const octets = address.split(".");
+  const decimal = octets.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255);
+  if (decimal && octets.length === 4) return octets.some((part) => Number(part) !== 0) ? octets.map(Number).join(".") : "";
+  const ipv6 = decimal && octets.length === 16
+    ? Array.from({ length: 8 }, (_, index) => ((Number(octets[index * 2]) << 8) | Number(octets[index * 2 + 1])).toString(16)).join(":")
+    : address;
+  if (!/^[0-9a-f:.]+$/i.test(ipv6) || !ipv6.includes(":")) return "";
+  try {
+    const normalized = new URL(`http://[${ipv6}]/`).hostname.slice(1, -1);
+    return normalized === "::" ? "" : normalized;
+  } catch { return ""; }
 }
 
 function escapeHtml(value) { return String(value || "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
@@ -674,6 +699,7 @@ function renderTraffic(text) {
     driverBadge: document.querySelector("#ecmDriverBadge"),
     driverDetail: document.querySelector("#ecmDriverDetail"),
     repairButton: document.querySelector("#installEcmDriverBtn"),
+    status: document.querySelector("#trafficStatus"),
   };
   if (!adapter) {
     ids.adapter.textContent = t("noAdapter");
@@ -688,29 +714,38 @@ function renderTraffic(text) {
     ids.repairButton.disabled = true;
     state.trafficPrevious = null;
     state.trafficBaseline = null;
+    ids.status.textContent = t("noAdapter");
     return;
   }
-  const statisticsReliable = adapter.statisticsReliable !== false;
-  const now = Date.now();
-  const key = `${adapter.name}|${adapter.description}`;
-  const rx = Number(adapter.receivedBytes) || 0;
-  const tx = Number(adapter.sentBytes) || 0;
-  if (statisticsReliable && (!state.trafficBaseline || state.trafficBaseline.key !== key || rx < state.trafficBaseline.rx || tx < state.trafficBaseline.tx)) {
+  const rx = adapter.receivedBytes;
+  const tx = adapter.sentBytes;
+  const statisticsReliable = adapter.statisticsReliable !== false && Number.isSafeInteger(rx) && rx >= 0 && Number.isSafeInteger(tx) && tx >= 0;
+  const now = Number(adapter.sampledAt) || Date.now();
+  const key = `${adapter.name}|${adapter.description}|${adapter.interfaceIndex || ""}|${adapter.statisticsSource || "adapter"}`;
+  const previous = state.trafficPrevious;
+  const reset = previous?.key === key && (rx < previous.rx || tx < previous.tx || now < previous.time);
+  if (statisticsReliable && (!state.trafficBaseline || state.trafficBaseline.key !== key || reset)) {
     state.trafficBaseline = { key, rx, tx };
     state.trafficPrevious = null;
   }
-  let rxRate = 0;
-  let txRate = 0;
+  let rxRate = null;
+  let txRate = null;
   if (statisticsReliable && state.trafficPrevious?.key === key) {
-    const seconds = Math.max(0.2, (now - state.trafficPrevious.time) / 1000);
-    rxRate = Math.max(0, rx - state.trafficPrevious.rx) / seconds;
-    txRate = Math.max(0, tx - state.trafficPrevious.tx) / seconds;
+    if (now === state.trafficPrevious.time) {
+      rxRate = state.trafficPrevious.rxRate;
+      txRate = state.trafficPrevious.txRate;
+    } else {
+      const seconds = (now - state.trafficPrevious.time) / 1000;
+      rxRate = Math.max(0, rx - state.trafficPrevious.rx) / seconds;
+      txRate = Math.max(0, tx - state.trafficPrevious.tx) / seconds;
+    }
   }
-  state.trafficPrevious = statisticsReliable ? { key, rx, tx, time: now } : null;
+  state.trafficPrevious = statisticsReliable ? { key, rx, tx, time: now, rxRate, txRate } : null;
   if (!statisticsReliable) state.trafficBaseline = null;
   ids.adapter.textContent = `${adapter.description || adapter.name || t("unknown")} | ${adapter.status || "--"}`;
-  ids.rxRate.textContent = statisticsReliable ? formatBytes(rxRate, true) : "--";
-  ids.txRate.textContent = statisticsReliable ? formatBytes(txRate, true) : "--";
+  ids.rxRate.textContent = rxRate !== null ? formatBytes(rxRate, true) : "--";
+  ids.txRate.textContent = txRate !== null ? formatBytes(txRate, true) : "--";
+  ids.status.textContent = t(!statisticsReliable ? "trafficCountersUnavailable" : rxRate === null ? "trafficWaiting" : "trafficActive");
   ids.rxSession.textContent = statisticsReliable ? formatBytes(rx - state.trafficBaseline.rx) : "--";
   ids.txSession.textContent = statisticsReliable ? formatBytes(tx - state.trafficBaseline.tx) : "--";
   ids.ipv4.textContent = adapter.ipv4 || "--";
@@ -2047,12 +2082,20 @@ async function refreshTrafficQuietly() {
   } catch {}
   finally { state.trafficRefreshInFlight = false; }
 }
-async function refreshModuleTemperatureQuietly() {
-  if (state.busy || state.callActionInFlight || state.temperatureSupported === false || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
+async function refreshModuleStatusQuietly() {
+  if (state.busy || state.overviewRefreshInFlight || state.callActionInFlight || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
+  const epoch = state.cardEpoch, port = state.atPort;
+  state.overviewRefreshInFlight = true;
   try {
-    const { data } = await requestAction("module-temperature");
+    const data = await fetchJson(`/api/module-status?port=${encodeURIComponent(port)}&brief=1`, 45000);
+    if (epoch !== state.cardEpoch || port !== state.atPort) return;
+    if (!data.ok || !/\+CEREG:/.test(data.stdout || "")) throw new Error("Network status unavailable");
+    state.moduleReadError = false;
+    updateSummary(data.stdout || "");
     updateTemperature(data);
-  } catch {}
+  } catch {
+    if (epoch === state.cardEpoch && port === state.atPort) { state.moduleReadError = true; renderSummary(); }
+  } finally { state.overviewRefreshInFlight = false; }
 }
 async function openPairingDialog() {
   pairingDeepLink = "";
@@ -2112,7 +2155,7 @@ function toggleSmsPolling() {
 setInterval(() => {if (state.smsPolling && document.querySelector("#sms").classList.contains("active")) refreshSmsQuietly();}, 20000);
 setInterval(refreshTrafficQuietly, 2000);
 setInterval(refreshCallStatusQuietly, 3500);
-setInterval(refreshModuleTemperatureQuietly, 10000);
+setInterval(refreshModuleStatusQuietly, 30000);
 
 const launchToken = launchParameters.get("token") || "";
 tokenInput.value = launchToken || (nativeCompanion ? "" : localStorage.getItem("consoleToken") || "");
