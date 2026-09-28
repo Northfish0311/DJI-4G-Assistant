@@ -19,6 +19,7 @@ const {
   sameUsbComposition,
   parseVoiceIdentity,
   parseSmsStorage,
+  normalizeNetworkTrafficResult,
   redactModemIdentifiers,
 } = require("../web/server");
 
@@ -183,6 +184,23 @@ test("reports a full SMS storage without guessing", () => {
   const storage = parseSmsStorage('+CPMS: "MT",23,23,"MT",23,23,"MT",23,23');
   assert.deepEqual(storage, { used: 23, total: 23, percent: 100, full: true });
   assert.equal(parseSmsStorage("ERROR"), null);
+});
+
+test("rejects the Quectel ECM traffic counter sentinel", () => {
+  const normalized = normalizeNetworkTrafficResult({
+    ok: true,
+    stdout: JSON.stringify({ receivedBytes: 4294967297, sentBytes: 0, statisticsReliable: true }),
+  });
+  assert.deepEqual(JSON.parse(normalized.stdout), {
+    receivedBytes: 0,
+    sentBytes: 0,
+    statisticsReliable: false,
+  });
+  const regular = normalizeNetworkTrafficResult({
+    ok: true,
+    stdout: JSON.stringify({ receivedBytes: 1200, sentBytes: 300, statisticsReliable: true }),
+  });
+  assert.equal(JSON.parse(regular.stdout).receivedBytes, 1200);
 });
 
 test("compares every USB composition field", () => {

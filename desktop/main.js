@@ -7,6 +7,7 @@ const { loadOrCreateConsoleToken } = require("../web/pairing");
 let mainWindow = null;
 let localServer = null;
 const smokeTest = process.env.ROAMDOCK_SMOKE_TEST === "1";
+if (smokeTest) app.disableHardwareAcceleration();
 
 function writeSmokeResult(value) {
   const output = process.env.ROAMDOCK_SMOKE_OUTPUT;
@@ -106,9 +107,23 @@ function createWindow(port) {
     await new Promise((resolve) => setTimeout(resolve, 700));
     if (process.env.ROAMDOCK_SMOKE_PAIRING === "1") {
       await mainWindow.webContents.executeJavaScript("openPairingDialog()");
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      await mainWindow.webContents.executeJavaScript(`(async () => {
+        const deadline = Date.now() + 15000;
+        while (Date.now() < deadline) {
+          const qr = document.querySelector("#pairingQr");
+          const host = document.querySelector("#pairingUrl")?.textContent?.trim();
+          const copy = document.querySelector("#copyPairingBtn");
+          if (qr && !qr.hidden && qr.src.startsWith("data:image/") && host && host !== "--" && copy && !copy.disabled) {
+            await qr.decode().catch(() => {});
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            return true;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+        throw new Error("Pairing dialog did not become ready within 15 seconds.");
+      })()`);
     }
-    const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")), calls: Boolean(document.querySelector("#callStatus")), pairingOpen: document.querySelector("#pairingDialog")?.open === true, pairingQr: Boolean(document.querySelector("#pairingQr")?.getAttribute("src")) })');
+    const snapshot = await mainWindow.webContents.executeJavaScript('({ title: document.title, views: document.querySelectorAll(".view").length, profiles: Boolean(document.querySelector("#profilesList")), sms: Boolean(document.querySelector("#smsList")), calls: Boolean(document.querySelector("#callStatus")), pairingOpen: document.querySelector("#pairingDialog")?.open === true, pairingReady: !document.querySelector("#pairingQr")?.hidden && document.querySelector("#pairingQr")?.src?.startsWith("data:image/") && document.querySelector("#pairingUrl")?.textContent?.trim() !== "--" && document.querySelector("#copyPairingBtn")?.disabled === false })');
     if (process.env.ROAMDOCK_CAPTURE_OUTPUT) {
       const image = await mainWindow.webContents.capturePage();
       fs.writeFileSync(process.env.ROAMDOCK_CAPTURE_OUTPUT, image.toPNG());

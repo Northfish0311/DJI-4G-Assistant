@@ -45,6 +45,43 @@ test("keeps mobile pairing compact and buttons free of legacy shadows", () => {
   assert.doesNotMatch(ios, /\.frame\(height: (44|50)\)/);
 });
 
+test("desktop smoke test waits for a fully usable pairing code", () => {
+  const source = read("desktop/main.js");
+  assert.match(source, /if \(smokeTest\) app\.disableHardwareAcceleration\(\)/);
+  assert.match(source, /Pairing dialog did not become ready within 15 seconds/);
+  assert.match(source, /qr\.src\.startsWith\("data:image\/"\)/);
+  assert.match(source, /host !== "--"/);
+  assert.match(source, /!copy\.disabled/);
+  assert.match(source, /await qr\.decode\(\)\.catch/);
+  assert.match(source, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
+  assert.match(source, /pairingReady:/);
+});
+
+test("network polling never stacks slow Windows adapter reads", () => {
+  const source = read("web/public/app.js");
+  const refresh = source.split("async function refreshTrafficQuietly()")[1].split("async function refreshModuleTemperatureQuietly")[0];
+  assert.match(refresh, /state\.trafficRefreshInFlight/);
+  assert.match(refresh, /state\.trafficRefreshInFlight = true/);
+  assert.match(refresh, /finally \{ state\.trafficRefreshInFlight = false; \}/);
+  const server = read("web/server.js");
+  assert.match(server, /let networkTrafficQuery = null/);
+  assert.match(server, /if \(!networkTrafficQuery\)/);
+  assert.match(server, /pnputil \/enum-devices \/connected \/class Net/);
+  assert.doesNotMatch(server, /\$targetDevice = Get-PnpDevice/);
+  assert.ok(server.includes("-match 'USB\\\\\\\\VID_2C7C"));
+  assert.match(server, /Get-NetIPAddress -InterfaceIndex \$adapter\.ifIndex/);
+  assert.match(server, /Get-NetRoute -InterfaceIndex \$adapter\.ifIndex/);
+});
+
+test("system guidance is fully translated instead of mixing English into Chinese", () => {
+  const html = read("web/public/index.html");
+  const app = read("web/public/app.js");
+  for (const key of ["githubPageDetail", "localConsoleDetail", "hardwareScopeDetail"]) {
+    assert.match(html, new RegExp(`data-i18n="${key}"`));
+    assert.ok(app.split(`${key}:`).length >= 3, `${key} must exist in English and Chinese`);
+  }
+});
+
 test("Android recovery keeps controls synchronized and detaches the console before disposal", () => {
   const source = read("android/app/src/main/java/com/northfish0311/dji4gremote/MainActivity.java");
   const vault = read("android/app/src/main/java/com/northfish0311/dji4gremote/PairingVault.java");

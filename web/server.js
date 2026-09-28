@@ -28,6 +28,7 @@ let atQueue = Promise.resolve();
 let driverInstallRunning = false;
 const voiceRuntime = new VoiceRuntimeManager(dataRoot);
 let voiceQueue = Promise.resolve();
+let networkTrafficQuery = null;
 let bonjour = null;
 let bonjourService = null;
 
@@ -943,6 +944,26 @@ function parseSmsStorage(text) {
   return { ...storage, full: storage.used >= storage.total, percent: Math.round((storage.used / storage.total) * 100) };
 }
 
+function normalizeNetworkTrafficResult(result) {
+  if (!result?.ok || !String(result.stdout || "").trim()) return result;
+  try {
+    const parsed = JSON.parse(result.stdout);
+    const items = Array.isArray(parsed) ? parsed : [parsed];
+    for (const item of items) {
+      const received = Number(item.receivedBytes);
+      const sent = Number(item.sentBytes);
+      const driverSentinel = (received === 4294967297 && sent === 0) || (sent === 4294967297 && received === 0);
+      if (!driverSentinel) continue;
+      item.receivedBytes = 0;
+      item.sentBytes = 0;
+      item.statisticsReliable = false;
+    }
+    return { ...result, stdout: JSON.stringify(Array.isArray(parsed) ? items : items[0]) };
+  } catch {
+    return result;
+  }
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let body = "";
@@ -1502,10 +1523,8 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/network-traffic") {
     const ps = `
-$targetDevice = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object {
-  $_.InstanceId -like 'USB\\VID_2C7C&PID_0125&MI_04*'
-} | Select-Object -First 1
-$targetPresent = [bool]$targetDevice
+$connectedNetDevices = (& pnputil /enum-devices /connected /class Net 2>$null | Out-String)
+$targetPresent = [bool]($connectedNetDevices -match 'USB\\\\VID_2C7C&PID_0125&MI_04')
 $driver = Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Where-Object {
   $_.DeviceID -like 'USB\\VID_2C7C&PID_0125&MI_04*'
 } | Sort-Object DriverDate -Descending | Select-Object -First 1
@@ -1528,7 +1547,10 @@ foreach ($adapter in $adapters) {
   $statisticsReliable = [bool]($receivedRaw -lt [uint64]1PB -and $sentRaw -lt [uint64]1PB)
   $receivedBytes = if ($statisticsReliable) { [int64]$receivedRaw } else { [int64]0 }
   $sentBytes = if ($statisticsReliable) { [int64]$sentRaw } else { [int64]0 }
-  $ip = Get-NetIPConfiguration -InterfaceIndex $adapter.ifIndex -ErrorAction SilentlyContinue
+  $ipAddress = Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object {
+    $_.IPAddress -notlike '169.254.*'
+  } | Select-Object -First 1
+  $defaultRoute = Get-NetRoute -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1
   $ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
   $items += [pscustomobject]@{
     name = $adapter.Name
@@ -1539,8 +1561,8 @@ foreach ($adapter in $adapters) {
     receivedBytes = $receivedBytes
     sentBytes = $sentBytes
     statisticsReliable = $statisticsReliable
-    ipv4 = [string]($ip.IPv4Address.IPAddress)
-    gateway = [string]($ip.IPv4DefaultGateway.NextHop)
+    ipv4 = [string]$ipAddress.IPAddress
+    gateway = [string]$defaultRoute.NextHop
     dhcp = [string]($ipInterface.Dhcp)
     driverName = if ($driver) { [string]$driver.DeviceName } else { '' }
     driverVersion = if ($driver) { [string]$driver.DriverVersion } else { '' }
@@ -1553,9 +1575,9 @@ foreach ($adapter in $adapters) {
 }
 if ($targetPresent -and $items.Count -eq 0) {
   $items += [pscustomobject]@{
-    name = [string]$targetDevice.FriendlyName
+    name = 'Quectel ECM interface'
     description = if ($driver) { [string]$driver.DeviceName } else { 'Quectel ECM interface' }
-    status = [string]$targetDevice.Status
+    status = 'Present'
     mediaState = ''
     linkSpeed = ''
     receivedBytes = 0
@@ -1575,7 +1597,12 @@ if ($targetPresent -and $items.Count -eq 0) {
 }
 $items | ConvertTo-Json -Depth 4 -Compress
 `;
-    const result = await runPowerShell(["-Command", ps]);
+    if (!networkTrafficQuery) {
+      networkTrafficQuery = runPowerShell(["-Command", ps])
+        .then(normalizeNetworkTrafficResult)
+        .finally(() => { networkTrafficQuery = null; });
+    }
+    const result = await networkTrafficQuery;
     sendJson(res, 200, result);
     return;
   }
@@ -1894,4 +1921,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };

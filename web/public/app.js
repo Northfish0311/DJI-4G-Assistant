@@ -67,7 +67,7 @@ const copy = {
     smsStorageUsage: "Module storage {used}/{total}", smsStorageFull: "SMS storage is full ({used}/{total}). New messages may be dropped. Delete an old message you no longer need.", smsStorageNearFull: "SMS storage is nearly full ({used}/{total}).", deleteSms: "Delete", confirmDeleteSms: "Delete message {index} from module storage? This cannot be undone.", smsDeleted: "Message deleted. Inbox capacity has been refreshed.", smsDeleteLocked: "SMS deletion is locked on this local server.",
  readSms: "Read SMS", noSms: "No SMS loaded.", smsUnread: "Unread", smsRead: "Read", smsSent: "Sent", smsUnsent: "Unsent", smsFrom: "From", smsMessageNumber: "Message {value}", sendSms: "Send SMS", recipient: "Recipient", message: "Message", smsSendLocked: "SMS sending is locked on this local server.", smsSendEnabled: "SMS sending is enabled. Carrier charges may apply.", confirmSms: "Send this SMS now?", invalidSms: "Enter a phone number or service number and a message.", startPolling: "Auto Refresh", stopPolling: "Stop Refresh", safeAtConsole: "Safe AT Console", baseline: "Baseline", send: "Send",
     signal: "Signal", readonlyAtHint: "Read-only AT commands are allowed. Configuration writes remain blocked by default.",
-    howWorks: "How It Works", githubPage: "GitHub page:", localConsole: "Local console:", hardwareScope: "Hardware scope:",
+    howWorks: "How It Works", githubPage: "GitHub page:", githubPageDetail: "project documentation and the UI source.", localConsole: "Local console:", localConsoleDetail: "each computer runs its own server. Use it on Windows itself or from a phone, tablet, or another computer on the same LAN.", hardwareScope: "Hardware scope:", hardwareScopeDetail: "this console only controls the DJI / Quectel module plugged into this computer.",
     connection: "Connection", consoleToken: "Console Token", ports: "Ports", device: "Device", module: "Module", windowsNetwork: "Windows Network", liveLog: "Live Log", clear: "Clear",
     ipadUrl: "Web console URL: {url}", moduleIp: "Module IP {ip}", adapterDisconnected: "Adapter present, Windows disconnected", adapterPresent: "Adapter present",
     quectelDetected: "Quectel detected", revision: "Revision {value}", active: "Active", enable: "Enable", disable: "Disable",
@@ -127,7 +127,7 @@ const copy = {
     smsStorageUsage: "模块短信容量 {used}/{total}", smsStorageFull: "模块短信仓库已满（{used}/{total}），新短信可能无法写入。请确认后删除一条不再需要的旧短信。", smsStorageNearFull: "模块短信仓库快满了（{used}/{total}）。", deleteSms: "删除", confirmDeleteSms: "确定从模块中删除第 {index} 条短信吗？删除后无法恢复。", smsDeleted: "短信已删除，收件箱容量已经刷新。", smsDeleteLocked: "本地服务没有开放短信删除。",
  readSms: "读取短信", noSms: "尚未读取短信。", smsUnread: "未读", smsRead: "已读", smsSent: "已发送", smsUnsent: "未发送", smsFrom: "来自", smsMessageNumber: "短信 {value}", sendSms: "发送短信", recipient: "收件号码", message: "短信内容", smsSendLocked: "短信发送已锁定。", smsSendEnabled: "已开放短信发送，运营商可能收费。", confirmSms: "确定现在发送这条短信吗？", invalidSms: "请输入手机号或运营商服务号码，并填写短信内容。", startPolling: "自动刷新", stopPolling: "停止刷新", safeAtConsole: "安全 AT 工具", baseline: "读取基线", send: "发送",
     signal: "信号", readonlyAtHint: "只允许执行只读 AT 指令，配置写入默认保持关闭。",
-    howWorks: "工作方式", githubPage: "GitHub 页面：", localConsole: "本地控制台：", hardwareScope: "硬件范围：",
+    howWorks: "工作方式", githubPage: "GitHub 页面：", githubPageDetail: "查看项目说明、使用教程和界面源码。", localConsole: "本地控制台：", localConsoleDetail: "每台电脑都会运行自己的管理服务；可以在本机使用，也可以从同一局域网内的手机、平板或其他电脑打开。", hardwareScope: "硬件范围：", hardwareScopeDetail: "这里只管理插在当前电脑上的大疆或兼容 Quectel 模块。",
     connection: "连接", consoleToken: "控制台密码", ports: "端口", device: "设备", module: "模块", windowsNetwork: "Windows 网卡", liveLog: "实时日志", clear: "清空",
     ipadUrl: "网页管理地址：{url}", moduleIp: "模块 IP {ip}", adapterDisconnected: "已发现网卡，但 Windows 未连接", adapterPresent: "已发现网卡",
     quectelDetected: "已发现 Quectel", revision: "版本 {value}", active: "已启用", enable: "启用", disable: "停用",
@@ -163,7 +163,7 @@ const state = {
   smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
   smsActiveSender: null, smsQuery: "", smsNewDraft: false, smsStorage: null,
-  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, smsDeleteEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, voiceRuntimeEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, busy: false, busyKey: "running", busyParams: {},
+  authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, smsDeleteEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, voiceRuntimeEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, trafficRefreshInFlight: false, busy: false, busyKey: "running", busyParams: {},
   primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, voiceRuntimeStatus: null, voiceSetupBusy: false, callHistory: [], lastCallKey: "", lastVoiceCall: null, pendingPostDial: null, postDialRunning: false, postDialGeneration: 0, postDialAbortController: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", temperature: null, temperatureSensors: [], temperatureSupported: null, trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
 
@@ -2039,11 +2039,13 @@ async function installEcmDriver() {
   await callApi("network-traffic");
 }
 async function refreshTrafficQuietly() {
-  if (state.busy || document.hidden || !document.querySelector('.nav-btn[data-target="network"]')?.classList.contains("active")) return;
+  if (state.busy || state.trafficRefreshInFlight || document.hidden || !document.querySelector('.nav-btn[data-target="network"]')?.classList.contains("active")) return;
+  state.trafficRefreshInFlight = true;
   try {
     const { data } = await requestAction("network-traffic");
     renderTraffic(data.stdout || "");
   } catch {}
+  finally { state.trafficRefreshInFlight = false; }
 }
 async function refreshModuleTemperatureQuietly() {
   if (state.busy || state.callActionInFlight || state.temperatureSupported === false || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
