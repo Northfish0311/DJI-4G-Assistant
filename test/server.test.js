@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
+const vm = require("node:vm");
 const {
   buildSmsPdus,
   localIps,
@@ -266,12 +267,12 @@ test("accepts only the verified QDC507 voice identity", () => {
 });
 
 
-test("returns the queued serial operation to API callers", () => {
+test("returns the queued serial operation to API callers", async () => {
   const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
-  assert.match(
-    source,
-    /function enqueueSerial\(task\)\s*\{\s*const queued = atQueue\.then\(task\);\s*atQueue = queued\.catch\(\(\) => \{\}\);\s*return queued;\s*\}/,
-  );
+  const queueSource = source.slice(source.indexOf("function enqueueSerial("), source.indexOf("function enqueueAt("));
+  const context = vm.createContext({});
+  vm.runInContext("let atQueue = Promise.resolve();\n" + queueSource, context);
+  assert.equal(await context.enqueueSerial(() => Promise.resolve("operation result")), "operation result");
 });
 
 

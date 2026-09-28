@@ -10,6 +10,8 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
+**Windows v1.7.3：** 加强异常请求处理和 AT 指令保护，已完成实机只读回归。更新前先退出旧版，再安装新版；无需重新改动模块。详情见[中文更新说明](docs/RELEASE-v1.7.3.md)。
+
 | 设备 | 下载与使用 |
 | --- | --- |
 | Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |

@@ -9,6 +9,35 @@ const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8")
 const lpacSource = source.slice(source.indexOf("function runLpac("), source.indexOf("function euiccInventoryPath("));
 const queueSource = source.slice(source.indexOf("function enqueueSerial("), source.indexOf("function enqueueAt("));
 
+test("a rejected queue task reaches its caller without preventing the next task", async () => {
+  const voiceSource = source.slice(source.indexOf("function enqueueVoice("), source.indexOf("function redactAtResult("));
+  const context = vm.createContext({});
+  vm.runInContext("let atQueue = Promise.resolve(), voiceQueue = Promise.resolve();\n" + queueSource + voiceSource, context);
+  for (const name of ["enqueueSerial", "enqueueVoice"]) {
+    const error = new Error("expected failure");
+    const failed = context[name](() => { throw error; });
+    const recovered = context[name](() => "next task completed");
+    await assert.rejects(failed, item => item === error);
+    assert.equal(await recovered, "next task completed");
+  }
+});
+
+test("PowerShell spawn errors are handled at the child process, not by a global crash handler", async () => {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter(); child.stderr = new EventEmitter();
+  let cleared = 0;
+  const context = vm.createContext({ root: ".", spawn: () => child, setTimeout: () => 1, clearTimeout: () => cleared++, diagnosticCode: error => error.code });
+  vm.runInContext(source.slice(source.indexOf("function runPowerShell("), source.indexOf("function script(")), context);
+  const result = context.runPowerShell(["-Command", "sensitive command"]);
+  child.emit("error", Object.assign(new Error("sensitive command"), { code: "ENOENT" }));
+  child.emit("close", -1);
+  const value = await result;
+  assert.equal(value.ok, false);
+  assert.match(value.stderr, /ENOENT/);
+  assert.doesNotMatch(value.stderr, /sensitive/);
+  assert.equal(cleared, 1);
+});
+
 function harness(onSpawn) {
   const context = vm.createContext({
     spawn: (...args) => {

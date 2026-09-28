@@ -122,6 +122,7 @@ function stopBonjour() {
 }
 
 function sendJson(res, status, body) {
+  if (res.destroyed || res.writableEnded) return;
   const data = Buffer.from(JSON.stringify(body, null, 2), "utf8");
   res.writeHead(status, {
     "content-type": "application/json; charset=utf-8",
@@ -140,6 +141,7 @@ function sendFile(res, filePath) {
   };
 
   fs.readFile(filePath, (error, data) => {
+    if (res.destroyed || res.writableEnded) return;
     if (error) {
       res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
       res.end("Not found");
@@ -190,6 +192,12 @@ function runPowerShell(args, timeoutMs = 45000) {
     });
     child.stderr.on("data", (chunk) => {
       stderr += chunk.toString("utf8");
+    });
+    child.on("error", (error) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      resolve({ ok: false, code: null, stdout, stderr: `PowerShell could not start (${diagnosticCode(error)}).` });
     });
     child.on("close", (code) => {
       if (finished) return;
@@ -736,6 +744,7 @@ function atAccepted(result) {
 
 function enqueueVoice(task) {
   const queued = voiceQueue.then(task);
+  // Recover the queue tail; the caller still receives the original rejection.
   voiceQueue = queued.catch(() => {});
   return queued;
 }
@@ -871,28 +880,15 @@ async function voicePnpStatus() {
 }
 
 function isSafeAt(command) {
+  if (typeof command !== "string" || command.length > 240 || /[^\x20-\x7e]|;/.test(command)) return false;
   const normalized = command.trim().toUpperCase();
   if (!normalized.startsWith("AT")) return false;
-  if (/^AT\+QCFG="[^"]+"\??$/.test(normalized)) return true;
-
-  const dangerous = [
-    "AT+QCFG=",
-    "AT+CFUN=",
-    "AT+QPRTPARA",
-    "AT+QF",
-    "AT+CMGD",
-    "AT+CMGS",
-    "AT+CGDCONT=",
-    "AT+CGACT=",
-    "AT+CLCK=",
-    "AT+CPWD=",
-  ];
-
-  if (process.env.ALLOW_DANGEROUS_AT === "1") {
-    return true;
-  }
-
-  return !dangerous.some((prefix) => normalized.startsWith(prefix));
+  if (process.env.ALLOW_DANGEROUS_AT === "1") return true;
+  if (/^(?:AT|ATI|AT\+(?:CGMI|CGMM|CGMR|CGSN|GMI|GMM|GMR|GSN|CIMI|QCCID|CCID|CSQ|CESQ|QNWINFO|QTEMP|CLCC))$/.test(normalized)) return true;
+  if (/^AT\+(?:CPIN|COPS|CREG|CGREG|CEREG|C5GREG|CGATT|CGACT|CGDCONT|CGCONTRDP|CPMS|CMGF|CSCS|CSCA|CNMI|CLIP|CNUM|CFUN|QNETDEVSTATUS)\?$/.test(normalized)) return true;
+  if (/^AT\+QCFG="[A-Z0-9_]+"\??$/.test(normalized)) return true;
+  if (/^AT\+QENG="(?:SERVINGCELL|NEIGHBOURCELL)"$/.test(normalized)) return true;
+  return /^AT\+CGPADDR(?:\?|=(?:[1-9]|1[0-6]))$/.test(normalized);
 }
 
 function runAtCommands(portName, commands, timeoutMs = 60000) {
@@ -928,6 +924,7 @@ try {
 
 function enqueueSerial(task) {
   const queued = atQueue.then(task);
+  // Recover the queue tail; the caller still receives the original rejection.
   atQueue = queued.catch(() => {});
   return queued;
 }
@@ -978,17 +975,84 @@ function normalizeNetworkTrafficResult(result) {
   }
 }
 
+const MAX_BODY_BYTES = 20 * 1024;
+
+class RequestError extends Error {
+  constructor(statusCode, code, message, closeConnection = false) {
+    super(message);
+    this.name = "RequestError";
+    this.statusCode = statusCode;
+    this.code = code;
+    this.closeConnection = closeConnection;
+  }
+}
+
+function diagnosticCode(error) {
+  const code = error?.code || error?.name || "UNEXPECTED_ERROR";
+  return /^[A-Za-z0-9_]{1,64}$/.test(code) ? code : "UNEXPECTED_ERROR";
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
-    let body = "";
-    req.on("data", (chunk) => {
-      body += chunk.toString("utf8");
-      if (body.length > 20480) {
-        reject(new Error("Body too large"));
+    let chunks = [], bytes = 0, settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      if (error) reject(error);
+      else resolve(Buffer.concat(chunks, bytes).toString("utf8"));
+      chunks = [];
+    };
+    const onData = (chunk) => {
+      if (settled) return;
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      bytes += buffer.length;
+      if (bytes > MAX_BODY_BYTES) {
+        finish(new RequestError(413, "BODY_TOO_LARGE", "JSON request body exceeds 20 KiB.", true));
+        return;
       }
-    });
-    req.on("end", () => resolve(body));
-    req.on("error", reject);
+      chunks.push(buffer);
+    };
+    const cleanup = () => {
+      req.off("data", onData);
+      req.off("end", onEnd);
+      req.off("aborted", onAborted);
+      req.off("error", onError);
+      req.off("close", onClose);
+    };
+    const onEnd = () => { finish(); cleanup(); };
+    const onAborted = () => finish(new RequestError(400, "REQUEST_ABORTED", "Request body was interrupted.", true));
+    const onError = () => finish(new RequestError(400, "REQUEST_STREAM_ERROR", "Could not read the request body.", true));
+    const onClose = () => { if (!settled) onAborted(); cleanup(); };
+    // After an abort, keep the error listener until close to consume ECONNRESET.
+    req.on("data", onData);
+    req.once("end", onEnd);
+    req.once("aborted", onAborted);
+    req.on("error", onError);
+    req.once("close", onClose);
+  });
+}
+
+async function readJsonBody(req) {
+  const raw = await readBody(req);
+  let body;
+  try { body = JSON.parse(raw.trim() || "{}"); }
+  catch { throw new RequestError(400, "INVALID_JSON", "Request body must be valid JSON."); }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
+    throw new RequestError(400, "INVALID_JSON_OBJECT", "Request body must be a JSON object.");
+  }
+  return body;
+}
+
+function handleRequestError(req, res, error) {
+  const expected = error instanceof RequestError;
+  if (!expected) console.error("API_ERROR", diagnosticCode(error));
+  if (res.destroyed || res.writableEnded) return;
+  if (res.headersSent) { res.destroy(); return; }
+  if (expected && error.closeConnection) res.setHeader("connection", "close");
+  sendJson(res, expected ? error.statusCode : 500, {
+    ok: false,
+    code: expected ? error.code : "INTERNAL_ERROR",
+    error: expected ? error.message : "The local operation failed. Check the local diagnostic log.",
   });
 }
 
@@ -1068,7 +1132,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Original-module conversion is locked. Start the dedicated original-module setup launcher first." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "CONVERT") {
       sendJson(res, 400, { ok: false, error: "Confirm CONVERT before changing the USB identity." });
       return;
@@ -1088,7 +1152,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Original-module setup is locked. Start the dedicated original-module setup launcher first." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "USBNET") {
       sendJson(res, 400, { ok: false, error: "Confirm USBNET before changing the USB networking mode." });
       return;
@@ -1222,7 +1286,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Voice runtime setup is disabled on this local server." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "DOWNLOADVOICE") {
       sendJson(res, 400, { ok: false, error: "Confirm DOWNLOADVOICE before downloading the pinned voice runtime." });
       return;
@@ -1237,7 +1301,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Voice USB setup is disabled on this local server." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "VOICEUSB") {
       sendJson(res, 400, { ok: false, error: "Confirm VOICEUSB before persistent QADBKEY authorization and USB composition changes." });
       return;
@@ -1311,7 +1375,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Voice USB restore is disabled on this local server." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "RESTOREVOICE") {
       sendJson(res, 400, { ok: false, error: "Confirm RESTOREVOICE before restoring the latest matching USB backup." });
       return;
@@ -1364,7 +1428,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Voice runtime preparation is disabled on this local server." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "PREPAREVOICE") {
       sendJson(res, 400, { ok: false, error: "Confirm PREPAREVOICE before loading the temporary QDC507 voice runtime." });
       return;
@@ -1384,7 +1448,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Voice audio routing is disabled on this local server." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "AUDIO") {
       sendJson(res, 400, { ok: false, error: "Confirm AUDIO before opening the live call audio route." });
       return;
@@ -1421,7 +1485,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "Call controls are disabled on this local server." });
       return;
     }
-    const callAction = buildCallAction(JSON.parse(await readBody(req) || "{}"));
+    const callAction = buildCallAction(await readJsonBody(req));
     if (!callAction) {
       sendJson(res, 400, { ok: false, error: "Invalid call action, number, DTMF digits, or confirmation." });
       return;
@@ -1452,7 +1516,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "SMS deletion is disabled on this local server." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const index = Number(body.index);
     if (!Number.isInteger(index) || index < 1 || index > 255 || String(body.confirm || "").toUpperCase() !== "DELETE") {
       sendJson(res, 400, { ok: false, error: "Choose one valid SMS and confirm DELETE." });
@@ -1474,7 +1538,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "SMS sending is disabled. Start the dedicated local SMS launcher first." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const number = smsRecipient(body.number);
     const message = smsText(body.message);
     if (!number || !message || String(body.confirm || "").toUpperCase() !== "SEND") {
@@ -1491,7 +1555,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "USSD is disabled." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const code = ussdCode(body.code);
     if (!code || String(body.confirm || "").toUpperCase() !== "USSD") {
       sendJson(res, 400, { ok: false, error: "Enter a USSD code such as *100# and confirm USSD." });
@@ -1507,7 +1571,7 @@ async function handleApi(req, res, url) {
       sendJson(res, 403, { ok: false, error: "USB mode switching is disabled." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const mode = Number(body.mode);
     const expected = mode === 0 ? "USBNET0" : mode === 1 ? "USBNET1" : "";
     if (!expected || String(body.confirm || "").toUpperCase() !== expected) {
@@ -1641,7 +1705,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 403, { ok: false, error: "ECM driver installation is available only in the Windows desktop app." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     if (String(body.confirm || "").toUpperCase() !== "ECMDRIVER") {
       sendJson(res, 400, { ok: false, error: "Confirm ECMDRIVER before installing a Windows driver." });
       return;
@@ -1665,8 +1729,8 @@ $items | ConvertTo-Json -Depth 4 -Compress
   }
 
   if (url.pathname === "/api/at" && req.method === "POST") {
-    const body = JSON.parse(await readBody(req) || "{}");
-    const command = String(body.command || "").trim();
+    const body = await readJsonBody(req);
+    const command = body.command;
     if (!isSafeAt(command)) {
       sendJson(res, 400, {
         ok: false,
@@ -1676,7 +1740,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       });
       return;
     }
-    const result = await enqueueAt(portArg(url), [command], 30000);
+    const result = await enqueueAt(portArg(url), [command.trim()], 30000);
     sendJson(res, 200, result);
     return;
   }
@@ -1693,7 +1757,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
   }
 
   if (url.pathname === "/api/euicc-label" && req.method === "POST") {
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const eid = String(body.eid || "");
     const label = euiccLabel(body.label);
     if (!isEid(eid) || label === null) {
@@ -1709,7 +1773,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
   }
 
   if (url.pathname === "/api/euicc-aid" && req.method === "POST") {
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const aid = normalizeIsdrAid(body.aid);
     if (!aid || String(body.confirm || "").toUpperCase() !== "ADD") {
       sendJson(res, 400, { ok: false, error: "Enter a valid ISD-R AID and confirm ADD." });
@@ -1780,7 +1844,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
 
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const action = String(body.action || "").toLowerCase();
     const aid = requestedAid(url, body);
     const id = profileId(body.id);
@@ -1812,7 +1876,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 403, { ok: false, error: "Profile nickname changes are disabled. Start eSIM management first." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const aid = requestedAid(url, body);
     const id = profileId(body.id);
     const nickname = profileNickname(body.nickname);
@@ -1848,7 +1912,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 403, { ok: false, error: "Notification processing is disabled. Start eSIM management first." });
       return;
     }
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const aid = requestedAid(url, body);
     if (!aid || String(body.confirm || "").toUpperCase() !== "PROCESS") {
       sendJson(res, 400, { ok: false, error: "Confirm PROCESS before sending profile notifications." });
@@ -1870,7 +1934,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
 
-    const body = JSON.parse(await readBody(req) || "{}");
+    const body = await readJsonBody(req);
     const aid = requestedAid(url, body);
     const code = activationCode(body.activationCode);
     if (!aid || !code || String(body.confirm || "").toUpperCase() !== "DOWNLOAD") {
@@ -1896,13 +1960,12 @@ $items | ConvertTo-Json -Depth 4 -Compress
 }
 
 const server = http.createServer((req, res) => {
-  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  let url;
+  try { url = new URL(req.url, "http://localhost"); }
+  catch { handleRequestError(req, res, new RequestError(400, "INVALID_URL", "Invalid request URL.", true)); return; }
 
   if (url.pathname.startsWith("/api/")) {
-    handleApi(req, res, url).catch((error) => {
-      console.error(error.stack || error.message);
-      sendJson(res, 500, { ok: false, error: error.message || "The local operation failed." });
-    });
+    handleApi(req, res, url).catch((error) => handleRequestError(req, res, error));
     return;
   }
 

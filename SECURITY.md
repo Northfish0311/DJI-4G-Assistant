@@ -21,6 +21,15 @@ DJI 4G Assistant 可能读取 IMSI、ICCID、EID、短信、APN、运营商状�
 
 报告漏洞时请删除全部真实 SIM/eSIM 标识、IMEI、激活码和短信正文。
 
+## 请求和异常处理
+
+- JSON 写入接口只接受对象；非法 JSON、`null`、数组和其他顶层类型返回 `400`。请求体上限为 20 KiB，按实际接收的字节数计算，超过时返回 `413` 并关闭该连接。分块传输的中文按完整 UTF-8 数据解码。
+- 格式错误不会回显原始请求、激活码或短信正文；未预期异常返回统一 `500`，诊断日志仅记录错误类别或代码。
+- AT 工具默认仅开放明确支持的只读查询。未列入的指令会被拒绝；换行、控制字符和分号拼接在高级模式下也不允许。短信、电话、套餐管理继续走各自受保护的专用接口。
+- 不采用“全局捕获致命异常后仅打印日志并继续工作”的补丁。启动监听失败由 `startServer` 返回失败，PowerShell 子进程启动失败在操作边界处理。
+- 串口和语音队列的恢复处理只影响内部队列尾部；原始失败仍传给调用者，后续任务不因前一项失败而永久阻塞。
+- `innerHTML` 的动态文本和属性必须转义；不能仅根据出现次数判断存在注入漏洞。修改短信、eSIM 或通话模板时应同时检查动态字段和恶意输入测试。
+
 ## English
 
 Use the console only on a trusted LAN. Never expose its port publicly. Treat activation codes, ICCIDs, IMSIs, EIDs, IMEIs, SMS, and local USB backups as secrets. Destructive profile and modem actions can be irreversible. Bind WinUSB only to the verified QDC507 ADB child interface.
