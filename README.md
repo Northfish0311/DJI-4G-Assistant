@@ -15,7 +15,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 | 设备 | 下载与使用 |
 | --- | --- |
 | Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |
-| 安卓手机/平板 | [安卓 0.1.0 远程测试版发布入口](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.1.0)，下载 `.apk`；若发布页尚未出现，使用[已验证构建下载](https://github.com/Northfish0311/DJI-4G-Assistant/actions/runs/35221564045)中的 `DJI-4G-Remote-Android-test`。见[安卓中文说明](docs/Android使用说明.md) |
+| 安卓手机/平板 | [下载安卓 0.2.0 测试版 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)，也可打开[安卓发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)。见[安卓中文说明](docs/Android使用说明.md) |
 | iPhone/iPad | 可用 Safari 访问电脑助手；TestFlight 尚未开放邀请，GitHub 的未签名 IPA 不能直接安装 |
 
 **手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
@@ -83,7 +83,9 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 ### 安卓远程管理
 
-安卓 0.1.0 测试 APK 已完成云端编译、单元测试、静态检查和模拟器启动截图，真实手机与模块操作仍需测试。最低 Android 7.0，安装后扫描电脑显示的配对码即可连接，无需 Apple 账号或 TestFlight。[完整中文安装说明](docs/Android使用说明.md)。
+安卓 **0.2.0 远程测试版**支持保存多台电脑、搜索局域网电脑、损坏配对重置和有限自动重连；切回 App 不会自动刷新正常页面。已完成单元测试、静态检查和 Android 14 模拟器测试，真实手机扫码与模块操作仍需验证。最低 Android 7.0，下载 APK 安装后扫描电脑显示的配对码即可连接。[完整中文安装说明](docs/Android使用说明.md)。
+
+这是调试签名测试包。若旧测试版提示签名冲突，需卸载旧版后重新安装并扫码，手机保存的配对信息会清除，不会删除模块里的套餐。**模块仍插在 Windows 电脑上，不是安卓 USB 直插版；本次安卓发布不替换 Windows 1.7.3 正式版。**
 
 Windows 顶部的“连接手机 / 平板”二维码由 Android 和 iOS 客户端共用。网络、短信和 eSIM 能力由电脑助手提供；通话声音不传到安卓手机。
 

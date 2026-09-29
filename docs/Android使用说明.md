@@ -1,6 +1,6 @@
 # 安卓远程管理版
 
-当前为 **0.1.0 远程测试版**。已经通过云端编译、单元测试、静态检查和模拟器启动截图；真实手机扫码、连接 Windows 和模块操作仍需测试，不是正式稳定版。
+当前为 **0.2.0 远程测试版**。[直接下载 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)或打开[发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)。已经通过云端编译、单元测试、静态检查和模拟器测试；真实手机扫码、连接 Windows 和模块操作仍需测试，不是正式稳定版。
 
 ## 它做什么
 
@@ -8,9 +8,9 @@
 
 第一版提供扫码/手动配对、加密保存配对信息、加载管理网页、网页操作确认/输入弹窗、手动重连和忘记电脑。扫码使用设备相机，不依赖 Google Play 服务；拒绝相机权限后可手动输入。
 
-## 开发中的配对改进（尚未发布 APK）
+## 0.2.0 更新了什么
 
-以下功能属于本轮源码修改，不代表上面 0.1.0 发布页的 APK 已经更新：
+请安装本页链接中的 **0.2.0** APK，旧 0.1.0 安装包不会自动获得这些改进：
 
 - **多台电脑：** 新电脑不会覆盖旧记录；在“更多操作”里选择“更换电脑”，可回到配对页选择已保存的电脑或添加新电脑。“忘记这台电脑”只删除选中的配对。
 - **局域网搜索：** 点击“搜索局域网电脑”，等待约 6 秒。选择电脑后仍需输入它提供的配对密码；搜索到电脑不等于获得授权。未发现时可直接扫码；目前不提供 IPv6 地址配对。
@@ -20,20 +20,20 @@
 
 ### 本轮验证结果（2026-09-29）
 
-[完整构建与测试记录](https://github.com/Northfish0311/DJI-4G-Assistant/actions/runs/36574440703)已通过，对应源码提交 `93df45d`。这是验证分支的测试包，没有替换正式下载页或 Windows 安装包。
+[配对修复的完整构建与测试记录](https://github.com/Northfish0311/DJI-4G-Assistant/actions/runs/36574440703)已通过，对应修复源码提交 `93df45d`。0.2.0 沿用这批已验证的应用逻辑，仅更新版本号、打包流程和说明；发布时重新打包，不重复运行整套测试。准确的打包提交、构建地址及 `Package-only` 标记见发布附件 `BUILD-SOURCE.txt`。安卓测试版不替换 Windows 正式安装包。
 
 - 安卓编译成功，11 项单元测试通过；静态检查为 0 错误、8 条警告，仍有警告待后续整理。
 - Android 14 模拟器的 7 项运行测试全部通过：三台电脑的加密保存与单独删除、旧格式迁移、密文损坏恢复、密钥丢失恢复、返回 App 保留输入、授权错误不重试、连续服务错误最多重试三次。
 - 手机普通字体、1.3 倍大字体、手动连接展开/收起和空地址提示已检查；平板配对页截图已生成并检查。
 - 本地 102 项项目回归检查通过。
 
-测试包在上述构建页面底部的 Artifacts 中，选择 `DJI-4G-Remote-Android-test`，解压后打开 `download` 文件夹。核对 `BUILD-SOURCE.txt` 中的提交和构建地址，不要仅凭相同的 `0.1.0-test.apk` 文件名判断新旧。
+普通用户直接从[0.2.0 发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)下载 APK，无需寻找 Actions 的 Artifacts。开发者也可下载成功构建中的 `DJI-4G-Remote-Android-test`，解压后查看 `download/BUILD-SOURCE.txt`，核对源码提交和构建地址。
 
 **尚未完成真机验证：** 安卓手机相机扫码、真实局域网发现和 Windows 配对、实际断网恢复，以及经 Windows 操作模块的短信/eSIM/电话。模拟器使用虚构地址和本地测试服务，不接触真实模块，不能据此宣称所有手机或硬件功能都已通过。
 
 ## 安装和使用
 
-1. 打开[安卓测试版发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.1.0)，展开 Assets，下载 `DJI-4G-Remote-Android-0.1.0-test.apk`。这是已发布的测试包，不会随着源码更新而自动变化。需要测试开发中的修改时，可在[安卓构建列表](https://github.com/Northfish0311/DJI-4G-Assistant/actions/workflows/android.yml)选择对应提交且结果为绿色成功的构建，在底部 Artifacts 下载 `DJI-4G-Remote-Android-test`（通常需要登录 GitHub），解压后在 `download` 文件夹找到 APK。开发包可能与发布页不同，不能只凭 APK 文件名判断新旧。
+1. [直接下载 0.2.0 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)。也可打开[安卓测试版发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)，展开 Assets，选择 `DJI-4G-Remote-Android-0.2.0-test.apk`，不要下载 Source code。
 2. 将 APK 传到安卓手机，打开安装。系统如要求，只给本次使用的浏览器或文件管理器允许“安装未知应用”，装完可关闭该权限；不要求关闭系统安全扫描。
 3. 打开 Windows 助手，模块留在电脑上。两台设备连接同一可信局域网。
 4. 安卓 App 点击“扫描配对码”，扫描 Windows 顶部“连接手机 / 平板”里的二维码。也可填写电脑的局域网地址和配对密码。
@@ -45,9 +45,9 @@
 
 | 文件 | 用途 |
 | --- | --- |
-| `DJI-4G-Remote-Android-0.1.0-test.apk` | 安卓安装包，手机用户下载这个 |
+| `DJI-4G-Remote-Android-0.2.0-test.apk` | 安卓安装包，手机用户下载这个 |
 | `SHA256SUMS.txt` | 安装包完整性校验，不用安装 |
-| `BUILD-SOURCE.txt` | 新开发包附带的源码提交和构建地址，用来确认包来自哪次更新 |
+| `BUILD-SOURCE.txt` | 源码提交和构建地址，用来确认包来自哪次更新 |
 | `phone.png` / `tablet-layout.png` | 配对页的模拟器截图，不是安装包 |
 | `Source code (zip/tar.gz)` | 开发者源码，不能在手机上安装 |
 

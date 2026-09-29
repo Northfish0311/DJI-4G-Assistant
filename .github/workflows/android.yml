@@ -1,6 +1,11 @@
 name: Build Android remote companion
 on:
   workflow_dispatch:
+    inputs:
+      package_only:
+        description: 'Package already-validated app logic without repeating the test suite'
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths: ['android/**', '.github/workflows/android.yml']
@@ -27,14 +32,21 @@ jobs:
       - name: Install SDK
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Test, lint and assemble test APK
+        if: inputs.package_only != true
         working-directory: android
         run: gradle --no-daemon testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+      - name: Assemble already-validated test APK
+        if: inputs.package_only == true
+        working-directory: android
+        run: gradle --no-daemon assembleDebug
       - name: Enable emulator acceleration on the disposable runner
+        if: inputs.package_only != true
         run: |
           sudo chown "$(id -u):$(id -g)" /dev/kvm
           test -r /dev/kvm
           test -w /dev/kvm
       - name: Verify Android recovery and layouts
+        if: inputs.package_only != true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           # The app still compiles and targets API 35. API 34 is used here
@@ -60,9 +72,10 @@ jobs:
       - name: Package test download
         run: |
           mkdir -p android/download
-          cp android/app/build/outputs/apk/debug/app-debug.apk android/download/DJI-4G-Remote-Android-0.1.0-test.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk android/download/DJI-4G-Remote-Android-0.2.0-test.apk
           cp docs/Android使用说明.md android/download/README-zh.md
           printf 'Commit: %s\nBuild: %s/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > android/download/BUILD-SOURCE.txt
+          printf 'Package-only: %s\n' '${{ inputs.package_only == true }}' >> android/download/BUILD-SOURCE.txt
           cd android/download
           sha256sum *.apk > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
@@ -73,13 +86,13 @@ jobs:
             android/screenshots/
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && inputs.package_only != true
         with:
           name: Android-test-reports
           path: android/app/build/reports/
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && inputs.package_only != true
         with:
           name: Android-instrumentation-results
           path: android/app/build/outputs/androidTest-results/
