@@ -18,7 +18,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,15 +51,15 @@ public class ConsoleRecoveryTest {
         assertTrue("WebView callback timed out", done.await(5, TimeUnit.SECONDS));
         return result.get();
     }
-    private void waitFor(BooleanSupplier condition, long timeout) throws Exception {
+    private void waitForRequests(Fixture fixture, int count, long timeout) throws Exception {
         long deadline = System.currentTimeMillis() + timeout;
-        while (!condition.getAsBoolean() && System.currentTimeMillis() < deadline) Thread.sleep(100);
-        assertTrue("Expected WebView request was not observed", condition.getAsBoolean());
+        while (fixture.requests.get() < count && System.currentTimeMillis() < deadline) Thread.sleep(100);
+        assertTrue("Expected at least " + count + " WebView requests, got " + fixture.requests.get(), fixture.requests.get() >= count);
     }
     @Test public void returningFromBackgroundPreservesDraft() throws Exception {
         try (Fixture fixture = new Fixture(200); ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             console(scenario, fixture);
-            waitFor(() -> fixture.requests.get() >= 1, 10000);
+            waitForRequests(fixture, 1, 10000);
             String value = "null";
             for (int i = 0; i < 30 && "null".equals(value); i++) {
                 value = evaluate(scenario, "document.getElementById('draft') ? (document.getElementById('draft').value='keep this draft') : null");
@@ -78,7 +77,7 @@ public class ConsoleRecoveryTest {
     @Test public void retryWaitsForAsynchronousFailureAndStopsAfterThree() throws Exception {
         try (Fixture fixture = new Fixture(503); ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             console(scenario, fixture);
-            waitFor(() -> fixture.requests.get() >= 4, 20000);
+            waitForRequests(fixture, 4, 20000);
             Thread.sleep(2500);
             assertEquals(4, fixture.requests.get());
         }
@@ -86,7 +85,7 @@ public class ConsoleRecoveryTest {
     @Test public void authFailuresAreNotAutomaticallyRetried() throws Exception {
         try (Fixture fixture = new Fixture(401); ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
             console(scenario, fixture);
-            waitFor(() -> fixture.requests.get() >= 1, 10000);
+            waitForRequests(fixture, 1, 10000);
             Thread.sleep(2500);
             assertEquals(1, fixture.requests.get());
         }

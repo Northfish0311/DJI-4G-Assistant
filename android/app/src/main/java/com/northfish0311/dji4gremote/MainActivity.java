@@ -39,6 +39,7 @@ public final class MainActivity extends Activity {
     private boolean vaultUnreadable;
     private boolean started;
     private boolean retryableFailure;
+    private long pageLoad;
     private ComputerDiscovery discovery;
     private Button discoverButton;
     private LinearLayout root;
@@ -424,7 +425,9 @@ public final class MainActivity extends Activity {
     private void reload() {
         if (web == null || host == null) return;
         cancelReconnect(); loadFailed = false; status.setText("正在连接…"); status.setVisibility(View.VISIBLE);
-        Uri url = Uri.parse(host.toString()).buildUpon().appendQueryParameter("token", token).appendQueryParameter("native", "android").fragment("overview").build();
+        // A repeated URL with a fragment can become a same-document navigation instead of a new GET.
+        Uri url = Uri.parse(host.toString()).buildUpon().appendQueryParameter("token", token).appendQueryParameter("native", "android")
+            .appendQueryParameter("nativeLoad", Long.toString(++pageLoad)).fragment("overview").build();
         web.loadUrl(url.toString());
     }
     private void forget() {

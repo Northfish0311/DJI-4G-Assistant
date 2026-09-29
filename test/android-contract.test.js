@@ -23,6 +23,7 @@ test("Android retries are scheduled on failed loads, not immediately after start
   const source = read(base + "MainActivity.java");
   const reload = source.split("private void reload()")[1].split("private void forget()")[0];
   assert.doesNotMatch(reload, /scheduleReconnect/);
+  assert.match(reload, /appendQueryParameter\("nativeLoad", Long\.toString\(\+\+pageLoad\)\)/);
   assert.match(source, /if \(retryable\) scheduleReconnect\(\)/);
   assert.match(source, /code >= 500/);
   assert.match(read(".github/workflows/android.yml"), /connectedDebugAndroidTest/);
