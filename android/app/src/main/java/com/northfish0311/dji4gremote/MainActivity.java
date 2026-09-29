@@ -12,6 +12,8 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.View;
 import android.webkit.*;
@@ -22,12 +24,23 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.json.JSONObject;
 
 public final class MainActivity extends Activity {
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
+    private final Handler retryHandler = new Handler(Looper.getMainLooper());
+    private final ReconnectPolicy retryPolicy = new ReconnectPolicy();
+    private final List<View> historyControls = new ArrayList<>();
+    private List<JSONObject> savedPairings = new ArrayList<>();
+    private boolean vaultUnreadable;
+    private boolean started;
+    private boolean retryableFailure;
+    private ComputerDiscovery discovery;
+    private Button discoverButton;
     private LinearLayout root;
     private TextView status;
     private EditText address, password;
@@ -50,23 +63,28 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         vault = new PairingVault(this);
+        discovery = new ComputerDiscovery(this);
         showPairing();
-        try {
-            JSONObject saved = vault.load();
-            if (saved != null) {
-                address.setText(saved.getString("host"));
-                password.setText(saved.getString("token"));
-                pair(address.getText().toString(), password.getText().toString());
-            }
-        } catch (Exception error) { vault.clear(); status.setText("保存的配对已失效，请重新扫码。"); }
+        if (!savedPairings.isEmpty()) {
+            JSONObject saved = savedPairings.get(0);
+            address.setText(saved.optString("host"));
+            password.setText(saved.optString("token"));
+            pair(address.getText().toString(), password.getText().toString());
+        }
     }
 
     @Override protected void onStart() {
         super.onStart();
+        started = true;
         startNetworkMonitor();
+        if (loadFailed && retryableFailure) scheduleReconnect();
     }
 
     @Override protected void onStop() {
+        started = false;
+        cancelReconnect();
+        discovery.stop();
+        if (discoverButton != null) discoverButton.setEnabled(!connecting);
         stopNetworkMonitor();
         super.onStop();
     }
@@ -78,14 +96,11 @@ public final class MainActivity extends Activity {
         networkCallback = new ConnectivityManager.NetworkCallback() {
             @Override public void onAvailable(Network network) {
                 runOnUiThread(() -> {
-                    if (!loadFailed || reconnectScheduled || web == null) return;
-                    reconnectScheduled = true;
+                    if (!started || !loadFailed || !retryableFailure || reconnectScheduled || web == null) return;
+                    retryPolicy.reset();
                     status.setText("网络已恢复，正在重新连接…");
                     status.setVisibility(View.VISIBLE);
-                    web.postDelayed(() -> {
-                        reconnectScheduled = false;
-                        if (loadFailed && web != null) reload();
-                    }, 700);
+                    scheduleReconnect();
                 });
             }
         };
@@ -94,6 +109,21 @@ public final class MainActivity extends Activity {
         } catch (RuntimeException error) {
             networkCallback = null;
         }
+    }
+
+    private void cancelReconnect() {
+        retryHandler.removeCallbacksAndMessages(null);
+        reconnectScheduled = false;
+    }
+    private void scheduleReconnect() {
+        if (!started || web == null || !loadFailed || !retryableFailure || reconnectScheduled) return;
+        long delay = retryPolicy.nextDelay();
+        if (delay < 0) { status.setText("多次重连失败，请检查电脑助手和网络，再点击重连。"); return; }
+        reconnectScheduled = true;
+        retryHandler.postDelayed(() -> {
+            reconnectScheduled = false;
+            if (started && web != null && loadFailed && retryableFailure) reload();
+        }, delay);
     }
 
     private void stopNetworkMonitor() {
@@ -158,6 +188,11 @@ public final class MainActivity extends Activity {
         setContentView(root);
     }
     private void showPairing() {
+        historyControls.clear();
+        savedPairings = new ArrayList<>();
+        vaultUnreadable = false;
+        try { savedPairings = vault.list(); }
+        catch (Exception error) { vaultUnreadable = true; }
         shell();
         ScrollView scroll = new ScrollView(this); scroll.setFillViewport(true); root.addView(scroll, new LinearLayout.LayoutParams(-1, -1));
         FrameLayout container = new FrameLayout(this); scroll.addView(container);
@@ -180,6 +215,10 @@ public final class MainActivity extends Activity {
         paste = button("粘贴配对链接", this::pastePairing);
         styleButton(paste, Color.WHITE, INK, true); paste.setMinHeight(dp(54));
         LinearLayout.LayoutParams pasteSize = new LinearLayout.LayoutParams(-1, -2); pasteSize.topMargin = dp(12); form.addView(paste, pasteSize);
+        discoverButton = button("搜索局域网电脑", this::startDiscovery);
+        styleButton(discoverButton, Color.WHITE, INK, true);
+        LinearLayout.LayoutParams discoverSize = new LinearLayout.LayoutParams(-1, -2); discoverSize.topMargin = dp(12);
+        form.addView(discoverButton, discoverSize);
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); progress.setIndeterminate(true); progress.setVisibility(View.INVISIBLE);
         form.addView(progress, new LinearLayout.LayoutParams(-1, dp(4)));
         View divider = new View(this); divider.setBackgroundColor(Color.rgb(221, 228, 232));
@@ -204,6 +243,55 @@ public final class MainActivity extends Activity {
         password.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_GO);
         password.setOnEditorActionListener((v, action, event) -> { if (action != android.view.inputmethod.EditorInfo.IME_ACTION_GO) return false; pair(address.getText().toString(), password.getText().toString()); return true; });
         setManualExpanded(false);
+        if (!savedPairings.isEmpty()) {
+            form.addView(text("已保存的电脑", 13, MUTED));
+            for (JSONObject item : savedPairings) {
+                final String savedHost = item.optString("host");
+                String name = item.optString("name", "");
+                Button history = button(name.isEmpty() ? savedHost : name + "\n" + savedHost, () -> {
+                    if (connecting) return;
+                    address.setText(savedHost); password.setText(item.optString("token"));
+                    pair(savedHost, password.getText().toString());
+                });
+                styleButton(history, Color.WHITE, INK, true);
+                LinearLayout.LayoutParams size = new LinearLayout.LayoutParams(-1, -2); size.topMargin = dp(8);
+                form.addView(history, size); historyControls.add(history);
+            }
+        }
+        if (vaultUnreadable || !savedPairings.isEmpty()) {
+            Button reset = button(vaultUnreadable ? "重置本机配对" : "清除已保存的电脑", this::resetPairings);
+            form.addView(reset, new LinearLayout.LayoutParams(-1, -2)); historyControls.add(reset);
+        }
+        if (vaultUnreadable) status.setText("保存的配对无法读取，请先重置本机配对，再重新扫码。不会修改电脑或模块。");
+    }
+    private void resetPairings() {
+        if (connecting) return;
+        new AlertDialog.Builder(this).setTitle("清除本机配对？")
+            .setMessage("仅删除这台手机保存的电脑地址和密码，不修改 Windows 或模块。")
+            .setNegativeButton("取消", null).setPositiveButton("清除", (dialog, which) -> {
+                generation++;
+                try { vault.clear(); showPairing(); }
+                catch (Exception error) { status.setText("配对信息未能清除，请重试。没有修改模块。"); }
+            }).show();
+    }
+    private void startDiscovery() {
+        if (connecting) return;
+        discoverButton.setEnabled(false);
+        status.setText("正在搜索局域网电脑…");
+        discovery.start((computers, error) -> {
+            if (!started || isDestroyed() || web != null || connecting) return;
+            discoverButton.setEnabled(true);
+            if (error != null) { status.setText(error); return; }
+            if (computers.isEmpty()) { status.setText("未发现电脑助手，请确认同一 Wi-Fi；也可以直接扫码连接。"); return; }
+            String[] labels = new String[computers.size()];
+            for (int i = 0; i < labels.length; i++) labels[i] = computers.get(i).name + "\n" + computers.get(i).address;
+            status.setText("发现 " + computers.size() + " 台电脑");
+            new AlertDialog.Builder(this).setTitle("选择电脑助手").setItems(labels, (dialog, which) -> {
+                ComputerDiscovery.Computer selected = computers.get(which);
+                address.setText(selected.address); password.setText(""); setManualExpanded(true);
+                status.setText("已填入地址，请粘贴这台电脑提供的配对密码。搜索不会自动授权。");
+            }).setNegativeButton("取消", null).show();
+        });
     }
     private void setManualExpanded(boolean open) {
         manual.setVisibility(open ? View.VISIBLE : View.GONE);
@@ -216,6 +304,8 @@ public final class MainActivity extends Activity {
     private void setConnecting(boolean busy) {
         connecting = busy;
         for (View control : new View[]{connect, scan, paste, address, password}) control.setEnabled(!busy);
+        if (discoverButton != null) discoverButton.setEnabled(!busy);
+        for (View control : historyControls) control.setEnabled(!busy);
         progress.setVisibility(busy ? View.VISIBLE : View.INVISIBLE);
     }
     private void pastePairing() {
@@ -227,10 +317,12 @@ public final class MainActivity extends Activity {
     }
     private void pair(String rawAddress, String rawToken) {
         if (connecting) return;
+        if (vaultUnreadable) { status.setText("请先重置无法读取的本机配对，再重新扫码。"); return; }
         final URI base;
         final String secret = rawToken.trim();
         try { base = PairingAddress.normalize(rawAddress); PairingAddress.validateToken(secret); }
         catch (IllegalArgumentException error) { status.setText(error.getMessage()); setManualExpanded(true); return; }
+        discovery.stop();
         setConnecting(true); status.setText("正在验证电脑…");
         final int request = ++generation;
         worker.execute(() -> {
@@ -261,7 +353,7 @@ public final class MainActivity extends Activity {
                 if (isDestroyed() || request != generation) return;
                 setConnecting(false);
                 if (message != null) { status.setText(message); setManualExpanded(true); return; }
-                try { vault.save(base.toString(), secret, computerName); }
+                try { vault.add(base.toString(), secret, computerName); }
                 catch (Exception error) { status.setText("无法安全保存配对，请重试。"); setManualExpanded(true); return; }
                 host = base; hostName = computerName; token = secret; password.setText("");
                 ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(password.getWindowToken(), 0);
@@ -270,6 +362,7 @@ public final class MainActivity extends Activity {
         });
     }
     private void showConsole() {
+        retryPolicy.reset(); retryableFailure = true;
         shell();
         LinearLayout toolbar = new LinearLayout(this); toolbar.setPadding(dp(12), 0, dp(12), 0); toolbar.setGravity(android.view.Gravity.CENTER_VERTICAL);
         LinearLayout labels = new LinearLayout(this); labels.setOrientation(LinearLayout.VERTICAL);
@@ -281,9 +374,12 @@ public final class MainActivity extends Activity {
         ImageButton more = icon(android.R.drawable.ic_menu_more, "更多操作", () -> {});
         more.setOnClickListener(v -> {
             PopupMenu menu = new PopupMenu(this, more);
-            menu.getMenu().add("连接帮助"); menu.getMenu().add("忘记这台电脑");
+            menu.getMenu().add("连接帮助"); menu.getMenu().add("更换电脑"); menu.getMenu().add("忘记这台电脑");
             menu.setOnMenuItemClickListener(item -> {
                 if (item.getTitle().equals("连接帮助")) help();
+                else if (item.getTitle().equals("更换电脑")) new AlertDialog.Builder(this).setTitle("更换电脑？")
+                    .setMessage("未保存的输入会丢失。保留当前电脑的配对，不会重发已提交的操作。")
+                    .setNegativeButton("取消", null).setPositiveButton("更换", (d, w) -> disconnectConsole()).show();
                 else new AlertDialog.Builder(this).setTitle("忘记这台电脑？").setMessage("清除手机配对信息，不改变模块设置。").setNegativeButton("取消", null).setPositiveButton("忘记", (d, w) -> forget()).show();
                 return true;
             }); menu.show();
@@ -300,27 +396,45 @@ public final class MainActivity extends Activity {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return PairingAddress.sameOrigin(allowed, request.getUrl().toString()) ? null : new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
             }
-            @Override public void onPageFinished(WebView view, String url) { if (!loadFailed) status.setVisibility(View.GONE); }
-            @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) { if (request.isForMainFrame()) failed("连接中断，请保持电脑助手运行，然后点击重连。"); }
-            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) { if (request.isForMainFrame()) failed("电脑返回错误。密码失效时，请在右上角更多操作中选择“忘记这台电脑”，再重新扫码。"); }
+            @Override public void onPageFinished(WebView view, String url) {
+                if (view == web && !loadFailed) { cancelReconnect(); retryPolicy.reset(); status.setVisibility(View.GONE); }
+            }
+            @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                if (view == web && request.isForMainFrame()) failed("连接中断，正在尝试重连。请保持电脑助手运行。", true);
+            }
+            @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {
+                if (view != web || !request.isForMainFrame()) return;
+                int code = response.getStatusCode();
+                failed(code == 401 || code == 403 ? "配对密码已失效，请忘记这台电脑，再重新扫码。" : "电脑返回错误（HTTP " + code + "）。", code >= 500);
+            }
         });
         root.addView(web, new LinearLayout.LayoutParams(-1, 0, 1)); reload();
     }
     private boolean loadFailed;
     private void requestReload() {
-        if (loadFailed) { reload(); return; }
+        if (loadFailed) { retryPolicy.reset(); retryableFailure = true; reload(); return; }
         new AlertDialog.Builder(this).setTitle("重新加载页面？").setMessage("未保存的输入可能丢失。已提交的操作不会自动重发。")
-            .setNegativeButton("取消", null).setPositiveButton("重新加载", (d, w) -> reload()).show();
+            .setNegativeButton("取消", null).setPositiveButton("重新加载", (d, w) -> { retryPolicy.reset(); retryableFailure = true; reload(); }).show();
     }
-    private void failed(String message) { loadFailed = true; reconnectScheduled = false; status.setText(message); status.setVisibility(View.VISIBLE); }
+    private void failed(String message, boolean retryable) {
+        cancelReconnect(); loadFailed = true; retryableFailure = retryable;
+        status.setText(message); status.setVisibility(View.VISIBLE);
+        if (retryable) scheduleReconnect();
+    }
     private void reload() {
         if (web == null || host == null) return;
-        reconnectScheduled = false; loadFailed = false; status.setText("正在连接…"); status.setVisibility(View.VISIBLE);
+        cancelReconnect(); loadFailed = false; status.setText("正在连接…"); status.setVisibility(View.VISIBLE);
         Uri url = Uri.parse(host.toString()).buildUpon().appendQueryParameter("token", token).appendQueryParameter("native", "android").fragment("overview").build();
         web.loadUrl(url.toString());
     }
     private void forget() {
-        generation++; vault.clear(); token = null; host = null; hostName = null;
+        try { if (host != null) vault.remove(host.toString()); }
+        catch (Exception error) { status.setText("配对未能删除，请重试。当前配对仍保留。"); status.setVisibility(View.VISIBLE); return; }
+        disconnectConsole();
+    }
+    private void disconnectConsole() {
+        generation++; cancelReconnect(); discovery.stop();
+        token = null; host = null; hostName = null; loadFailed = false; retryableFailure = false;
         if (web != null) { web.clearCache(true); web.clearHistory(); }
         destroyConsole();
         WebStorage.getInstance().deleteAllData(); CookieManager.getInstance().removeAllCookies(null); connecting = false; showPairing();
@@ -342,11 +456,12 @@ public final class MainActivity extends Activity {
         } catch (Exception error) { status.setText("配对码无效，请扫描或复制电脑助手显示的配对链接。"); }
     }
     private void destroyConsole() {
+        cancelReconnect();
         if (web == null) return;
         web.stopLoading();
         web.setWebViewClient(new WebViewClient()); web.setWebChromeClient(null);
         if (web.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) web.getParent()).removeView(web);
         web.destroy(); web = null;
     }
-    @Override protected void onDestroy() { generation++; worker.shutdownNow(); destroyConsole(); super.onDestroy(); }
+    @Override protected void onDestroy() { generation++; cancelReconnect(); stopNetworkMonitor(); discovery.stop(); worker.shutdownNow(); destroyConsole(); super.onDestroy(); }
 }

@@ -101,7 +101,8 @@ test("Android recovery keeps controls synchronized and detaches the console befo
   assert.match(source, /registerDefaultNetworkCallback/);
   assert.match(source, /网络已恢复，正在重新连接/);
   assert.match(source, /payload\.optString\("name"/);
-  assert.match(vault, /put\("name", name\)/);
+  assert.match(vault, /PairingHistory\.prepend\(list\(\), host, token, name\)/);
+  assert.match(read("android/app/src/main/java/com/northfish0311/dji4gremote/PairingHistory.java"), /put\("name", name\)/);
   assert.match(manifest, /android\.permission\.ACCESS_NETWORK_STATE/);
   assert.match(uiCheck, /\/data\/local\/tmp\/dji4g-pairing-ui\.xml/);
   assert.doesNotMatch(uiCheck, /\/sdcard\/pairing-ui\.xml/);

@@ -28,7 +28,7 @@ jobs:
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
       - name: Test, lint and assemble test APK
         working-directory: android
-        run: gradle --no-daemon testDebugUnitTest lintDebug assembleDebug
+        run: gradle --no-daemon testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
       - name: Capture phone layout
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -47,6 +47,10 @@ jobs:
             adb shell pidof com.northfish0311.dji4gremote
             adb exec-out screencap -p > android/screenshots/phone.png
             python3 android/scripts/check_pairing_ui.py
+            gradle -p android --no-daemon connectedDebugAndroidTest
+            adb shell am force-stop com.northfish0311.dji4gremote
+            adb shell am start -W -n com.northfish0311.dji4gremote/.MainActivity
+            sleep 3
             adb shell wm size 1600x2560
             adb shell wm density 240
             adb shell am force-stop com.northfish0311.dji4gremote
@@ -74,6 +78,12 @@ jobs:
         with:
           name: Android-test-reports
           path: android/app/build/reports/
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Android-instrumentation-results
+          path: android/app/build/outputs/androidTest-results/
           if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: failure()
