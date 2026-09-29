@@ -3,6 +3,7 @@
 import pathlib
 import re
 import subprocess
+import sys
 import time
 import xml.etree.ElementTree as ET
 
@@ -43,12 +44,28 @@ def tap(text):
     adb("shell", "input", "tap", str((left + right) // 2), str((top + bottom) // 2))
 
 
+def swipe(direction):
+    size = adb("shell", "wm", "size").decode()
+    width, height = map(int, re.findall(r"(\d+)x(\d+)", size)[-1])
+    start, end = (0.8, 0.3) if direction == "down" else (0.3, 0.8)
+    adb("shell", "input", "swipe", str(width // 2), str(int(height * start)), str(width // 2), str(int(height * end)), "300")
+
+
+def reveal(text, direction):
+    for _ in range(5):
+        if any(node.get("text") == text for node in nodes()):
+            return find(text)
+        swipe(direction)
+    return find(text, attempts=1)
+
+
 def capture(name):
     OUTPUT.mkdir(parents=True, exist_ok=True)
     (OUTPUT / name).write_bytes(adb("exec-out", "screencap", "-p"))
 
 
 def launch():
+    adb("shell", "input", "keyevent", "KEYCODE_WAKEUP")
     adb("shell", "am", "force-stop", APP)
     # Avoid am start -W: software-rendered CI emulators can time out even while
     # the activity continues to launch successfully.
@@ -58,12 +75,16 @@ def launch():
 
 def main():
     launch()
+    capture("phone.png")
     tap("手动连接")
     find("收起手动连接")
     find("电脑地址")
     capture("phone-manual.png")
     # Empty input is rejected locally, without contacting a computer.
+    reveal("连接电脑", "down")
     tap("连接电脑")
+    swipe("up")
+    swipe("up")
     find("收起手动连接")
     if not any("局域网" in node.get("text", "") for node in nodes()):
         raise AssertionError("Invalid input did not show the address error")
@@ -80,6 +101,8 @@ def main():
         tap("手动连接")
         find("收起手动连接")
         capture("phone-large-text-manual.png")
+        reveal("连接电脑", "down")
+        capture("phone-large-text-manual-bottom.png")
     finally:
         if original_scale == "null":
             adb("shell", "settings", "delete", "system", "font_scale")
@@ -90,7 +113,11 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        if "--tablet" in sys.argv:
+            launch()
+            capture("tablet-layout.png")
+        else:
+            main()
     except Exception:
         try:
             capture("pairing-failure.png")

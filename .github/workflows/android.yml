@@ -29,6 +29,11 @@ jobs:
       - name: Test, lint and assemble test APK
         working-directory: android
         run: gradle --no-daemon testDebugUnitTest lintDebug assembleDebug assembleDebugAndroidTest
+      - name: Enable emulator acceleration on the disposable runner
+        run: |
+          sudo chown "$(id -u):$(id -g)" /dev/kvm
+          test -r /dev/kvm
+          test -w /dev/kvm
       - name: Capture phone layout
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -38,26 +43,19 @@ jobs:
           api-level: 34
           arch: x86_64
           profile: pixel_6
+          disable-linux-hw-accel: false
+          emulator-boot-timeout: 300
           script: |
             adb shell settings put global hide_error_dialogs 1
+            adb shell settings put system screen_off_timeout 2147483647
+            adb shell settings put global stay_on_while_plugged_in 7
             adb install android/app/build/outputs/apk/debug/app-debug.apk
-            adb shell am start -W -n com.northfish0311.dji4gremote/.MainActivity
-            sleep 4
             mkdir -p android/screenshots
-            adb shell pidof com.northfish0311.dji4gremote
-            adb exec-out screencap -p > android/screenshots/phone.png
             python3 android/scripts/check_pairing_ui.py
             gradle -p android --no-daemon connectedDebugAndroidTest
-            adb shell am force-stop com.northfish0311.dji4gremote
-            adb shell am start -W -n com.northfish0311.dji4gremote/.MainActivity
-            sleep 3
             adb shell wm size 1600x2560
             adb shell wm density 240
-            adb shell am force-stop com.northfish0311.dji4gremote
-            adb shell am start -W -n com.northfish0311.dji4gremote/.MainActivity
-            sleep 4
-            adb shell pidof com.northfish0311.dji4gremote
-            adb exec-out screencap -p > android/screenshots/tablet-layout.png
+            python3 android/scripts/check_pairing_ui.py --tablet
       - name: Package test download
         run: |
           mkdir -p android/download
