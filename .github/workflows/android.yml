@@ -34,7 +34,7 @@ jobs:
           sudo chown "$(id -u):$(id -g)" /dev/kvm
           test -r /dev/kvm
           test -w /dev/kvm
-      - name: Capture phone layout
+      - name: Verify Android recovery and layouts
         uses: reactivecircus/android-emulator-runner@v2
         with:
           # The app still compiles and targets API 35. API 34 is used here
@@ -53,6 +53,7 @@ jobs:
             mkdir -p android/screenshots
             python3 android/scripts/check_pairing_ui.py
             gradle -p android --no-daemon connectedDebugAndroidTest
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
             adb shell wm size 1600x2560
             adb shell wm density 240
             python3 android/scripts/check_pairing_ui.py --tablet
