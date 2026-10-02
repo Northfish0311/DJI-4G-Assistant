@@ -182,6 +182,32 @@ test("keeps mobile eSIM profiles readable after desktop refinements", () => {
   assert.match(mobile, /\.rail \{[\s\S]*overflow-x:auto/);
 });
 
+test("keeps System content and connection tools on the same inset", () => {
+  const css = read("web/public/desktop-refresh.css");
+  const rule = selector => {
+    const start = css.indexOf(selector + " {");
+    assert.ok(start >= 0, "Missing System layout rule: " + selector);
+    return css.slice(start, css.indexOf("}", start) + 1);
+  };
+  const scope = "html:not(.native-companion) .system-grid";
+  assert.match(rule(scope + " > .panel"), /--system-inset: 22px/);
+  assert.match(rule(scope + " > .panel > .panel-head"), /padding: 18px var\(--system-inset\)/);
+  assert.match(rule(scope + " .info-list"), /padding: 16px var\(--system-inset\) 22px/);
+  assert.match(rule(scope + " .field-row"), /padding: 16px var\(--system-inset\) 0/);
+  assert.match(rule(scope + " .action-grid"), /padding: 16px var\(--system-inset\) 22px/);
+});
+
+test("keeps network metrics and the AT tool clear of their edges", () => {
+  const css = read("web/public/desktop-refresh.css");
+  const metrics = [...css.matchAll(/html:not\(\.native-companion\) \.network-metric \{([^}]+)\}/g)];
+  assert.ok(metrics.length > 0);
+  for (const [, declarations] of metrics) assert.match(declarations, /padding: 18px 22px/);
+  assert.match(css, /html:not\(\.native-companion\) \.network-metric-grid \{[^}]*background: #fff/);
+  assert.match(css, /#atlab > \.panel > \.panel-head \{ padding: 18px 22px/);
+  assert.match(css, /#atlab > \.panel > \.at-row \{ padding: 16px 22px 12px/);
+  assert.match(css, /#atlab > \.panel > \.preset-row \{ padding: 0 22px 12px/);
+});
+
 test("ships one source launcher with the complete guarded console", () => {
   const cmd = read("Start-Web-Console.cmd");
   const ps = read("scripts/windows/start-console.ps1");

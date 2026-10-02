@@ -318,6 +318,31 @@ html:not(.native-companion) {
 html:not(.native-companion) .panel-head + .action-grid { padding-top: 16px; }
 html:not(.native-companion) .sms-search { padding-top: 12px; }
 html:not(.native-companion) .dialer-panel > .panel-head + .dial-number-row { padding-top: 12px; }
+html:not(.native-companion) .system-grid > .panel { --system-inset: 22px; }
+html:not(.native-companion) .system-grid > .panel > .panel-head { padding: 18px var(--system-inset); }
+html:not(.native-companion) .system-grid .info-list {
+  padding: 16px var(--system-inset) 22px;
+  gap: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+html:not(.native-companion) .system-grid .info-list p { margin: 0; }
+html:not(.native-companion) .system-grid .field-row { padding: 16px var(--system-inset) 0; }
+html:not(.native-companion) .system-grid .action-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 16px var(--system-inset) 22px;
+  gap: 12px;
+}
+html:not(.native-companion) .system-grid .action-grid button { min-width: 0; }
+@media (min-width: 1181px) {
+  html:not(.native-companion) .system-grid .action-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+html:not(.native-companion) .network-metric { padding: 18px 22px; }
+html:not(.native-companion) #network .flat-section > .hint { padding-inline: 22px; }
+html:not(.native-companion) #atlab > .panel > .panel-head { padding: 18px 22px; border-bottom: 1px solid var(--line); }
+html:not(.native-companion) #atlab > .panel > .at-row { padding: 16px 22px 12px; }
+html:not(.native-companion) #atlab > .panel > .preset-row { padding: 0 22px 12px; }
+html:not(.native-companion) #atlab > .panel > .hint { padding: 0 22px 22px; }
 #trafficSyncState { font-size: 11px; font-variant-numeric: tabular-nums; }
 #trafficSyncState[data-tone="error"] { color: #ae4939; }
 @media (min-width: 880px) {
@@ -361,8 +386,8 @@ html:not(.native-companion) .dialer-panel > .panel-head + .dial-number-row { pad
   html:not(.native-companion) .action-grid button:not(:disabled):hover { background: #f0f5fc; border-color: #b6cae6; }
   html:not(.native-companion) .view > .disclosure-panel { border-top: 1px solid var(--line); }
   html:not(.native-companion) .view > .disclosure-panel > summary { padding: 18px 0; }
-  html:not(.native-companion) .network-metric-grid { padding: 0; gap: 0; border-block: 1px solid var(--line); }
-  html:not(.native-companion) .network-metric { background: transparent; border: 0; border-radius: 0; min-height: 88px; padding: 18px 12px 18px 0; }
+  html:not(.native-companion) .network-metric-grid { padding: 0; gap: 0; border-block: 1px solid var(--line); background: #fff; }
+  html:not(.native-companion) .network-metric { background: transparent; border: 0; border-radius: 0; min-height: 88px; padding: 18px 22px; }
   html:not(.native-companion) .network-metric strong { font-variant-numeric: tabular-nums; font-size: 16px; }
   html:not(.native-companion) #trafficRxRate,
   html:not(.native-companion) #trafficTxRate { font-size: 24px; }
@@ -396,6 +421,7 @@ html:not(.native-companion) .dialer-panel > .panel-head + .dial-number-row { pad
   html:not(.native-companion) .tool-stack > .panel > summary { padding: 16px 0; }
   html:not(.native-companion) .call-main > .panel,
   html:not(.native-companion) .call-side > .panel { border-radius: 8px; box-shadow: none; }
+  html:not(.native-companion) #atlab > .panel { border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: none; }
 }
 @media (min-width: 880px) and (max-width: 1180px) {
   html:not(.native-companion) .shell { grid-template-columns: 154px minmax(0, 1fr); gap: 20px; padding: 20px; }
