@@ -25,13 +25,15 @@ function refreshDesktopIcons() {
     icon.setAttribute("aria-hidden", "true");
     button.prepend(icon);
   }
-  if (document.documentElement.classList.contains("native-companion")) {
-    for (const [id, name] of Object.entries({newSmsBtn: "square-pen", dialBackspaceBtn: "delete"})) {
+  const native = document.documentElement.classList.contains("native-companion");
+  {
+    for (const [id, name] of Object.entries({newSmsBtn: "square-pen", dialBackspaceBtn: "delete", clearBtn: "trash-2"})) {
       const button = document.getElementById(id);
-      const label = button.getAttribute("aria-label") || button.textContent.trim();
-      button.setAttribute("aria-label", id === "newSmsBtn" ? button.textContent.trim() || label : label);
+      if (!button) continue;
+      const label = button.textContent.trim() || button.getAttribute("aria-label");
+      button.setAttribute("aria-label", label);
       button.title = button.getAttribute("aria-label");
-      button.classList.add("native-icon-button");
+      button.classList.add(native ? "native-icon-button" : "desktop-icon-button");
       const icon = document.createElement("i");
       icon.dataset.lucide = name;
       icon.setAttribute("aria-hidden", "true");
@@ -42,7 +44,7 @@ function refreshDesktopIcons() {
         button.title = button.textContent.trim();
         button.setAttribute("aria-label", button.title);
       }
-      button.classList.add("native-icon-button");
+      button.classList.add(native ? "native-icon-button" : "desktop-icon-button");
       const icon = document.createElement("i");
       icon.dataset.lucide = "refresh-cw";
       icon.setAttribute("aria-hidden", "true");

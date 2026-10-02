@@ -164,7 +164,12 @@ Object.assign(copy.en, {callMicrophone: "Microphone", callSpeaker: "Speaker", re
 Object.assign(copy.zh, {callMicrophone: "麦克风", callSpeaker: "扬声器", refreshAudioDevices: "刷新设备", audioDevicesReady: "音频设备已刷新。", microphoneOption: "麦克风 {index}", speakerOption: "扬声器 {index}"});
 Object.assign(copy.en, {"replyTo":"Reply to {number}","writeMessage":"Write a message…","replyMessage":"Write a reply…","chooseEidCompact":"View card space","compactProfiles":"{count} profiles · {active} enabled","callNextReady":"Enter or paste a number in the dialer. Incoming calls appear here.","callNextLocked":"You can view call status. Calling and answering require call control to be enabled on the local service.","callNextDisconnected":"Connect the module by USB, then scan to find it.","callNextWaiting":"The next call status check will run automatically.","callFocusDialer":"Enter a number","callRetryStatus":"Check again","voiceSummaryUnknown":"Check audio before your first call","voiceSummaryReady":"Ready · Start audio after the call connects","voiceSummaryRuntime":"Next: download the verified audio files","voiceSummaryUsb":"Next: set up the module audio interface","voiceSummaryPrepare":"Ready to prepare · Start Audio can do this for you","voiceSummaryUnsupported":"Automatic audio setup is unavailable for this module","voiceSummaryRemote":"Audio runs on the connected Windows computer"});
 Object.assign(copy.zh, {"replyTo":"回复给 {number}","writeMessage":"输入短信内容…","replyMessage":"输入回复内容…","chooseEidCompact":"查看卡片空间","compactProfiles":"{count} 个套餐 · {active} 个已启用","callNextReady":"在拨号盘输入或粘贴号码。有来电时，这里会显示接听按钮。","callNextLocked":"当前可以查看通话状态。拨号和接听需要先在本地服务中开放电话控制。","callNextDisconnected":"用 USB 连接模块，再扫描查找设备。","callNextWaiting":"正在等待下一次自动状态检查。","callFocusDialer":"输入号码","callRetryStatus":"重新检查","voiceSummaryUnknown":"首次通话前，检查声音是否就绪","voiceSummaryReady":"声音已就绪 · 接通后可启动","voiceSummaryRuntime":"下一步：下载已校验的语音文件","voiceSummaryUsb":"下一步：设置模块声音接口","voiceSummaryPrepare":"可准备声音 · 接通后也可自动完成","voiceSummaryUnsupported":"当前模块不支持自动声音设置","voiceSummaryRemote":"声音由连接模块的 Windows 电脑处理"});
+Object.assign(copy.en, {trafficNotSynced: "Not refreshed", trafficRefreshing: "Refreshing", trafficUpdated: "Updated {time}", trafficRefreshFailed: "Refresh failed · Last sample kept"});
+Object.assign(copy.zh, {trafficNotSynced: "尚未刷新", trafficRefreshing: "正在刷新", trafficUpdated: "更新于 {time}", trafficRefreshFailed: "刷新失败 · 保留上次采样"});
+Object.assign(copy.en, {smsNoConversations: "No conversations"});
+Object.assign(copy.zh, {smsNoConversations: "暂无会话"});
 const state = {
+  viewScrollPositions: new Map(), trafficLastRead: 0, trafficReadError: false, trafficFailureCount: 0, trafficRetryAfter: 0,
   overviewRefreshInFlight: false, moduleReadError: false,
   smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
@@ -204,7 +209,8 @@ function applyLanguage() {
   document.querySelector("#smsSearchInput").setAttribute("aria-label", t("searchMessages"));
   document.querySelector("#dialBackspaceBtn").setAttribute("aria-label", state.language === "zh" ? "退格" : "Backspace");
   document.querySelector("#dialBackspaceBtn").title = state.language === "zh" ? "退格" : "Backspace";
-  if (state.networkText) renderTraffic(state.networkText);
+  if (state.networkText) renderTraffic(state.networkText, false);
+  renderTrafficSyncState();
   if (state.callStatusData) {
     const readError = state.callStatusReadError;
     renderCallStatus(state.callStatusData);
@@ -689,15 +695,20 @@ function formatBytes(value, perSecond = false) {
   return `${amount.toFixed(digits)} ${units[index]}${perSecond ? "/s" : ""}`;
 }
 
-function renderTraffic(text) {
-  state.networkText = text;
+function renderTraffic(text, freshSample = true) {
   let adapters = [];
   try {
-    const parsed = JSON.parse(String(text || "").trim() || "[]");
+    const parsed = JSON.parse(String(text || "").trim());
     adapters = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
+    if (adapters.some(item => !item || typeof item !== "object" || Array.isArray(item))) return false;
   } catch {
-    adapters = [];
+    return false;
   }
+  state.networkText = text;
+  if (freshSample) {
+    state.trafficReadError = false; state.trafficFailureCount = 0; state.trafficRetryAfter = 0; state.trafficLastRead = Date.now();
+  }
+  renderTrafficSyncState();
   const adapter = adapters.find((item) => String(item.status).toLowerCase() === "up") || adapters[0];
   const ids = {
     adapter: document.querySelector("#trafficAdapter"),
@@ -728,7 +739,7 @@ function renderTraffic(text) {
     state.trafficPrevious = null;
     state.trafficBaseline = null;
     ids.status.textContent = t("noAdapter");
-    return;
+    return true;
   }
   const rx = adapter.receivedBytes;
   const tx = adapter.sentBytes;
@@ -779,6 +790,21 @@ function renderTraffic(text) {
   ids.repairButton.dataset.driverReady = driverReady ? "1" : "0";
   ids.repairButton.textContent = driverReady ? t("driverReady") : t("repairDriver");
   ids.repairButton.disabled = state.busy || !state.driverInstallEnabled || !driverTargetPresent || driverReady;
+  return true;
+}
+
+function renderTrafficSyncState() {
+  const element = document.querySelector("#trafficSyncState");
+  const time = state.trafficLastRead ? new Date(state.trafficLastRead).toLocaleTimeString(state.language === "zh" ? "zh-CN" : "en-GB", {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "";
+  element.textContent = t(state.trafficReadError ? "trafficRefreshFailed" : state.trafficRefreshInFlight ? "trafficRefreshing" : time ? "trafficUpdated" : "trafficNotSynced", {time});
+  element.dataset.tone = state.trafficReadError ? "error" : "normal";
+}
+
+function noteTrafficReadFailure() {
+  state.trafficReadError = true;
+  state.trafficFailureCount += 1;
+  state.trafficRetryAfter = Date.now() + Math.min(30000, 4000 * 2 ** Math.min(state.trafficFailureCount, 3));
+  renderTrafficSyncState();
 }
 function smsStatus(status) {
   const normalized = status.toUpperCase();
@@ -890,10 +916,10 @@ function renderSmsRefreshState() {
   const button = document.querySelector("#smsPollingBtn");
   button.textContent = t(state.smsPolling ? "pauseSmsRefresh" : "resumeSmsRefresh");
   button.setAttribute("aria-pressed", String(state.smsPolling));
-  if (nativeCompanion) {
+  {
     button.title = button.textContent;
     button.setAttribute("aria-label", button.textContent);
-    button.classList.add("native-icon-button");
+    button.classList.add(nativeCompanion ? "native-icon-button" : "desktop-icon-button");
     const icon = document.createElement("i");
     icon.dataset.lucide = state.smsPolling ? "pause" : "play";
     icon.setAttribute("aria-hidden", "true");
@@ -1026,7 +1052,7 @@ function renderSms(text, data = {}) {
     const draft = state.smsDrafts.get(sender)?.message;
     const preview = messages.length ? decodeSmsBody(messages.at(-1)[2]) : t("draftKept");
     return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${escapeHtml(sender || t("unknown"))}</strong><small>${escapeHtml(preview)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
-  }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t(nativeCompanion && state.smsLastRead ? "smsEmpty" : "noSms"));
+  }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t(state.smsLastRead ? "smsNoConversations" : "noSms"));
   if (threads.dataset.markup !== threadHtml) {
     threads.innerHTML = threadHtml; threads.dataset.markup = threadHtml;
     for (const button of threads.querySelectorAll("[data-sms-thread]")) button.addEventListener("click", () => selectSmsConversation(button.dataset.smsThread));
@@ -1779,11 +1805,12 @@ async function callApi(action) {
     }
     if (action === "call-status") renderCallStatus(data);
     if (action === "call-capabilities") renderCallCapabilities(data);
-    if (action === "network-traffic") renderTraffic(data.stdout || "");
+    if (action === "network-traffic" && (!data.ok || !renderTraffic(data.stdout || ""))) throw new Error(data.error || "Traffic read failed");
   }
   catch (error) {
     state.failedViews.add(view); state.autoLoadedViews.delete(view);
     if (action === "sms-list") state.smsReadError = true;
+    else if (action === "network-traffic") noteTrafficReadFailure();
     else showFeedback(t("actionFailed", {action:actionTitle(action)}), "error", view);
     append(actionTitle(action), error.name === "AbortError" ? t("timedOut") : error.stack || error.message);
   }
@@ -2128,13 +2155,15 @@ async function installEcmDriver() {
   await callApi("network-traffic");
 }
 async function refreshTrafficQuietly() {
-  if (state.busy || state.trafficRefreshInFlight || document.hidden || !document.querySelector('.nav-btn[data-target="network"]')?.classList.contains("active")) return;
+  if (!state.started || state.busy || state.confirming || state.trafficRefreshInFlight || document.hidden || Date.now() < state.trafficRetryAfter || !document.querySelector('.nav-btn[data-target="network"]')?.classList.contains("active")) return;
   state.trafficRefreshInFlight = true;
+  renderTrafficSyncState();
   try {
     const { data } = await requestAction("network-traffic");
-    renderTraffic(data.stdout || "");
-  } catch {}
+    if (!data.ok || !renderTraffic(data.stdout || "")) throw new Error(data.error || "Traffic read failed");
+  } catch { noteTrafficReadFailure(); }
   finally { state.trafficRefreshInFlight = false; }
+  renderTrafficSyncState();
 }
 async function refreshModuleStatusQuietly() {
   if (state.busy || state.overviewRefreshInFlight || state.callActionInFlight || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
@@ -2261,6 +2290,8 @@ function selectView(target, updateHash = false) {
   const button = document.querySelector(`.nav-btn[data-target="${target}"]`);
   const view = document.querySelector(`#${target}`);
   if (!button || !view) return;
+  const previous = document.querySelector(".view.active")?.id;
+  if (!nativeCompanion && previous && previous !== target) state.viewScrollPositions.set(previous, window.scrollY);
   document.querySelectorAll(".nav-btn").forEach((item) => item.classList.remove("active"));
   document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
   button.classList.add("active");
@@ -2276,7 +2307,11 @@ function selectView(target, updateHash = false) {
     const dialog = document.querySelector("#nativeToolsDialog");
     if (dialog.open) dialog.close();
   }
-  if (updateHash) { history.replaceState(null, "", `#${target}`); resetViewScroll(); }
+  if (updateHash) history.replaceState(null, "", `#${target}`);
+  if (updateHash || previous !== target) {
+    if (nativeCompanion) resetViewScroll();
+    else restoreViewScroll(target);
+  }
   if (target === "calls" && !state.callMonitoring) toggleCallMonitoring(true);
   if (target === "calls" && !state.callCapabilityData) refreshVoiceSetup();
   state.failedViews.delete(target);
@@ -2287,12 +2322,18 @@ function resetViewScroll() {
   requestAnimationFrame(() => window.scrollTo(0, 0));
 }
 
+function restoreViewScroll(target) {
+  requestAnimationFrame(() => {
+    if (document.querySelector(".view.active")?.id === target) window.scrollTo(0, state.viewScrollPositions.get(target) || 0);
+  });
+}
+
 for (const button of document.querySelectorAll(".nav-btn")) button.addEventListener("click", () => selectView(button.dataset.target, true));
 for (const button of document.querySelectorAll("[data-open-view]")) button.addEventListener("click", () => selectView(button.dataset.openView, true));
-window.addEventListener("hashchange", () => { selectView(location.hash.slice(1)); resetViewScroll(); });
+window.addEventListener("hashchange", () => selectView(location.hash.slice(1)));
 window.addEventListener("beforeunload", () => { stopAudioBridge("audioNotConnected", false); stopModuleVoiceRoute(true); });
 selectView(location.hash.slice(1) || "overview");
-if (location.hash) window.addEventListener("load", resetViewScroll, { once: true });
+if (location.hash) window.addEventListener("load", () => nativeCompanion ? resetViewScroll() : restoreViewScroll(location.hash.slice(1)), { once: true });
 for (const button of document.querySelectorAll(".preset")) button.addEventListener("click", () => { document.querySelector("#atInput").value = button.dataset.command; sendAt(); });
 document.querySelector("#autoScanBtn").addEventListener("click", autoScan);
 pairIosBtn.addEventListener("click", openPairingDialog);

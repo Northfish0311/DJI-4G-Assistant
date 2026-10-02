@@ -295,6 +295,115 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
   .profile-primary-actions button {font-size:12px;}
   .profile-more {grid-column:1 / -1;}
 }
+
+/* Windows workspace refinements; companion layouts keep their native styling. */
+html:not(.native-companion) {
+  --ink: #232832;
+  --muted: #6a7180;
+  --line: #e3e7ed;
+  --bg: #f6f7f9;
+}
+.desktop-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  min-height: 36px !important;
+  padding: 0 !important;
+  border-radius: 8px;
+}
+.desktop-icon-button svg { width: 18px; height: 18px; }
+html:not(.native-companion) .panel-head + .action-grid { padding-top: 16px; }
+html:not(.native-companion) .sms-search { padding-top: 12px; }
+html:not(.native-companion) .dialer-panel > .panel-head + .dial-number-row { padding-top: 12px; }
+#trafficSyncState { font-size: 11px; font-variant-numeric: tabular-nums; }
+#trafficSyncState[data-tone="error"] { color: #ae4939; }
+@media (min-width: 880px) {
+  html:not(.native-companion) body { background: var(--bg); }
+  html:not(.native-companion) * { letter-spacing: 0; }
+  html:not(.native-companion) .topbar { min-height: 76px; padding: 14px 24px; background: #fff; }
+  html:not(.native-companion) .topbar h1 { font-size: 17px; font-weight: 650; }
+  html:not(.native-companion) #hostLine { color: var(--muted); }
+  html:not(.native-companion) .brand-mark { border-radius: 8px; }
+  html:not(.native-companion) .shell { width: min(1600px, 100%); grid-template-columns: 186px minmax(0, 1fr); gap: 28px; padding: 24px; }
+  html:not(.native-companion) .rail { top: 100px; gap: 4px; padding: 0; }
+  html:not(.native-companion) .rail .nav-btn { min-height: 54px; border-radius: 8px; padding: 10px 14px; color: #616978; }
+  html:not(.native-companion) .rail .nav-btn.active { background: #e8eef9; color: #295590; box-shadow: none; }
+  html:not(.native-companion) .rail .nav-btn.active .nav-subtitle { color: #61789d; }
+  html:not(.native-companion) .rail .nav-btn:not(.active):hover { background: #eceff3; color: #303c4d; }
+  html:not(.native-companion) .rail .nav-btn[data-target="atlab"] { margin-top: 24px; }
+  html:not(.native-companion) .rail .nav-btn[data-target="atlab"]::before { top: -12px; background: var(--line); }
+  html:not(.native-companion) .view { gap: 24px; }
+  html:not(.native-companion) .view-heading { min-height: 48px; margin: 0; }
+  html:not(.native-companion) .view-heading h2 { font-size: 24px; font-weight: 650; }
+  html:not(.native-companion) .view-heading .eyebrow { display: none; }
+  html:not(.native-companion) .view > .panel,
+  html:not(.native-companion) .overview-panel,
+  html:not(.native-companion) .euicc-library-band { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  html:not(.native-companion) .hero-panel { min-height: 100px; padding: 20px 0; border-bottom: 1px solid var(--line); background: transparent; gap: 16px; }
+  html:not(.native-companion) .hero-panel h2 { color: var(--ink); font-size: 22px; }
+  html:not(.native-companion) .hero-panel #deviceSubtitle { color: var(--muted); font-size: 12px; }
+  html:not(.native-companion) .device-glyph { width: 56px; height: 56px; border-radius: 8px; border: 1px solid var(--line); background: #fff; }
+  html:not(.native-companion) .device-glyph svg { color: #287665; width: 28px; height: 28px; }
+  html:not(.native-companion) .hero-panel .connection-badge { background: #eceff3; color: #616978; border: 0; }
+  html:not(.native-companion) .hero-panel .connection-badge.online,
+  html:not(.native-companion) .hero-panel .connection-badge.registered { background: #e3f2e9; color: #267148; }
+  html:not(.native-companion) .metric-grid { padding: 8px 0 0; background: transparent; }
+  html:not(.native-companion) .metric-grid .metric { min-height: 88px; padding: 16px 12px 16px 0; background: transparent; border-color: var(--line); }
+  html:not(.native-companion) .metric-grid .metric > span { color: var(--muted); font-size: 12px; }
+  html:not(.native-companion) .metric-grid .metric strong { font-size: 16px; font-weight: 600; }
+  html:not(.native-companion) .view > .panel > .panel-head { padding: 0 0 16px; border: 0; }
+  html:not(.native-companion) .view > .panel:has(> .action-grid) > .panel-head { padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  html:not(.native-companion) .action-grid { padding: 0; gap: 12px; }
+  html:not(.native-companion) .action-grid button { min-height: 52px; padding: 12px; border-radius: 8px; background: #fff; color: #374151; border-color: var(--line); }
+  html:not(.native-companion) .action-grid button:not(:disabled):hover { background: #f0f5fc; border-color: #b6cae6; }
+  html:not(.native-companion) .view > .disclosure-panel { border-top: 1px solid var(--line); }
+  html:not(.native-companion) .view > .disclosure-panel > summary { padding: 18px 0; }
+  html:not(.native-companion) .network-metric-grid { padding: 0; gap: 0; border-block: 1px solid var(--line); }
+  html:not(.native-companion) .network-metric { background: transparent; border: 0; border-radius: 0; min-height: 88px; padding: 18px 12px 18px 0; }
+  html:not(.native-companion) .network-metric strong { font-variant-numeric: tabular-nums; font-size: 16px; }
+  html:not(.native-companion) #trafficRxRate,
+  html:not(.native-companion) #trafficTxRate { font-size: 24px; }
+  html:not(.native-companion) .sms-workspace { gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+  html:not(.native-companion) .sms-threads-panel { border: 0; border-radius: 0; box-shadow: none; }
+  html:not(.native-companion) .sms-conversation { border: 0; border-left: 1px solid var(--line); border-radius: 0; }
+  html:not(.native-companion) .sms-threads-panel > .panel-head,
+  html:not(.native-companion) .sms-conversation .sms-inbox-panel > .panel-head {
+    box-sizing: border-box;
+    height: 80px;
+    padding: 16px 20px;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+  }
+  html:not(.native-companion) .sms-conversation .sms-list { background: #fafbfd; min-height: 260px; max-height: 400px; }
+  html:not(.native-companion) .sms-conversation .sms-list.empty { border: 0; border-radius: 0; }
+  html:not(.native-companion) .sms-thread[aria-pressed="true"] { background: #edf2fb !important; border-color: #d9e3f3; }
+  html:not(.native-companion) .sms-thread .thread-avatar { background: #edf0f5; color: #617395; border-radius: 8px; }
+  html:not(.native-companion) .sms-conversation .sms-card { border-color: #e2e6ed; border-radius: 8px; }
+  html:not(.native-companion) .sms-conversation .sms-card.outgoing { background: #eaf4f0; border-color: #d4e8df; border-radius: 8px; }
+  html:not(.native-companion) .euicc-library-band .section-heading-row { padding: 0 0 12px; }
+  html:not(.native-companion) .euicc-slot-grid { padding: 0; }
+  html:not(.native-companion) .euicc-slot-card { border-radius: 8px; background: #fff; }
+  html:not(.native-companion) .euicc-slot-card.active { border-color: #b5cae8; background: #eef3fc; box-shadow: none; }
+  html:not(.native-companion) .euicc-library-band .viewing-hint,
+  html:not(.native-companion) .euicc-library-band #euiccReadStatus { margin-left: 0; }
+  html:not(.native-companion) .profile-panel .active-euicc-band { border: 0; border-radius: 0; border-block: 1px solid var(--line); background: transparent; }
+  html:not(.native-companion) .profile-panel .profile-list { padding: 18px 0; }
+  html:not(.native-companion) .esim-workspace > .profile-panel { border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+  html:not(.native-companion) .tool-stack > .panel { background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+  html:not(.native-companion) .tool-stack > .panel > summary { padding: 16px 0; }
+  html:not(.native-companion) .call-main > .panel,
+  html:not(.native-companion) .call-side > .panel { border-radius: 8px; box-shadow: none; }
+}
+@media (min-width: 880px) and (max-width: 1180px) {
+  html:not(.native-companion) .shell { grid-template-columns: 154px minmax(0, 1fr); gap: 20px; padding: 20px; }
+  html:not(.native-companion) .hero-panel .connection-badge { margin-left: 72px; }
+}
+@media (min-width: 880px) and (max-width: 1000px) {
+  html:not(.native-companion) .sms-conversation { border-left: 0; border-top: 1px solid var(--line); }
+}
 /* Final mobile guard. Keep the four daily tools first, while advanced tools remain
    reachable in the same horizontally scrollable rail. This block intentionally
    comes after every desktop refinement so later rules cannot squeeze eSIM cards. */

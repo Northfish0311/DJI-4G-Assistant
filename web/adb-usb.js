@@ -111,7 +111,17 @@ function isAdbInterface(iface) {
 
 function transfer(endpoint, value) {
   return new Promise((resolve, reject) => {
-    endpoint.transfer(value, (error, data) => error ? reject(error) : resolve(Buffer.from(data || [])));
+    endpoint.transfer(value, (error, data) => {
+      if (error) { reject(error); return; }
+      if (Buffer.isBuffer(value)) {
+        // OutEndpoint returns the number of bytes written, not a response buffer.
+        if (data !== value.length) { reject(new Error("Incomplete ADB USB write.")); return; }
+        resolve(Buffer.alloc(0));
+        return;
+      }
+      if (!Buffer.isBuffer(data)) { reject(new Error("Invalid ADB USB read buffer.")); return; }
+      resolve(data);
+    });
   });
 }
 
@@ -209,7 +219,9 @@ class AdbUsbConnection {
 
   async write(command, argument0 = 0, argument1 = 0, payload = Buffer.alloc(0)) {
     if (!this.output) throw new Error("ADB USB is not open.");
-    await transfer(this.output, encodeMessage(command, argument0, argument1, payload));
+    const packet = encodeMessage(command, argument0, argument1, payload);
+    await transfer(this.output, packet.subarray(0, 24));
+    if (packet.length > 24) await transfer(this.output, packet.subarray(24));
   }
 
   async readExactly(length, deadline) {
@@ -220,7 +232,7 @@ class AdbUsbConnection {
         const chunk = await transfer(this.input, Math.max(1, Math.min(MAX_PAYLOAD + 24, length - this.pending.length)));
         if (chunk.length) this.pending = Buffer.concat([this.pending, chunk]);
       } catch (error) {
-        if (!/timed? ?out|LIBUSB_ERROR_TIMEOUT/i.test(String(error && error.message || error))) throw error;
+        if (!/timed?[\s_]?out|LIBUSB_ERROR_TIMEOUT|LIBUSB_TRANSFER_TIMED_OUT/i.test(String(error && error.message || error))) throw error;
       }
     }
     const result = this.pending.subarray(0, length);
