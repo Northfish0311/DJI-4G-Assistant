@@ -9,6 +9,8 @@ struct ConsoleView: View {
     @State private var loadError: String?
     @State private var retryCount = 0
     @State private var confirmingForget = false
+    @State private var confirmingReload = false
+    @State private var automaticRetryAllowed = true
 
     var body: some View {
         NavigationStack {
@@ -23,9 +25,11 @@ struct ConsoleView: View {
                         allowedBaseURL: host.baseURL,
                         isLoading: $isLoading,
                         errorMessage: $loadError,
-                        retryCount: $retryCount
+                        retryCount: $retryCount,
+                        automaticRetryAllowed: $automaticRetryAllowed
                     )
                     .id(reloadID)
+                    .allowsHitTesting(!isLoading && loadError == nil)
                 }
 
                 if isLoading && loadError == nil {
@@ -54,7 +58,7 @@ struct ConsoleView: View {
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
-                        if retryCount < 3 {
+                        if ConsoleRecoveryPolicy.retryDelay(attempt: retryCount, allowed: automaticRetryAllowed) != nil {
                             Label("console.auto_retry", systemImage: "arrow.triangle.2.circlepath")
                                 .font(.caption)
                         }
@@ -66,6 +70,8 @@ struct ConsoleView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     .padding(24)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(uiColor: .systemGroupedBackground))
                 }
             }
             .navigationTitle(pairingStore.host?.name ?? NSLocalizedString("app.title", comment: ""))
@@ -79,7 +85,8 @@ struct ConsoleView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         Button {
-                            retry()
+                            if loadError != nil { retry() }
+                            else { confirmingReload = true }
                         } label: {
                             Label("common.reload", systemImage: "arrow.clockwise")
                         }
@@ -98,17 +105,28 @@ struct ConsoleView: View {
                 Button("pairing.disconnect", role: .destructive) { pairingStore.disconnect() }
                 Button("common.cancel", role: .cancel) {}
             }
+            .confirmationDialog("console.reload_title", isPresented: $confirmingReload, titleVisibility: .visible) {
+                Button("common.reload", role: .destructive) { retry() }
+                Button("common.cancel", role: .cancel) {}
+            } message: {
+                Text("console.reload_warning")
+            }
         }
         .task(id: loadError) {
-            guard loadError != nil, retryCount < 3, scenePhase == .active else { return }
-            do { try await Task.sleep(nanoseconds: UInt64(2 << retryCount) * 1_000_000_000) }
+            guard loadError != nil, scenePhase == .active,
+                  let delay = ConsoleRecoveryPolicy.retryDelay(attempt: retryCount, allowed: automaticRetryAllowed) else { return }
+            do { try await Task.sleep(nanoseconds: delay) }
             catch { return }
             guard !Task.isCancelled, scenePhase == .active else { return }
             retryCount += 1
             reload()
         }
         .onChange(of: scenePhase) { phase in
-            if phase == .active && loadError != nil { retry() }
+            if phase == .active && loadError != nil,
+               ConsoleRecoveryPolicy.retryDelay(attempt: retryCount, allowed: automaticRetryAllowed) != nil {
+                retryCount += 1
+                reload()
+            }
         }
     }
 
@@ -145,6 +163,7 @@ struct ConsoleView: View {
 
     private func retry() {
         retryCount = 0
+        automaticRetryAllowed = true
         reload()
     }
 
@@ -161,13 +180,15 @@ private struct WebConsoleView: UIViewRepresentable {
     @Binding var isLoading: Bool
     @Binding var errorMessage: String?
     @Binding var retryCount: Int
+    @Binding var automaticRetryAllowed: Bool
 
     func makeCoordinator() -> Coordinator {
         Coordinator(
             allowedBaseURL: allowedBaseURL,
             isLoading: $isLoading,
             errorMessage: $errorMessage,
-            retryCount: $retryCount
+            retryCount: $retryCount,
+            automaticRetryAllowed: $automaticRetryAllowed
         )
     }
 
@@ -190,33 +211,49 @@ private struct WebConsoleView: UIViewRepresentable {
 
     func updateUIView(_ webView: WKWebView, context: Context) {}
 
+    static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinator) {
+        coordinator.invalidate()
+        webView.navigationDelegate = nil
+        webView.uiDelegate = nil
+        webView.stopLoading()
+    }
+
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         private let allowedBaseURL: URL
         private var isLoading: Binding<Bool>
         private var errorMessage: Binding<String?>
         private var retryCount: Binding<Int>
+        private var automaticRetryAllowed: Binding<Bool>
+        private var isActive = true
 
         init(
             allowedBaseURL: URL,
             isLoading: Binding<Bool>,
             errorMessage: Binding<String?>,
-            retryCount: Binding<Int>
+            retryCount: Binding<Int>,
+            automaticRetryAllowed: Binding<Bool>
         ) {
             self.allowedBaseURL = allowedBaseURL
             self.isLoading = isLoading
             self.errorMessage = errorMessage
             self.retryCount = retryCount
+            self.automaticRetryAllowed = automaticRetryAllowed
         }
 
+        func invalidate() { isActive = false }
+
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            guard isActive else { return }
             isLoading.wrappedValue = true
             errorMessage.wrappedValue = nil
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            guard isActive, errorMessage.wrappedValue == nil else { return }
             isLoading.wrappedValue = false
             errorMessage.wrappedValue = nil
             retryCount.wrappedValue = 0
+            automaticRetryAllowed.wrappedValue = true
         }
 
         func webView(
@@ -224,6 +261,7 @@ private struct WebConsoleView: UIViewRepresentable {
             didFailProvisionalNavigation navigation: WKNavigation!,
             withError error: Error
         ) {
+            guard isActive, errorMessage.wrappedValue == nil else { return }
             if (error as NSError).code == NSURLErrorCancelled { return }
             isLoading.wrappedValue = false
             errorMessage.wrappedValue = error.localizedDescription
@@ -234,6 +272,7 @@ private struct WebConsoleView: UIViewRepresentable {
             didFail navigation: WKNavigation!,
             withError error: Error
         ) {
+            guard isActive, errorMessage.wrappedValue == nil else { return }
             let nsError = error as NSError
             if nsError.code == NSURLErrorCancelled { return }
             isLoading.wrappedValue = false
@@ -245,6 +284,7 @@ private struct WebConsoleView: UIViewRepresentable {
             decidePolicyFor navigationAction: WKNavigationAction,
             decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
         ) {
+            guard isActive else { decisionHandler(.cancel); return }
             guard let url = navigationAction.request.url else {
                 decisionHandler(.cancel)
                 return
@@ -262,10 +302,29 @@ private struct WebConsoleView: UIViewRepresentable {
 
         func webView(
             _ webView: WKWebView,
+            decidePolicyFor navigationResponse: WKNavigationResponse,
+            decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+        ) {
+            guard isActive else { decisionHandler(.cancel); return }
+            if navigationResponse.isForMainFrame,
+               let response = navigationResponse.response as? HTTPURLResponse,
+               let failure = ConsoleRecoveryPolicy.httpFailure(statusCode: response.statusCode) {
+                isLoading.wrappedValue = false
+                automaticRetryAllowed.wrappedValue = failure.allowsAutomaticRetry
+                errorMessage.wrappedValue = NSLocalizedString(failure.messageKey, comment: "")
+                decisionHandler(.cancel)
+                return
+            }
+            decisionHandler(.allow)
+        }
+
+        func webView(
+            _ webView: WKWebView,
             createWebViewWith configuration: WKWebViewConfiguration,
             for navigationAction: WKNavigationAction,
             windowFeatures: WKWindowFeatures
         ) -> WKWebView? {
+            guard isActive else { return nil }
             if let url = navigationAction.request.url, !isAllowed(url),
                ["https", "http"].contains(url.scheme?.lowercased() ?? "") {
                 UIApplication.shared.open(url)
@@ -283,6 +342,7 @@ private struct WebConsoleView: UIViewRepresentable {
         }
 
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            guard isActive else { return }
             isLoading.wrappedValue = false
             errorMessage.wrappedValue = NSLocalizedString("console.process_stopped", comment: "")
         }
@@ -295,7 +355,7 @@ private struct WebConsoleView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
                      initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
-            guard let url = frame.request.url, isAllowed(url), let controller = presenter(for: webView) else {
+            guard isActive, let url = frame.request.url, isAllowed(url), let controller = presenter(for: webView) else {
                 completionHandler(false)
                 return
             }
@@ -307,7 +367,7 @@ private struct WebConsoleView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
                      initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
-            guard let url = frame.request.url, isAllowed(url), let controller = presenter(for: webView) else {
+            guard isActive, let url = frame.request.url, isAllowed(url), let controller = presenter(for: webView) else {
                 completionHandler()
                 return
             }
@@ -324,7 +384,7 @@ private struct WebConsoleView: UIViewRepresentable {
         func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String,
                      defaultText: String?, initiatedByFrame frame: WKFrameInfo,
                      completionHandler: @escaping (String?) -> Void) {
-            guard let url = frame.request.url, isAllowed(url), let controller = presenter(for: webView) else {
+            guard isActive, let url = frame.request.url, isAllowed(url), let controller = presenter(for: webView) else {
                 completionHandler(nil)
                 return
             }

@@ -44,6 +44,10 @@
 "console.auto_retry" = "正在等待自动重连";
 "console.process_stopped" = "页面已暂停，将重新连接电脑。未完成的操作不会自动重发。";
 "console.confirm" = "确认操作";
+"console.reload_title" = "重新载入管理页面？";
+"console.reload_warning" = "未发送的短信和未保存的输入会丢失。已经提交的操作不会重复发送；重新连接后请先刷新状态。";
+"console.authorization_failed" = "电脑未接受当前授权。已停止自动重连，请确认电脑助手正常运行；密码已变化时，忘记这台电脑后重新扫码。";
+"console.server_error" = "电脑助手返回了错误页面。请检查 Windows 程序，稍后重试。";
 "common.cancel" = "取消";
 "common.close" = "关闭";
 "common.ok" = "好";

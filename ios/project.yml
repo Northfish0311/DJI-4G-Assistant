@@ -17,8 +17,8 @@ targets:
       path: DJI4GAssistant/Info.plist
       properties:
         CFBundleDisplayName: DJI 4G Assistant
-        CFBundleShortVersionString: "1.0.1"
-        CFBundleVersion: "2"
+        CFBundleShortVersionString: "1.0.2"
+        CFBundleVersion: "3"
         UILaunchScreen: {}
         UIRequiresFullScreen: false
         NSLocalNetworkUsageDescription: DJI 4G Assistant uses your local network to find and securely connect to the Windows computer hosting the cellular dongle.

@@ -44,6 +44,10 @@
 "console.auto_retry" = "Waiting to reconnect";
 "console.process_stopped" = "The page stopped. Reconnecting will not resend unfinished actions.";
 "console.confirm" = "Confirm action";
+"console.reload_title" = "Reload the console?";
+"console.reload_warning" = "Unsent messages and unsaved input will be lost. Submitted operations will not be repeated; refresh their status after reconnecting.";
+"console.authorization_failed" = "The computer rejected authorization. Automatic retries have stopped. Check the Windows assistant; if its password changed, forget this computer and scan again.";
+"console.server_error" = "The Windows assistant returned an error page. Check the computer and try again later.";
 "common.cancel" = "Cancel";
 "common.close" = "Close";
 "common.ok" = "OK";

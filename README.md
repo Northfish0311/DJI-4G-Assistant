@@ -16,7 +16,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 | --- | --- |
 | Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |
 | 安卓手机/平板 | [下载安卓 0.2.0 测试版 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)，也可打开[安卓发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)。见[安卓中文说明](docs/Android使用说明.md) |
-| iPhone/iPad | 可用 Safari 访问电脑助手；TestFlight 尚未开放邀请，GitHub 的未签名 IPA 不能直接安装 |
+| iPhone/iPad | 可用 Safari 访问电脑助手；另有 [iOS 1.0.2 未签名远程测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)。IPA 需有效签名后安装，TestFlight 尚未开放邀请 |
 
 **手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
 
@@ -90,6 +90,8 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 Windows 顶部的“连接手机 / 平板”二维码由 Android 和 iOS 客户端共用。网络、短信和 eSIM 能力由电脑助手提供；通话声音不传到安卓手机。
 
 ### iPhone / iPad 支持状态
+
+实验性远程客户端 **1.0.2** 配合 Windows 1.7.4 使用新版手机/平板布局，并补充手动重载确认、HTTP 错误识别和有限重连保护。[中文更新说明](docs/RELEASE-ios-remote-v1.0.2.md) · [安装说明](docs/iOS安装说明.md)。通话声音仍在 Windows 电脑处理，不是 USB 直插独立管理版。
 
 计划通过 **TestFlight** 分发远程 App，普通测试者无需自行签名。**当前尚未开放邀请**，GitHub 的未签名 IPA 不是 TestFlight 安装包。[安装与发布准备说明](docs/TestFlight发布说明.md)。
 
