@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="/styles.css">
     <link rel="stylesheet" href="/desktop-ui.css">
     <link rel="stylesheet" href="/desktop-refresh.css">
+    <link rel="stylesheet" href="/native-ui.css">
   </head>
   <body>
     <header class="topbar">
@@ -33,6 +34,8 @@
         <button class="nav-btn" data-target="network"><span class="nav-title" data-i18n="networkCenter">Network</span><span class="nav-subtitle" data-i18n="networkTraffic">Live Traffic</span></button>
         <button class="nav-btn" data-target="atlab"><span class="nav-title" data-i18n="atLab">AT Lab</span><span class="nav-subtitle" data-i18n="safeAtConsole">Safe AT Console</span></button>
         <button class="nav-btn" data-target="system"><span class="nav-title" data-i18n="system">System</span><span class="nav-subtitle" data-i18n="connection">Connection</span></button>
+        <button id="nativeMoreBtn" class="native-more-btn" aria-haspopup="dialog" aria-controls="nativeToolsDialog" aria-expanded="false" hidden><i data-lucide="grid-2x2" aria-hidden="true"></i><span class="nav-title" data-i18n="moreTools">More</span></button>
+        <button id="nativeRailLanguageBtn" class="native-rail-language" hidden><i data-lucide="languages" aria-hidden="true"></i><span>English</span></button>
       </nav>
 
       <section class="content">
@@ -77,6 +80,11 @@
             </div>
           </div>
 
+          <details id="nativeDeviceDetails" class="panel disclosure-panel" hidden>
+            <summary><strong data-i18n="deviceDetails">Device details</strong></summary>
+            <div id="nativeDeviceMetrics" class="native-device-metrics"></div>
+          </details>
+
           <details class="panel disclosure-panel setup-panel">
             <summary><span><span class="summary-kicker">2CA3:4006</span><strong data-i18n="stockSetup">Original Module Setup</strong></span></summary>
             <div class="disclosure-content">
@@ -106,6 +114,7 @@
           </div>
 
           <div class="panel flat-section">
+            <div id="nativeNetworkAdapter" class="native-network-adapter" hidden></div>
             <div class="network-metric-grid">
               <article class="network-metric"><span data-i18n="adapterStatus">Adapter</span><strong id="trafficAdapter">--</strong></article>
               <article class="network-metric"><span data-i18n="downloadSpeed">Download</span><strong id="trafficRxRate">--</strong></article>
@@ -121,6 +130,10 @@
             <p class="hint" data-i18n="trafficScope">USB adapter traffic only, including local traffic. Not your plan balance.</p>
           </div>
 
+          <details id="nativeNetworkDetails" class="panel disclosure-panel" hidden>
+            <summary><strong data-i18n="networkDetails">Connection details</strong></summary>
+            <div id="nativeNetworkMetrics" class="native-network-details"></div>
+          </details>
           <div class="panel driver-panel">
             <div class="panel-head">
               <h2 data-i18n="ecmDriver">Windows ECM Driver</h2>
@@ -252,7 +265,8 @@
             <div class="sms-conversation">
             <div class="panel sms-inbox-panel">
               <div class="panel-head">
-                <div><h2 id="smsConversationTitle">SMS</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
+                <button id="nativeSmsBackBtn" class="secondary native-icon-button" data-i18n-aria="backToConversations" aria-label="Back to conversations" hidden><i data-lucide="arrow-left" aria-hidden="true"></i></button>
+                <div><h2 id="smsConversationTitle" tabindex="-1">SMS</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
               </div>
               <div id="smsStorageWarning" class="sms-storage-banner" hidden></div>
               <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
@@ -292,6 +306,7 @@
             </div>
           </div>
 
+          <p id="nativeCallAudioNote" class="native-call-audio-note" hidden><i data-lucide="monitor-speaker" aria-hidden="true"></i><span data-i18n="voiceSummaryRemote">Audio runs on the connected Windows computer</span></p>
           <div class="call-workspace">
             <div class="call-main">
             <div class="panel call-stage" id="callStatus" data-state="idle">
@@ -491,6 +506,16 @@
         </details>
       </section>
     </main>
+
+    <dialog id="nativeToolsDialog" class="native-tools-dialog" aria-labelledby="nativeToolsTitle">
+      <header class="native-tools-heading"><h2 id="nativeToolsTitle" data-i18n="moreTools">More</h2><form method="dialog"><button class="secondary native-icon-button" data-i18n-aria="close" aria-label="Close"><i data-lucide="x" aria-hidden="true"></i></button></form></header>
+      <div class="native-tools-list">
+        <button class="secondary" data-open-view="network"><span data-i18n="networkCenter">Network</span><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <button class="secondary" data-open-view="atlab"><span data-i18n="atLab">AT Lab</span><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <button class="secondary" data-open-view="system"><span data-i18n="system">System</span><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+        <button id="nativeLanguageBtn" class="secondary"><i data-lucide="languages" aria-hidden="true"></i><span>English</span><i data-lucide="chevron-right" aria-hidden="true"></i></button>
+      </div>
+    </dialog>
 
     <dialog id="pairingDialog" class="pairing-dialog" aria-labelledby="pairingTitle">
       <form method="dialog" class="pairing-sheet">

@@ -18,11 +18,36 @@ function refreshDesktopIcons() {
     button.prepend(icon);
   }
   for (const button of document.querySelectorAll("[data-open-view]")) {
-    if (button.querySelector("svg, [data-lucide]")) continue;
+    if (button.querySelector(".view-icon")) continue;
     const icon = document.createElement("i");
+    icon.className = "view-icon";
     icon.dataset.lucide = navigation[button.dataset.openView];
     icon.setAttribute("aria-hidden", "true");
     button.prepend(icon);
+  }
+  if (document.documentElement.classList.contains("native-companion")) {
+    for (const [id, name] of Object.entries({newSmsBtn: "square-pen", dialBackspaceBtn: "delete"})) {
+      const button = document.getElementById(id);
+      const label = button.getAttribute("aria-label") || button.textContent.trim();
+      button.setAttribute("aria-label", id === "newSmsBtn" ? button.textContent.trim() || label : label);
+      button.title = button.getAttribute("aria-label");
+      button.classList.add("native-icon-button");
+      const icon = document.createElement("i");
+      icon.dataset.lucide = name;
+      icon.setAttribute("aria-hidden", "true");
+      button.replaceChildren(icon);
+    }
+    for (const button of document.querySelectorAll('.view-heading [data-action="module-status"], .view-heading [data-action="euicc-inventory"], .view-heading [data-action="health"], .view-heading [data-action="sms-list"], .view-heading [data-action="network-traffic"]')) {
+      if (button.textContent.trim()) {
+        button.title = button.textContent.trim();
+        button.setAttribute("aria-label", button.title);
+      }
+      button.classList.add("native-icon-button");
+      const icon = document.createElement("i");
+      icon.dataset.lucide = "refresh-cw";
+      icon.setAttribute("aria-hidden", "true");
+      button.replaceChildren(icon);
+    }
   }
   lucide.createIcons();
 }

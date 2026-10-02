@@ -25,7 +25,7 @@ const copy = {
   en: {
     trafficWaiting: "Measuring speed...", trafficCountersUnavailable: "This adapter is not reporting usable traffic counters.", trafficActive: "Live USB adapter statistics", trafficScope: "USB adapter traffic only, including local traffic. Not your plan balance.",
     conversations: "Conversations", newMessage: "New message", searchMessages: "Search number or message", noMatchingThreads: "No matching conversations", conversationMessage: "1 message", conversationMessages: "{count} messages", newMessageHint: "Enter a recipient and write your first message below.", discardSmsDraft: "Discard the current draft and change conversation?",
-    commonTasks: "Everyday tasks", moreProfile: "More options & card details",
+    commonTasks: "Everyday tasks", moreProfile: "More options & card details", moreTools: "More", deviceDetails: "Device details", backToConversations: "Back to conversations", networkDetails: "Connection details",
     cardConnecting: "Reading module and SIM...", cardNotConnected: "Waiting for the module",
     cardChanged: "SIM changed. Reading the new card...", cardRemoved: "SIM or module disconnected. Previous card data cleared.",
     actionDone: "{action} completed.", actionFailed: "{action} failed. Check the connection or open the log.",
@@ -86,7 +86,7 @@ const copy = {
   zh: {
     trafficWaiting: "正在采样速度…", trafficCountersUnavailable: "此网卡暂未返回有效流量计数。", trafficActive: "正在统计 USB 网卡流量", trafficScope: "仅统计电脑经过此 USB 网卡的流量，含局域网通信；不代表套餐剩余流量。",
     conversations: "会话", newMessage: "新建短信", searchMessages: "搜索号码或短信内容", noMatchingThreads: "没有匹配的会话", conversationMessage: "1 条短信", conversationMessages: "{count} 条短信", newMessageHint: "在下方填写收件人，开始新的对话。", discardSmsDraft: "切换会话会放弃当前草稿，是否继续？",
-    commonTasks: "常用操作", moreProfile: "更多操作与卡号",
+    commonTasks: "常用操作", moreProfile: "更多操作与卡号", moreTools: "更多", deviceDetails: "设备详情",
     cardConnecting: "正在识别模块和卡片…", cardNotConnected: "等待连接模块",
     cardChanged: "卡片已变化，正在读取新卡…", cardRemoved: "卡片或模块已断开，已清除上一张卡的数据。",
     actionDone: "{action}完成。", actionFailed: "{action}未完成，请检查连接或展开日志。",
@@ -153,6 +153,7 @@ Object.assign(copy.en, {callReadFailed: "Could not refresh call status. The last
 Object.assign(copy.zh, {callReadFailed: "通话状态刷新失败，已保留上次状态，稍后自动重试。", callStatusUncertain: "暂时无法确认通话状态"});
 Object.assign(copy.en, {moduleTemperature: "Temperature"});
 Object.assign(copy.zh, {moduleTemperature: "模块温度"});
+Object.assign(copy.zh, {backToConversations: "返回会话列表", networkDetails: "连接详情"});
 Object.assign(copy.en, {noService: "No service", networkStatusUnavailable: "Network status unavailable", addressAssigned: "IP assigned", cellularConnected: "Cellular data connected"});
 Object.assign(copy.zh, {noService: "无服务", networkStatusUnavailable: "网络状态待确认", addressAssigned: "已获得 IP", cellularConnected: "蜂窝数据已连接"});
 Object.assign(copy.en, {profileSwitchVerified: "Profile switched and the live ICCID/IMSI check passed.", profileSwitchNetworkPending: "Profile ICCID switched; the mobile network is still registering.", profileSwitchPending: "The profile command completed, but the live ICCID has not changed yet. No automatic restart was performed; refresh before retrying."});
@@ -167,7 +168,7 @@ const state = {
   overviewRefreshInFlight: false, moduleReadError: false,
   smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
-  smsActiveSender: null, smsQuery: "", smsNewDraft: false, smsStorage: null,
+  smsActiveSender: null, smsQuery: "", smsNewDraft: false, smsStorage: null, smsConversationOpen: false,
   authRequired: false, dangerousAtEnabled: false, profileActionsEnabled: false, profileDownloadEnabled: false, profileNicknameEnabled: false, profileNotificationsEnabled: false, profileDeleteEnabled: false, smsSendEnabled: false, smsDeleteEnabled: false, callActionsEnabled: false, ussdEnabled: false, usbModeEnabled: false, stockBootstrapEnabled: false, driverInstallEnabled: false, voiceRuntimeEnabled: false, smsPolling: false, callMonitoring: false, callRefreshInFlight: false, callActionInFlight: false, trafficRefreshInFlight: false, busy: false, busyKey: "running", busyParams: {},
   primaryUrl: "", euiccInventory: [], euiccCandidatesChecked: 0, activeEid: "", activeAid: "", inventoryLoaded: false, chipText: "", discoveryText: "", profileText: "", notificationText: "", smsText: "", networkText: "", callStatusData: null, callCapabilityData: null, voiceRuntimeStatus: null, voiceSetupBusy: false, callHistory: [], lastCallKey: "", lastVoiceCall: null, pendingPostDial: null, postDialRunning: false, postDialGeneration: 0, postDialAbortController: null, audioBridge: null, audioBridgeStarting: false, usb: "", atPort: "", networkKind: "", moduleIp: "", sim: "", signal: "", carrier: "", radio: "", registrationCode: "", deviceModel: "", deviceRevision: "", temperature: null, temperatureSensors: [], temperatureSupported: null, trafficPrevious: null, trafficBaseline: null, autoLoadedViews: new Set(),
 };
@@ -185,6 +186,8 @@ function applyLanguage() {
   for (const element of document.querySelectorAll("[data-i18n]")) element.textContent = t(element.dataset.i18n);
   for (const element of document.querySelectorAll("[data-i18n-placeholder]")) element.placeholder = t(element.dataset.i18nPlaceholder);
   languageBtn.textContent = state.language === "zh" ? t("switchToEnglish") : t("switchToChinese");
+  document.querySelector("#nativeLanguageBtn span").textContent = languageBtn.textContent;
+  document.querySelector("#nativeRailLanguageBtn span").textContent = languageBtn.textContent;
   pairingQr.alt = t("pairingQrAlt");
   document.querySelector("#closePairingBtn").setAttribute("aria-label", t("close"));
   document.querySelector("#closePairingBtn").title = t("close");
@@ -239,6 +242,7 @@ function clearCardView() {
   state.networkKind = "";
   renderEuiccInventory({ eids: [], probes: [], candidatesChecked: 0 });
   state.smsActiveSender = null; state.smsQuery = ""; state.smsNewDraft = false; state.smsStorage = null;
+  setNativeSmsPane(false);
   for (const id of ["smsNumberInput", "smsMessageInput", "smsSearchInput"]) document.getElementById(id).value = "";
   renderSms("");
   document.querySelector("#smsCount").textContent = "0";
@@ -253,7 +257,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   renderConnectionState();
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
-    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #newSmsBtn, #smsPollingBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog")) {button.disabled = false; continue;}
+    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
     if (button.id === "clearBtn" || button.closest("#calls") || button.closest("#pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
@@ -266,7 +270,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
                   : button.dataset.ussd ? isBusy || !state.ussdEnabled
                   : button.dataset.usbMode ? isBusy || !state.usbModeEnabled
                     : button.dataset.driverInstall ? isBusy || !state.driverInstallEnabled || button.dataset.driverEligible !== "1" || button.dataset.driverReady === "1"
-                      : button.dataset.euiccSelect ? isBusy || button.dataset.euiccSelect === state.activeEid : isBusy;
+                      : button.dataset.euiccSelect ? isBusy || (!nativeCompanion && button.dataset.euiccSelect === state.activeEid) : isBusy;
     if (button.dataset.stockAction) button.disabled = isBusy || !state.stockBootstrapEnabled;
   }
   syncCallButtons(); updateSmsComposer(); renderCallGuidance();
@@ -450,6 +454,7 @@ function selectEuicc(eid) {
   if (state.busy) return;
   const item = state.euiccInventory.find((entry) => entry.eid === eid);
   if (!item || item.eid === state.activeEid) return;
+  const restoreFocus = nativeCompanion && document.activeElement?.dataset.euiccSelect === eid;
   state.activeEid = item.eid;
   state.activeAid = item.aid;
   state.profileText = "";
@@ -461,6 +466,7 @@ function selectEuicc(eid) {
   notifications.className = "notification-list empty";
   notifications.textContent = t("noNotifications");
   renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
+  if (restoreFocus) document.querySelector(`[data-euicc-select="${CSS.escape(eid)}"]`)?.focus({ preventScroll: true });
 }
 
 async function renameEuicc(eid) {
@@ -515,6 +521,12 @@ function renderEuiccInventory(data) {
   inventory.innerHTML = items.map((item, index) => {
     const selected = item.eid === state.activeEid;
     const label = euiccDisplayLabel(item, index);
+    if (nativeCompanion) {
+      return `<button class="euicc-slot-card ${selected ? "active" : ""}" data-euicc-select="${escapeHtml(item.eid)}" aria-pressed="${selected}" ${state.busy ? "disabled" : ""}>
+        <span class="euicc-slot-top"><strong>${escapeHtml(label)}</strong><span class="euicc-selection-mark" aria-hidden="true">${selected ? '<i data-lucide="check"></i>' : ""}</span></span>
+        <span class="euicc-slot-copy"><code>EID ${escapeHtml(shortEid(item.eid))}</code><span class="euicc-slot-count">${escapeHtml(Array.isArray(item.profiles) ? t("compactProfiles", {count:item.profiles.length, active:item.profiles.filter(p => p.profileState === "enabled").length}) : t("profilesReadFailed"))}</span></span>
+      </button>`;
+    }
     return `<article class="euicc-slot-card ${selected ? "active" : ""}">
       <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code title="${escapeHtml(item.eid)}">${escapeHtml(shortEid(item.eid))}</code><span class="euicc-slot-count">${escapeHtml(Array.isArray(item.profiles) ? t("compactProfiles", {count:item.profiles.length, active:item.profiles.filter(p => p.profileState === "enabled").length}) : t("profilesReadFailed"))}</span></div>
       <button data-euicc-select="${escapeHtml(item.eid)}" aria-pressed="${selected}" ${selected || state.busy ? "disabled" : ""}>${escapeHtml(selected ? t("viewing") : t("viewProfiles"))}</button>
@@ -522,6 +534,7 @@ function renderEuiccInventory(data) {
   }).join("");
   for (const button of inventory.querySelectorAll("[data-euicc-select]")) button.addEventListener("click", () => selectEuicc(button.dataset.euiccSelect));
   for (const button of inventory.querySelectorAll("[data-euicc-label]")) button.addEventListener("click", () => renameEuicc(button.dataset.euiccLabel));
+  if (nativeCompanion) window.lucide?.createIcons();
   renderActiveEuicc();
 }
 
@@ -600,16 +613,16 @@ function renderProfileItems(profiles) {
     const provider = escapeHtml(profile.serviceProviderName || profile.profileName || "");
     const profileClass = escapeHtml(profile.profileClass || "operational");
     const actionLabel = enabled ? t("disable") : t("switchProfile");
+    const actionButton = `<button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>`;
     return `<article class="profile-card ${enabled ? "active" : ""}">
       <div class="profile-card-head">
-        <div class="profile-title"><span>${provider}</span><strong>${title}</strong></div>
+        <div class="profile-title"><span>${nativeCompanion && provider === title ? "" : provider}</span><strong>${title}</strong></div>
         <span class="profile-state ${enabled ? "active" : "inactive"}">${enabled ? t("currentProfile") : t("inactiveProfile")}</span>
       </div>
-      <div class="profile-actions profile-primary-actions">
-        <button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>
-      </div>
+      ${nativeCompanion && enabled ? "" : `<div class="profile-actions profile-primary-actions">${actionButton}</div>`}
       <details class="profile-more">
       <summary>${escapeHtml(t("moreProfile"))}</summary>
+      ${nativeCompanion && enabled ? `<div class="profile-actions">${actionButton}</div>` : ""}
       <div class="profile-detail-grid">
         <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${id}</code></div>
         <div><span>${escapeHtml(t("profileClassLabel"))}</span><strong>${profileClass}</strong></div>
@@ -863,7 +876,7 @@ function updateSmsComposer() {
   button.disabled = state.busy || state.smsSending || !state.smsSendEnabled || !state.atPort || state.cardReady === false || !validNumber || !message.trim() || message.length > 480;
   button.title = !state.smsSendEnabled ? t("smsSendLocked") : !validNumber || !message.trim() ? t("invalidSms") : t("smsShortcut");
   document.querySelector("#smsCharacterCount").textContent = `${message.length} / 480`;
-  document.querySelector("#smsDraftHint").textContent = t(message ? "draftKept" : "smsShortcut");
+  document.querySelector("#smsDraftHint").textContent = message ? t("draftKept") : nativeCompanion ? "" : t("smsShortcut");
   const input = document.querySelector("#smsNumberInput");
   input.setAttribute("aria-invalid", String(Boolean(number) && !validNumber));
   const replying = !state.smsNewDraft && Boolean(state.smsActiveSender) && validNumber;
@@ -877,6 +890,16 @@ function renderSmsRefreshState() {
   const button = document.querySelector("#smsPollingBtn");
   button.textContent = t(state.smsPolling ? "pauseSmsRefresh" : "resumeSmsRefresh");
   button.setAttribute("aria-pressed", String(state.smsPolling));
+  if (nativeCompanion) {
+    button.title = button.textContent;
+    button.setAttribute("aria-label", button.textContent);
+    button.classList.add("native-icon-button");
+    const icon = document.createElement("i");
+    icon.dataset.lucide = state.smsPolling ? "pause" : "play";
+    icon.setAttribute("aria-hidden", "true");
+    button.replaceChildren(icon);
+    window.lucide?.createIcons();
+  }
   const time = state.smsLastRead ? new Date(state.smsLastRead).toLocaleTimeString(state.language === "zh" ? "zh-CN" : "en-GB", {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "";
   document.querySelector("#smsRefreshState").textContent = state.smsRefreshing ? t("smsRefreshing") : state.smsReadError ? t("smsRefreshFailed") : time ? t(state.smsPolling ? "smsLastSynced" : "smsSyncPaused", {time}) : t("smsNotSynced");
   document.querySelector("#smsRetryBtn").hidden = !state.smsReadError;
@@ -908,7 +931,9 @@ function renderCallGuidance() {
   const hasDevice = Boolean(state.atPort) && state.cardReady !== false;
   let key = !hasDevice ? "callConnectFirst" : !state.callActionsEnabled ? "callControlsLocked" : !state.callStatusData ? "callChecking" : call ? "callInProgressHint" : "callReadyFeedback";
   if (hasDevice && state.callStatusReadError) key = "callReadFailed";
-  document.querySelector("#callAvailability").textContent = t(key);
+  const availability = document.querySelector("#callAvailability");
+  availability.textContent = t(key);
+  availability.hidden = nativeCompanion && key === "callReadyFeedback";
   if (!call) document.querySelector("#callStateLabel").textContent = t(!hasDevice ? "cardNotConnected" : !state.callActionsEnabled ? "callReadOnly" : !state.callStatusData ? "callChecking" : "callIdle");
   if (!call && state.callStatusReadError) document.querySelector("#callStateLabel").textContent = t("callStatusUncertain");
   document.querySelector(".call-inline-control").hidden = !call || !["active", "held"].includes(call.state);
@@ -1001,7 +1026,7 @@ function renderSms(text, data = {}) {
     const draft = state.smsDrafts.get(sender)?.message;
     const preview = messages.length ? decodeSmsBody(messages.at(-1)[2]) : t("draftKept");
     return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${escapeHtml(sender || t("unknown"))}</strong><small>${escapeHtml(preview)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
-  }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t("noSms"));
+  }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t(nativeCompanion && state.smsLastRead ? "smsEmpty" : "noSms"));
   if (threads.dataset.markup !== threadHtml) {
     threads.innerHTML = threadHtml; threads.dataset.markup = threadHtml;
     for (const button of threads.querySelectorAll("[data-sms-thread]")) button.addEventListener("click", () => selectSmsConversation(button.dataset.smsThread));
@@ -1017,7 +1042,18 @@ function renderSms(text, data = {}) {
   if (list.dataset.markup !== markup) {
     list.innerHTML = markup; list.dataset.markup = markup;
     for (const button of list.querySelectorAll("[data-copy-code]")) button.addEventListener("click", async () => {try {await navigator.clipboard.writeText(button.dataset.copyCode); button.textContent = t("copied");} catch {setSmsFeedback("copyCodeFailed", "error");}});
-    for (const button of list.querySelectorAll("[data-sms-delete]")) button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
+    for (const button of list.querySelectorAll("[data-sms-delete]")) {
+      button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
+      if (nativeCompanion) {
+        button.title = t(state.smsDeleteEnabled ? "deleteSms" : "smsDeleteLocked");
+        button.setAttribute("aria-label", `${t("deleteSms")} · ${t("smsMessageNumber", {value: button.dataset.smsDelete})}`);
+        const icon = document.createElement("i");
+        icon.dataset.lucide = "trash-2";
+        icon.setAttribute("aria-hidden", "true");
+        button.replaceChildren(icon);
+      }
+    }
+    if (nativeCompanion) window.lucide?.createIcons();
     if (wasAtBottom) list.scrollTop = list.scrollHeight;
   }
   updateSmsComposer(); renderSmsRefreshState();
@@ -1030,8 +1066,26 @@ function selectSmsConversation(sender) {
   document.querySelector("#smsNumberInput").value = draft?.number ?? sender ?? "";
   document.querySelector("#smsMessageInput").value = draft?.message ?? "";
   setSmsFeedback(null); renderSms(state.smsText);
+  setNativeSmsPane(true);
+  if (nativeCompanion) resetViewScroll();
   const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
-  document.querySelector(sender === null ? "#smsNumberInput" : "#smsMessageInput").focus();
+  document.querySelector(sender === null ? "#smsNumberInput" : nativeCompanion ? "#smsConversationTitle" : "#smsMessageInput").focus({preventScroll: nativeCompanion});
+}
+
+function setNativeSmsPane(open) {
+  if (!nativeCompanion) return;
+  state.smsConversationOpen = open;
+  document.querySelector("#sms").classList.toggle("native-sms-detail", open);
+}
+
+function returnToSmsThreads() {
+  if (!nativeCompanion) return;
+  saveSmsDraft();
+  setNativeSmsPane(false);
+  renderSms(state.smsText);
+  const thread = [...document.querySelectorAll("[data-sms-thread]")].find(button => button.dataset.smsThread === state.smsActiveSender);
+  (state.smsNewDraft ? document.querySelector("#newSmsBtn") : thread || document.querySelector("#smsSearchInput")).focus({preventScroll: true});
+  resetViewScroll();
 }
 
 async function sendSmsMessage() {
@@ -1201,7 +1255,7 @@ async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs 
 }
 
 const moduleAudioPattern = /(quectel|qdc507|baiwang|ac interface|as interface)/i;
-const localAudioBridgeHost = ["127.0.0.1", "localhost", "::1"].includes(location.hostname);
+const localAudioBridgeHost = !nativeCompanion && ["127.0.0.1", "localhost", "::1"].includes(location.hostname);
 
 function isModuleAudioDevice(device) {
   return moduleAudioPattern.test(String(device?.label || ""));
@@ -2165,6 +2219,43 @@ tokenInput.addEventListener("change", () => {
   if (!nativeCompanion) localStorage.setItem("consoleToken", tokenInput.value.trim());
 });
 languageBtn.addEventListener("click", () => { state.language = state.language === "zh" ? "en" : "zh"; localStorage.setItem("uiLanguage", state.language); applyLanguage(); });
+if (nativeCompanion) {
+  const details = document.querySelector("#nativeDeviceDetails");
+  details.hidden = false;
+  // Reuse the live metric nodes so polling and language updates keep one source of truth.
+  for (const id of ["vidPid", "atPort", "netState", "temperatureValue"]) {
+    document.querySelector("#nativeDeviceMetrics").append(document.getElementById(id).closest(".metric"));
+  }
+  document.querySelector("#nativeSmsBackBtn").hidden = false;
+  document.querySelector("#nativeSmsBackBtn").addEventListener("click", returnToSmsThreads);
+  document.querySelector("#sms .sms-workspace").before(document.querySelector("#smsStorageWarning"));
+  const networkDetails = document.querySelector("#nativeNetworkDetails");
+  networkDetails.hidden = false;
+  const adapter = document.querySelector("#nativeNetworkAdapter");
+  adapter.hidden = false;
+  adapter.append(document.querySelector("#trafficAdapter").closest(".network-metric"));
+  for (const id of ["trafficIpv4", "trafficGateway", "trafficDriver", "trafficDhcp"]) {
+    document.querySelector("#nativeNetworkMetrics").append(document.getElementById(id).closest(".network-metric"));
+  }
+  networkDetails.append(document.querySelector("#network .driver-panel"));
+  const callWorkspace = document.querySelector(".call-workspace");
+  const callSections = [".call-stage", ".dialer-panel", ".call-history-panel", ".voice-setup-panel", ".call-capability-panel"].map(selector => document.querySelector(selector));
+  callWorkspace.replaceChildren(...callSections);
+  document.querySelector("#nativeCallAudioNote").hidden = false;
+  const more = document.querySelector("#nativeMoreBtn");
+  const dialog = document.querySelector("#nativeToolsDialog");
+  more.hidden = false;
+  more.addEventListener("click", () => { dialog.showModal(); more.setAttribute("aria-expanded", "true"); });
+  dialog.addEventListener("close", () => more.setAttribute("aria-expanded", "false"));
+  dialog.addEventListener("click", event => {
+    const rect = dialog.getBoundingClientRect();
+    if (event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) dialog.close();
+  });
+  document.querySelector("#nativeLanguageBtn").addEventListener("click", () => languageBtn.click());
+  const railLanguage = document.querySelector("#nativeRailLanguageBtn");
+  railLanguage.hidden = false;
+  railLanguage.addEventListener("click", () => languageBtn.click());
+}
 for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action));
 function selectView(target, updateHash = false) {
   const button = document.querySelector(`.nav-btn[data-target="${target}"]`);
@@ -2176,6 +2267,15 @@ function selectView(target, updateHash = false) {
   view.classList.add("active");
   showFeedback("");
   document.querySelectorAll(".nav-btn").forEach(item => item.setAttribute("aria-current", item === button ? "page" : "false"));
+  if (nativeCompanion) {
+    if (target !== "sms") setNativeSmsPane(false);
+    const more = document.querySelector("#nativeMoreBtn");
+    const secondaryView = ["network", "atlab", "system"].includes(target);
+    more.classList.toggle("active", secondaryView);
+    more.setAttribute("aria-current", secondaryView ? "page" : "false");
+    const dialog = document.querySelector("#nativeToolsDialog");
+    if (dialog.open) dialog.close();
+  }
   if (updateHash) { history.replaceState(null, "", `#${target}`); resetViewScroll(); }
   if (target === "calls" && !state.callMonitoring) toggleCallMonitoring(true);
   if (target === "calls" && !state.callCapabilityData) refreshVoiceSetup();

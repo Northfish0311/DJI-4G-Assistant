@@ -1,0 +1,255 @@
+/* Only the native companion surface changes; Windows keeps its desktop layout. */
+.native-more-btn, .native-rail-language { display: none; }
+html.native-companion {
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: #edf3ff;
+  --ink: #202832;
+  --muted: #697586;
+  --line: #e3e7ed;
+  --bg: #f7f8fa;
+}
+html.native-companion body { background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, Roboto, "Noto Sans SC", "Microsoft YaHei UI", "Segoe UI", sans-serif; }
+html.native-companion body * { letter-spacing: 0; }
+html.native-companion .shell { width: 100%; max-width: 1240px; margin: 0 auto; padding: 20px 20px 32px; gap: 24px; }
+html.native-companion .content { min-width: 0; padding: 0; gap: 24px; }
+html.native-companion .view { gap: 24px; }
+html.native-companion .view-heading { display: flex; flex-direction: row; justify-content: space-between; align-items: center; gap: 16px; min-height: 48px; margin: 0; padding: 0; border: 0; text-align: left; }
+html.native-companion .view-heading > div:first-child { flex: 1; min-width: 0; }
+html.native-companion .view-heading h2 { font-size: 24px; line-height: 1.4; font-weight: 700; }
+html.native-companion .view-heading .eyebrow { display: none; }
+html.native-companion .view-heading .panel-subtitle { margin: 4px 0 0; font-size: 13px; }
+html.native-companion .view-heading .view-actions { display: flex; flex-direction: row; flex-shrink: 0; gap: 8px; }
+html.native-companion button { border-radius: 8px; box-shadow: none; font-size: 14px; }
+html.native-companion button.secondary { color: var(--ink); background: #fff; border-color: var(--line); }
+html.native-companion button:focus-visible, html.native-companion summary:focus-visible { outline-color: var(--accent); }
+html.native-companion input, html.native-companion textarea { background: #fff; border-color: #d8dfe8; color: var(--ink); font-size: 16px; }
+html.native-companion .panel, html.native-companion .overview-panel, html.native-companion .euicc-library-band, html.native-companion .active-euicc-band { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+html.native-companion .panel-head { min-height: 0; padding: 0 0 14px; border: 0; }
+html.native-companion .panel-head h2 { font-size: 16px; font-weight: 650; }
+html.native-companion .native-icon-button { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 1px solid var(--line); background: #fff; color: var(--ink); }
+html.native-companion .native-icon-button svg { width: 20px; height: 20px; }
+html.native-companion .hero-panel { display: grid; grid-template-columns: 44px minmax(0,1fr); align-items: center; gap: 8px 12px; min-height: 0; padding: 0 0 20px; border: 0; background: transparent; text-align: left; }
+html.native-companion .device-glyph { display: grid; grid-row: 1 / 3; width: 44px; height: 52px; border: 1px solid #dce3ed; border-radius: 8px; background: #fff; color: #516278; }
+html.native-companion .device-glyph svg { width: 26px; height: 26px; color: inherit; }
+html.native-companion .hero-device-copy h2 { font-size: 18px; line-height: 1.5; color: var(--ink); }
+html.native-companion .hero-device-copy #deviceSubtitle { margin: 3px 0 0; font-size: 12px; color: var(--muted); line-height: 1.5; overflow-wrap: anywhere; }
+html.native-companion .hero-panel .connection-badge { grid-column: 2; justify-self: start; margin: 0; padding: 3px 8px; border: 0; border-radius: 4px; background: #edf0f4; color: #596577; font-size: 12px; line-height: 1.6; }
+html.native-companion .hero-panel .connection-badge.registered, html.native-companion .hero-panel .connection-badge.online { color: #12654c; background: #e7f5ee; }
+html.native-companion .metric-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--line); }
+html.native-companion .metric-grid .metric { min-width: 0; min-height: 92px; padding: 16px; border: 0; border-radius: 0; background: #fff; }
+html.native-companion .metric-grid .metric:has(#carrierValue) { order: -2; }
+html.native-companion .metric-grid .metric:has(#radioValue) { order: -1; }
+html.native-companion .metric-grid .signal-metric { grid-column: auto; }
+html.native-companion .metric-grid .metric > span { font-size: 12px; color: var(--muted); }
+html.native-companion .metric-grid .metric strong { font-size: 17px; line-height: 1.5; font-weight: 650; margin-top: 6px; overflow-wrap: anywhere; color: var(--ink); }
+html.native-companion .action-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 0; }
+html.native-companion .action-grid button { display: flex; justify-content: flex-start; align-items: center; gap: 12px; min-height: 64px; padding: 14px; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 8px; text-align: left; }
+html.native-companion .action-grid button svg { width: 22px; height: 22px; margin: 0; flex-shrink: 0; color: #3e6cc0; }
+html.native-companion .action-grid [data-open-view="sms"] svg { color: #a26b26; }
+html.native-companion .action-grid [data-open-view="calls"] svg { color: #168567; }
+html.native-companion .disclosure-panel { border-top: 1px solid var(--line); }
+html.native-companion .disclosure-panel > summary { padding: 16px 0; min-height: 52px; }
+html.native-companion .disclosure-panel > summary strong { font-size: 14px; font-weight: 550; }
+html.native-companion .disclosure-panel .summary-kicker { display: none; }
+html.native-companion .native-device-metrics { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; padding: 0 0 16px; }
+html.native-companion .native-device-metrics .metric { padding: 0; border: 0; min-height: 56px; border-radius: 0; background: transparent; }
+html.native-companion .native-device-metrics .metric strong { font-size: 14px; overflow-wrap: anywhere; }
+html.native-companion .native-device-metrics .metric > span { font-size: 12px; color: var(--muted); }
+html.native-companion .output-panel { opacity: 1; }
+html.native-companion .euicc-library-band .section-heading-row { padding: 0 0 12px; display: flex; flex-wrap: wrap; gap: 8px; border: 0; }
+html.native-companion .section-heading-row strong { font-size: 14px; }
+html.native-companion #euiccProbeState { display: none; }
+html.native-companion .euicc-slot-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); padding: 0; gap: 10px; }
+html.native-companion .euicc-slot-card { width: 100%; min-width: 0; min-height: 104px; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; gap: 10px; padding: 14px; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); box-shadow: none; }
+html.native-companion .euicc-slot-card.active { border-color: #6693e9; background: #edf3ff; box-shadow: inset 0 0 0 1px #6693e9; }
+html.native-companion .euicc-slot-card:hover:not(:disabled) { background: #f0f5ff; }
+html.native-companion .euicc-slot-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+html.native-companion .euicc-slot-top strong { font-size: 14px; line-height: 1.5; font-weight: 650; overflow-wrap: anywhere; }
+html.native-companion .euicc-selection-mark { flex: 0 0 18px; width: 18px; height: 18px; color: #2563eb; }
+html.native-companion .euicc-selection-mark svg { width: 18px; height: 18px; }
+html.native-companion .euicc-slot-copy { display: grid; gap: 5px; }
+html.native-companion .euicc-slot-copy code { font-size: 11px; color: #697586; overflow-wrap: anywhere; white-space: normal; }
+html.native-companion .euicc-slot-count { font-size: 12px; line-height: 1.6; color: #536175; }
+html.native-companion .viewing-hint { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+html.native-companion #euiccReadStatus { padding: 0; margin: 6px 0 0; font-size: 11px; color: var(--muted); }
+html.native-companion .esim-workspace { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; }
+html.native-companion .profile-panel > .panel-head { padding-bottom: 12px; }
+html.native-companion .active-euicc-band { margin: 0 0 14px; padding: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+html.native-companion .active-euicc-heading { padding: 12px 0; display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; text-align: left; }
+html.native-companion .active-euicc-heading > div { flex: 1; min-width: 0; }
+html.native-companion .active-euicc-heading::after { flex: 0 0 18px; }
+html.native-companion .active-euicc-heading h3 { margin: 3px 0 0; font-size: 14px; }
+html.native-companion .active-euicc-heading .summary-kicker { font-size: 11px; color: var(--muted); }
+html.native-companion .profile-panel .profile-list { grid-template-columns: minmax(0,1fr); padding: 0; gap: 12px; }
+html.native-companion .profile-card { padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; box-shadow: none; }
+html.native-companion .profile-card.active { border-color: #81bca7; box-shadow: inset 3px 0 #24936d; }
+html.native-companion .profile-card-head { padding: 16px; gap: 10px; align-items: center; }
+html.native-companion .profile-title strong { font-size: 16px; line-height: 1.6; }
+html.native-companion .profile-title span { font-size: 12px; color: var(--muted); }
+html.native-companion .profile-title span:empty { display: none; }
+html.native-companion .profile-state { border-radius: 4px; font-size: 11px; white-space: normal; }
+html.native-companion .profile-state.active { color: #156e50; background: #e9f6ef; }
+html.native-companion .profile-state.inactive { color: #687382; background: #f0f2f5; }
+html.native-companion .profile-primary-actions { padding: 0 16px 12px; }
+html.native-companion .profile-primary-actions button { width: 100%; margin: 0; }
+html.native-companion .profile-more > summary { padding: 12px 16px; min-height: 44px; font-size: 12px; }
+html.native-companion .tool-stack { grid-template-columns: minmax(0,1fr); gap: 0; }
+html.native-companion .tool-stack > .panel { border-top: 1px solid var(--line); }
+html.native-companion .tool-stack > .panel > summary { padding: 16px 0; }
+html.native-companion .sms-workspace { grid-template-columns: minmax(0,1fr); gap: 20px; }
+html.native-companion .sms-threads { padding: 0; max-height: none; overflow: visible; }
+html.native-companion .sms-search { padding: 0 0 12px; }
+html.native-companion .sms-thread { min-height: 84px; padding: 16px 0; gap: 12px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+html.native-companion .sms-thread .thread-avatar { width: 40px; height: 40px; background: #eef1f6; color: #5a6a81; font-size: 13px; }
+html.native-companion .sms-thread .thread-copy { gap: 7px; }
+html.native-companion .sms-thread .thread-copy strong { font-size: 15px; font-weight: 600; }
+html.native-companion .sms-thread .thread-copy small { font-size: 13px; line-height: 1.6; }
+html.native-companion .sms-thread[aria-pressed="true"] { background: #edf3ff !important; border-color: #d5e2fc; }
+html.native-companion .sms-conversation { min-width: 0; border: 0; border-radius: 0; background: transparent; gap: 0; }
+html.native-companion .sms-inbox-panel > .panel-head { display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 0 0 16px; }
+html.native-companion .sms-inbox-panel > .panel-head > div { min-width: 0; }
+html.native-companion #smsConversationTitle { font-size: 17px; overflow-wrap: anywhere; }
+html.native-companion .sms-conversation .sms-list { background: transparent; padding: 12px 0 20px; min-height: 140px; max-height: 50dvh; gap: 16px; }
+html.native-companion .sms-conversation .sms-card { width: min(94%,520px); padding: 16px; border: 1px solid #e0e5ec; border-radius: 8px; background: #fff; box-shadow: none; }
+html.native-companion .sms-conversation .sms-card.outgoing { align-self: end; margin-left: auto; background: #edf3ff; border-color: #d6e3fc; }
+html.native-companion .sms-card-head { gap: 8px; }
+html.native-companion .sms-contact { display: none; }
+html.native-companion .sms-card .sms-status { background: transparent; padding: 0; }
+html.native-companion .sms-card > time { font-size: 11px; margin-top: 5px; color: var(--muted); }
+html.native-companion .sms-card-foot { display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding-top: 8px; margin-top: 10px; border-top: 1px solid #dfe5ee; }
+html.native-companion .sms-card-foot > span { font-size: 11px; }
+html.native-companion .sms-card-foot button { display: grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; min-height: 40px; padding: 0; border: 0; background: transparent; }
+html.native-companion .sms-card-foot button svg { width: 17px; height: 17px; }
+html.native-companion .sms-conversation .sms-compose-panel { padding: 16px 0 0; border-top: 1px solid var(--line); }
+html.native-companion .sms-compose-panel > .panel-head { display: none; }
+html.native-companion .sms-compose-panel .form-grid { padding: 0; }
+html.native-companion .sms-compose-panel .panel-actions { padding: 12px 0 0; }
+html.native-companion .sms-conversation .sms-body { font-size: 16px; line-height: 1.8; margin: 12px 0; }
+html.native-companion .sms-send-row { display: flex; align-items: center; gap: 12px; }
+html.native-companion .sms-send-row #sendSmsBtn { width: auto; min-height: 44px; flex-shrink: 0; }
+html.native-companion .sms-reply-target { font-size: 12px; min-width: 0; overflow-wrap: anywhere; }
+html.native-companion .sms-compose-meta { padding: 10px 0 0; font-size: 11px; }
+html.native-companion .sms-sync-line { font-size: 11px; line-height: 1.6; }
+html.native-companion #smsPollingBtn[aria-pressed="true"] { color: #2563eb; background: #edf3ff; border-color: #d8e4fc; }
+html.native-companion #smsStorageWarning { margin: 0; }
+html.native-companion #smsStorageWarning.healthy { padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 12px; }
+html.native-companion .native-call-audio-note { display: flex; gap: 10px; align-items: flex-start; margin: -8px 0 0; color: #697586; font-size: 12px; line-height: 1.6; }
+html.native-companion .native-call-audio-note svg { flex: 0 0 18px; width: 18px; height: 18px; }
+html.native-companion #calls > .view-heading .panel-subtitle { display: none; }
+html.native-companion .call-workspace { display: grid; grid-template-columns: minmax(0,1fr); gap: 24px; }
+html.native-companion .call-workspace:has(.call-stage:not([data-state="idle"])) .dialer-panel { display: none; }
+html.native-companion .call-stage { min-height: 0; padding: 16px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+html.native-companion .call-state-line { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; }
+html.native-companion .call-state-line strong { font-size: 14px; }
+html.native-companion #callDirectionLabel { font-size: 12px; color: var(--muted); margin-left: auto; }
+html.native-companion #callAvailability { padding: 0; margin: 8px 0 0; font-size: 12px; }
+html.native-companion .call-next-step { margin: 12px 0 0; padding: 0; border: 0; background: transparent; }
+html.native-companion .call-next-step:has([data-next="dial"]) { display: none; }
+html.native-companion .call-identity { margin: 24px 0; padding: 0; gap: 10px; }
+html.native-companion .call-avatar { width: 56px; height: 56px; font-size: 15px; background: #e7f5ee; color: #1a7a56; }
+html.native-companion #callNumber { font-size: 26px; line-height: 1.5; overflow-wrap: anywhere; }
+html.native-companion .call-primary-actions { padding: 0; gap: 12px; }
+html.native-companion .call-primary-actions button { min-height: 48px; flex: 1; }
+html.native-companion .call-inline-control { padding: 16px 0 0; gap: 8px; }
+html.native-companion .call-audio-actions { display: none; }
+html.native-companion .dialer-panel { width: 100%; max-width: 380px; margin: 0 auto; padding: 0; }
+html.native-companion .dialer-panel > .panel-head { padding: 0; }
+html.native-companion .dial-number-row { padding: 6px 0 0; }
+html.native-companion #callNumberInput { min-height: 56px; padding: 12px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; text-align: center; font-size: 24px; }
+html.native-companion #callNumberInput::placeholder { font-size: 14px; }
+html.native-companion #callFeedback { margin: 8px 0 12px; padding: 0; min-height: 20px; border: 0; font-size: 12px; text-align: center; }
+html.native-companion .dial-pad { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); grid-auto-rows: 64px; justify-items: center; gap: 10px; padding: 0; }
+html.native-companion .dial-key { width: 64px; height: 64px; min-height: 0; padding: 6px; border: 0; border-radius: 50%; background: #eef1f5; color: #263244; }
+html.native-companion .dial-key:hover:not(:disabled) { background: #e2e9f4; }
+html.native-companion .dial-key strong { font-size: 25px; font-weight: 500; line-height: 1.1; }
+html.native-companion .dial-key span { font-size: 10px; color: #68758a; line-height: 1.4; }
+html.native-companion .dial-actions { padding: 12px 0 0; }
+html.native-companion #dialCallBtn { width: 100%; min-height: 48px; background: #17835e; color: #fff; border: 0; }
+html.native-companion .call-history-panel, html.native-companion .call-capability-panel { padding: 0; }
+html.native-companion .call-history { padding: 0; }
+html.native-companion .call-history.empty { padding: 20px 0; background: transparent; border-top: 1px solid var(--line); border-radius: 0; }
+html.native-companion .call-capability-panel { border-top: 1px solid var(--line); }
+html.native-companion .network-metric-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #fff; }
+html.native-companion .network-metric { grid-column: auto; grid-row: auto; min-width: 0; padding: 18px 14px; border: 0; border-radius: 0; background: transparent; }
+html.native-companion #network .flat-section > .hint { margin-inline: 0; }
+html.native-companion .network-metric strong { font-size: 20px; line-height: 1.5; overflow-wrap: anywhere; }
+html.native-companion .network-metric span { font-size: 12px; color: var(--muted); }
+html.native-companion .network-metric-grid .network-metric:nth-child(odd) { border-right: 1px solid var(--line); }
+html.native-companion .network-metric-grid .network-metric:nth-child(n+3) { border-top: 1px solid var(--line); }
+html.native-companion #trafficRxRate { color: #2563eb; font-size: 24px; }
+html.native-companion #trafficTxRate { color: #168467; font-size: 24px; }
+html.native-companion .native-network-adapter .network-metric { padding: 0 0 20px; }
+html.native-companion .native-network-adapter strong { font-size: 14px; }
+html.native-companion .native-network-details { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; padding-bottom: 24px; }
+html.native-companion .native-network-details .network-metric { padding: 0; }
+html.native-companion .native-network-details strong { font-size: 14px; }
+html.native-companion #nativeNetworkDetails .driver-panel { padding: 16px 0; border-top: 1px solid var(--line); }
+html.native-companion .native-tools-dialog { width: min(440px,calc(100% - 24px)); max-height: min(80vh,600px); padding: 20px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; }
+html.native-companion .native-tools-dialog::backdrop { background: #16203266; }
+html.native-companion .native-tools-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; }
+html.native-companion .native-tools-heading h2 { margin: 0; font-size: 20px; }
+html.native-companion .native-tools-heading form { margin: 0; }
+html.native-companion .native-tools-list { display: grid; gap: 4px; }
+html.native-companion .native-tools-list button { display: flex; align-items: center; gap: 14px; padding: 14px 8px; min-height: 56px; width: 100%; border: 0; text-align: left; }
+html.native-companion .native-tools-list button span { flex: 1; }
+html.native-companion .native-tools-list svg { width: 20px; height: 20px; flex-shrink: 0; color: #637287; }
+html.native-companion .native-tools-list svg:last-child { width: 16px; height: 16px; }
+@media (max-width: 719px) {
+  html.native-companion #sms:not(.native-sms-detail) .sms-conversation { display: none; }
+  html.native-companion #sms.native-sms-detail > .view-heading, html.native-companion #sms.native-sms-detail .sms-threads-panel, html.native-companion #sms.native-sms-detail .ussd-panel { display: none; }
+  html.native-companion #sms.native-sms-detail > #smsStorageWarning.healthy { display: none; }
+  html.native-companion .sms-thread[aria-pressed="true"] { background: transparent !important; }
+  html.native-companion { scroll-padding-top: 16px; scroll-padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  html.native-companion .shell { display: block; padding: 20px 16px calc(100px + env(safe-area-inset-bottom)); }
+  html.native-companion .rail { position: fixed; inset: auto 0 0; z-index: 40; width: 100%; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); align-items: stretch; gap: 0; margin: 0; padding: 6px max(6px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left)); border: 0; border-top: 1px solid var(--line); background: #fff; backdrop-filter: none; overflow: visible; }
+  html.native-companion .rail .nav-btn, html.native-companion .rail .native-more-btn { position: static; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; min-width: 0; min-height: 58px; padding: 7px 2px; margin: 0; color: #727d8c; background: transparent; border: 0; border-radius: 8px; box-shadow: none; }
+  html.native-companion .rail [data-target="network"], html.native-companion .rail [data-target="atlab"], html.native-companion .rail [data-target="system"] { display: none; }
+  html.native-companion .rail [data-target="overview"] { order: 0; }
+  html.native-companion .rail [data-target="euicc"] { order: 1; }
+  html.native-companion .rail [data-target="sms"] { order: 2; }
+  html.native-companion .rail [data-target="calls"] { order: 3; }
+  html.native-companion .rail .native-more-btn { order: 4; }
+  html.native-companion .rail .nav-btn.active, html.native-companion .rail .native-more-btn.active { color: #2159bd; background: #edf3ff; }
+  html.native-companion .rail .nav-btn > svg, html.native-companion .rail .native-more-btn > svg { display: block; width: 21px; height: 21px; }
+  html.native-companion .rail .nav-title { font-size: 11px; line-height: 1.4; font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+  html.native-companion .rail .nav-subtitle { display: none; }
+  html.native-companion .native-tools-dialog { margin: auto auto max(12px,env(safe-area-inset-bottom)); }
+}
+@media (min-width: 720px) {
+  html.native-companion #nativeSmsBackBtn { display: none; }
+  html.native-companion .sms-workspace { grid-template-columns: minmax(180px,0.8fr) minmax(0,1.4fr); gap: 24px; align-items: start; }
+  html.native-companion .sms-threads { max-height: 65dvh; overflow: auto; }
+  html.native-companion .sms-thread { grid-template-columns: minmax(0,1fr) auto; padding: 12px 8px; gap: 8px; }
+  html.native-companion .sms-thread .thread-count { min-width: 22px; width: auto; padding: 2px 6px; }
+  html.native-companion .sms-thread .thread-avatar { display: none; }
+  html.native-companion .shell { display: grid; grid-template-columns: 100px minmax(0,1fr); }
+  html.native-companion .rail { position: sticky; top: 20px; display: grid; grid-template-columns: minmax(0,1fr); grid-auto-flow: row; grid-auto-rows: min-content; align-content: start; align-self: start; height: auto; gap: 8px; margin: 0; padding: 0; overflow: visible; border: 0; background: transparent; backdrop-filter: none; }
+  html.native-companion .rail .nav-btn { display: flex; flex-direction: column; gap: 7px; align-items: center; justify-content: center; width: 100%; min-width: 0; min-height: 76px; padding: 12px 4px; margin: 0; border: 0; border-radius: 8px; background: transparent; color: #697586; box-shadow: none; }
+  html.native-companion .rail .nav-btn.active { background: #e8effe; color: #2159bd; }
+  html.native-companion .rail .nav-btn::before, html.native-companion .rail .nav-subtitle { display: none; }
+  html.native-companion .rail .nav-title { font-size: 12px; white-space: normal; }
+  html.native-companion .rail .nav-btn > svg { display: block; width: 22px; height: 22px; }
+  html.native-companion .rail .native-more-btn { display: none; }
+  html.native-companion .rail .native-rail-language { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; padding: 10px 0; background: transparent; color: var(--muted); border: 0; border-top: 1px solid var(--line); border-radius: 0; font-size: 12px; }
+  html.native-companion .native-rail-language svg { width: 18px; height: 18px; flex-shrink: 0; }
+  html.native-companion .euicc-slot-grid { grid-template-columns: repeat(auto-fit,minmax(170px,1fr)); }
+  html.native-companion .profile-panel .profile-list { grid-template-columns: repeat(auto-fit,minmax(240px,1fr)); }
+}
+@media (min-width: 1000px) {
+  html.native-companion .call-workspace { grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px 32px; align-items: start; }
+  html.native-companion .call-stage { grid-column: 1 / -1; }
+  html.native-companion .dialer-panel { grid-column: 1; grid-row: 2 / span 2; }
+  html.native-companion .call-history-panel { grid-column: 2; }
+  html.native-companion .voice-setup-panel, html.native-companion .call-capability-panel { grid-column: 1 / -1; }
+}
+@media (max-width: 359px) {
+  html.native-companion .shell { padding-inline: 12px; }
+  html.native-companion .euicc-slot-grid { grid-template-columns: minmax(0,1fr); }
+  html.native-companion .action-grid button { gap: 8px; padding: 12px; font-size: 13px; }
+}
+@media (max-width: 719px) and (max-height: 760px) {
+  html.native-companion #calls, html.native-companion .call-workspace { gap: 16px; }
+  html.native-companion .dial-pad { grid-auto-rows: 56px; gap: 8px; }
+  html.native-companion .dial-key { width: 56px; height: 56px; }
+}
