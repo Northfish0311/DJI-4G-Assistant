@@ -73,7 +73,7 @@ function syncHeader(identifier, value) {
 
 function checkedShellCommand(command, token) {
   if (!/^[A-Za-z0-9]+$/.test(token)) throw new Error("Invalid shell status token.");
-  return "{ " + command + "; }; __dji_status=$?; printf '\\n__DJI_STATUS_" + token + "_%u__\\n' \"$__dji_status\"";
+  return "( " + command + " ); __dji_status=$?; printf '\\n__DJI_STATUS_" + token + "_%u__\\n' \"$__dji_status\"";
 }
 
 function parseCheckedShellOutput(raw, token) {

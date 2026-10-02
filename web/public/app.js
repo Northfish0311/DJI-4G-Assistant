@@ -243,6 +243,7 @@ function clearCardView() {
   state.chipText = ""; state.profileText = ""; state.discoveryText = ""; state.notificationText = "";
   state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = ""; state.signal = ""; state.moduleReadError = false;
   state.temperature = null; state.temperatureSensors = []; state.temperatureSupported = null;
+  state.voiceNetwork = null; state.voiceSetupFeedback = null; state.callCapabilityData = null;
   state.postDialGeneration += 1; state.postDialAbortController?.abort(); state.postDialAbortController = null; state.pendingPostDial = null; state.postDialRunning = false;
   state.cardSignature = null;
   state.networkKind = "";
@@ -1175,6 +1176,58 @@ function renderCallHistory() {
   }).join("");
 }
 
+Object.assign(copy.en, {
+  chipInfoUnavailable: "No manageable eSIM space was found. Physical SIM features are unaffected; an eSIM card may have an unsupported management interface.",
+  cardReadyNoEuicc: "SIM detected. No manageable eSIM space found.",
+  voiceSetupTitle: "Call Setup", voiceStepNetwork: "Voice network", enableIms: "Enable VoLTE", restoreIms: "Restore IMS backup",
+  voiceNetworkUnknown: "Voice network status has not been checked.", imsDisabled: "IMS is off", imsEnabled: "IMS enabled", imsDefault: "Carrier defaults",
+  voiceImsDisabled: "The module has IMS disabled. Enable VoLTE before retrying the call.", voiceLteMissing: "LTE is not registered. Restore the SIM network connection first.",
+  voiceVolteMissing: "VoLTE is not enabled by the current module configuration.", voiceImsInactive: "The IMS bearer is inactive. The carrier voice network is not ready.",
+  voiceNetworkUnverified: "Module voice settings are enabled. A successful call is still required to verify service.",
+  confirmEnableIms: "Save this module's IMS setting, enable IMS/VoLTE and restart? Data will disconnect briefly. APN, eSIM profiles, USB mode and carrier profile are preserved. This does not guarantee carrier voice support.",
+  confirmRestoreIms: "Restore the IMS backup for this exact module and restart? Data will disconnect briefly.",
+  voiceWorking: "Setting up calls...", voiceDownloadStarting: "Connecting to the download server...", voiceDownloadProgress: "Downloading {file} · {percent}%",
+  voiceReconnecting: "Settings saved. Module restarting; wait for it to reconnect.", voiceDownloadNetwork: "Download failed: GitHub could not be reached. Retry; verified files will be reused.",
+  voiceDownloadIntegrity: "Download failed verification. No module setting was changed.", voiceDownloadStorage: "Could not save voice files. Check free disk space and app permissions.", voiceFailureReason: "Call rejected: {reason}",
+});
+Object.assign(copy.zh, {
+  chipInfoUnavailable: "未发现可管理的 eSIM 空间。普通实体 SIM 的功能不受影响；若是 eSIM 卡，管理入口可能暂不支持。",
+  cardReadyNoEuicc: "SIM 已识别，未发现可管理的 eSIM 空间。",
+  voiceSetupTitle: "通话设置", voiceStepNetwork: "语音网络", enableIms: "启用 VoLTE", restoreIms: "恢复 IMS 备份",
+  voiceNetworkUnknown: "尚未检查语音网络。", imsDisabled: "IMS 已关闭", imsEnabled: "IMS 已启用", imsDefault: "随运营商配置",
+  voiceImsDisabled: "模块关闭了 IMS。先启用 VoLTE，再重试拨号。", voiceLteMissing: "尚未注册 LTE 网络，请先恢复 SIM 网络连接。",
+  voiceVolteMissing: "当前模块配置未开启 VoLTE。", voiceImsInactive: "IMS 承载尚未激活，运营商语音网络未就绪。",
+  voiceNetworkUnverified: "模块语音配置已启用，仍需实际通话验证运营商服务。",
+  confirmEnableIms: "先保存当前模块的 IMS 设置，再启用 IMS/VoLTE 并重启吗？网络会短暂中断；保留 APN、eSIM 套餐、USB 模式和运营商配置。此操作不保证运营商语音一定可用。",
+  confirmRestoreIms: "为当前这一个模块恢复已保存的 IMS 设置并重启吗？网络会短暂中断。",
+  voiceWorking: "正在设置通话…", voiceDownloadStarting: "正在连接下载服务器…", voiceDownloadProgress: "正在下载 {file} · {percent}%",
+  voiceReconnecting: "设置已保存，模块正在重启，请等待重新连接。", voiceDownloadNetwork: "下载失败：无法连接 GitHub。可重新下载，已校验的文件不会重复下载。",
+  voiceDownloadIntegrity: "语音文件校验失败，未修改模块设置。", voiceDownloadStorage: "语音文件无法保存，请检查磁盘空间和软件权限。", voiceFailureReason: "拨号被拒绝：{reason}",
+});
+
+function voiceNetworkText(network) {
+  const key = { IMS_DISABLED: "voiceImsDisabled", LTE_NOT_REGISTERED: "voiceLteMissing", VOLTE_NOT_READY: "voiceVolteMissing", IMS_BEARER_INACTIVE: "voiceImsInactive", VOICE_NETWORK_UNVERIFIED: "voiceNetworkUnverified" }[network?.diagnosis];
+  return t(key || "voiceNetworkUnknown");
+}
+
+function renderVoiceNetwork(network) {
+  state.voiceNetwork = network;
+  const configured = network?.imsMode === 1;
+  const key = network?.imsMode === 2 ? "imsDisabled" : configured ? "imsEnabled" : network?.imsMode === 0 ? "imsDefault" : "statusPending";
+  setVoiceStep("voiceNetworkStep", "voiceNetworkState", key, configured && network?.volteEnabled ? "ready" : network?.imsMode === null || !network ? "pending" : "warning");
+  document.querySelector("#voiceNetworkDescription").textContent = voiceNetworkText(network);
+  const button = document.querySelector("#enableImsBtn");
+  button.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !state.callCapabilityData?.voiceSetupSupported || configured;
+  document.querySelector("#restoreImsBtn").disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !state.callCapabilityData?.imsBackupAvailable;
+}
+
+function showVoiceSetupFeedback(key, params = {}, tone = "working") {
+  state.voiceSetupFeedback = { key, params, tone };
+  const message = document.querySelector("#voiceSetupMessage");
+  message.textContent = t(key, params);
+  message.dataset.tone = tone;
+}
+
 function setVoiceStep(rowId, labelId, labelKey, status) {
   const row = document.querySelector("#" + rowId);
   const label = document.querySelector("#" + labelId);
@@ -1190,6 +1243,7 @@ function renderVoiceSetup(data) {
   const usbConfigured = Boolean(pnp.adbInterfacePresent || pnp.audioInputPresent || pnp.audioOutputPresent);
   const usbReady = Boolean(pnp.adbWinUsb && pnp.standardUsbAudio);
   const prepared = Boolean(runtime.prepared && runtime.adb?.root && runtime.adb?.kernelCompatible);
+  renderVoiceNetwork(state.voiceNetwork || state.callCapabilityData?.voiceNetwork);
 
   setVoiceStep("voiceRuntimeStep", "voiceRuntimeState", downloaded ? "runtimeDownloaded" : "runtimeMissing", downloaded ? "ready" : "pending");
   setVoiceStep(
@@ -1215,7 +1269,7 @@ function renderVoiceSetup(data) {
   const supported = state.callCapabilityData ? Boolean(state.callCapabilityData.voiceSetupSupported) : true;
   const message = document.querySelector("#voiceSetupMessage");
   if (message) {
-    message.textContent = !supported
+    message.textContent = state.voiceSetupFeedback ? t(state.voiceSetupFeedback.key, state.voiceSetupFeedback.params) : !supported
       ? t("voiceSetupUnsupported")
       : prepared && usbReady
         ? t(localAudioBridgeHost ? "voiceSetupReady" : "voiceSetupLocalOnly")
@@ -1230,10 +1284,8 @@ async function refreshVoiceSetup() {
   if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
   try {
     const port = encodeURIComponent(portInput.value.trim());
-    const capabilities = await fetchJson("/api/call-capabilities?port=" + port, 60000);
+    const capabilities = await fetchJson("/api/call-capabilities?port=" + port, 90000);
     renderCallCapabilities(capabilities);
-    const status = await fetchJson("/api/voice-runtime-status", 45000);
-    renderVoiceSetup({ ...status, voiceSetupSupported: capabilities.voiceSetupSupported });
   } catch (error) {
     append(t("voiceSetupTitle"), error.message || String(error));
   } finally {
@@ -1243,6 +1295,7 @@ async function refreshVoiceSetup() {
 }
 
 async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs = 360000) {
+  if (state.voiceSetupBusy) return;
   if (!state.voiceRuntimeEnabled) {
     append(t("voiceSetupTitle"), t("voiceActionFailed"));
     return;
@@ -1250,8 +1303,20 @@ async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs 
   if (!window.confirm(t(promptKey))) return;
   state.voiceSetupBusy = true;
   if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
+  const downloading = pathname === "/api/voice-runtime-download";
+  showVoiceSetupFeedback(downloading ? "voiceDownloadStarting" : "voiceWorking");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let polling = false;
+  let progressDone = false;
+  const progressTimer = downloading ? setInterval(async () => {
+    if (polling) return;
+    polling = true;
+    try {
+      const progress = await fetchJson("/api/voice-download-status", 5000);
+      if (!progressDone && progress.phase === "downloading" && progress.file) showVoiceSetupFeedback("voiceDownloadProgress", { file: progress.file, percent: Math.min(100, Math.round(progress.receivedBytes / progress.totalBytes * 100)) });
+    } catch {} finally { polling = false; }
+  }, 1000) : null;
   try {
     const port = encodeURIComponent(portInput.value.trim());
     const response = await fetch(pathname + "?port=" + port, {
@@ -1261,10 +1326,16 @@ async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs 
       signal: controller.signal,
     });
     const data = await response.json();
+    progressDone = true;
     append(t("voiceSetupTitle"), textFromResult(data) || JSON.stringify(data, null, 2));
-    if (!response.ok) throw new Error(data.error || t("voiceActionFailed"));
-    const message = document.querySelector("#voiceSetupMessage");
-    if (message) message.textContent = data.message || t("voiceActionDone");
+    clearInterval(progressTimer);
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.error || t("voiceActionFailed"));
+      error.code = data.code;
+      throw error;
+    }
+    showVoiceSetupFeedback(data.rebootRequested ? "voiceReconnecting" : "voiceActionDone", {}, "success");
+    if (data.voiceNetwork) renderVoiceNetwork(data.voiceNetwork);
     if (data.rebootRequested) {
       setTimeout(() => refreshVoiceSetup(), 15000);
     } else {
@@ -1272,9 +1343,16 @@ async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs 
       await refreshVoiceSetup();
     }
   } catch (error) {
+    clearInterval(progressTimer);
+    const key = error.name === "AbortError" ? "timedOut" : error.code === "VOICE_DOWNLOAD_INTEGRITY" ? "voiceDownloadIntegrity"
+      : error.code === "VOICE_DOWNLOAD_STORAGE" ? "voiceDownloadStorage" : /^VOICE_DOWNLOAD_(NETWORK|HTTP)$/.test(error.code || "") ? "voiceDownloadNetwork" : "voiceActionFailed";
+    showVoiceSetupFeedback(key, {}, "error");
+    showFeedback(t(key), "error");
     append(t("voiceSetupTitle"), error.name === "AbortError" ? t("timedOut") : (error.message || String(error)));
   } finally {
+    progressDone = true;
     clearTimeout(timer);
+    clearInterval(progressTimer);
     state.voiceSetupBusy = false;
     if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
   }
@@ -1612,6 +1690,7 @@ function renderCallStatus(data) {
 
 function renderCallCapabilities(data) {
   state.callCapabilityData = data;
+  renderVoiceNetwork(data?.voiceNetwork);
   const runtime = data?.runtime || {};
   const pnp = data?.voiceUsb || {};
   const runtimeState = document.querySelector("#rawPcmState");
@@ -1734,7 +1813,10 @@ async function runCallAction(action) {
       await new Promise((resolve) => setTimeout(resolve, 500));
       await refreshCallStatusQuietly(true);
     } else {
-      setCallFeedback(res.status === 502 || /(^|\r?\n)(ERROR|NO CARRIER)(\r?\n|$)/i.test(raw) ? t("callRejected") : (data.error || t("callRequestFailed")), "error");
+      if (data.voiceNetwork) renderVoiceNetwork(data.voiceNetwork);
+      const detail = data.voiceNetwork?.diagnosis && data.voiceNetwork.diagnosis !== "VOICE_NETWORK_UNVERIFIED" ? voiceNetworkText(data.voiceNetwork)
+        : data.voiceNetwork?.lastFailure ? t("voiceFailureReason", { reason: data.voiceNetwork.lastFailure }) : "";
+      setCallFeedback(detail || (res.status === 502 || /(^|\r?\n)(ERROR|NO CARRIER)(\r?\n|$)/i.test(raw) ? t("callRejected") : (data.error || t("callRequestFailed"))), "error");
     }
   } catch (error) {
     setCallFeedback(t("callRequestFailed"), "error");
@@ -1892,7 +1974,7 @@ async function quickStart() {
         if (data.ok) state.autoLoadedViews.add("euicc");
         showFeedback(data.ok ? t("inventoryReadStatus", {
           loaded: data.eids.filter((item) => Array.isArray(item.profiles)).length, count: data.eids.length,
-        }) : t("chipInfoUnavailable"), data.ok ? "success" : "error");
+        }) : t("cardReadyNoEuicc"), data.ok ? "success" : "neutral");
       }
     }
     const card = await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
@@ -2382,6 +2464,8 @@ document.querySelector("#callSpeakerSelect").addEventListener("change", (event) 
 navigator.mediaDevices?.addEventListener?.("devicechange", () => refreshAudioDeviceOptions(false).catch(() => {}));
 document.querySelector("#refreshVoiceSetupBtn").addEventListener("click", refreshVoiceSetup);
 document.querySelector("#downloadVoiceRuntimeBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-runtime-download", "DOWNLOADVOICE", "confirmVoiceDownload"));
+document.querySelector("#enableImsBtn").addEventListener("click", () => runVoiceSetupAction("/api/call-ims-enable", "ENABLEIMS", "confirmEnableIms"));
+document.querySelector("#restoreImsBtn").addEventListener("click", () => runVoiceSetupAction("/api/call-ims-restore", "RESTOREIMS", "confirmRestoreIms"));
 document.querySelector("#enableVoiceUsbBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-usb-enable", "VOICEUSB", "confirmVoiceUsb"));
 document.querySelector("#prepareVoiceRuntimeBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-runtime-prepare", "PREPAREVOICE", "confirmVoicePrepare"));
 document.querySelector("#restoreVoiceUsbBtn").addEventListener("click", () => runVoiceSetupAction("/api/voice-usb-restore", "RESTOREVOICE", "confirmVoiceRestore"));

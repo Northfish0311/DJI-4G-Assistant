@@ -3,7 +3,10 @@
 const crypto = require("crypto");
 const fs = require("fs");
 const https = require("https");
+const dns = require("dns").promises;
 const path = require("path");
+const { Transform } = require("stream");
+const { pipeline } = require("stream/promises");
 const { withAdb } = require("./adb-usb");
 
 const RUNTIME_COMMIT = "0443dfdaf8aec086fd76ba2ee9152fd908114524";
@@ -149,64 +152,101 @@ async function verifyRuntime(directory) {
   return { ok: true, version: RUNTIME_VERSION, directory, totalBytes: RUNTIME_FILES.reduce((sum, item) => sum + item.size, 0) };
 }
 
-function downloadOne(expected, target) {
-  return new Promise((resolve, reject) => {
-    const temporary = target + ".download";
-    const fail = async (error) => {
-      try { await fs.promises.rm(temporary, { force: true }); } catch {}
-      reject(error);
-    };
-    const request = https.get(RUNTIME_BASE_URL + encodeURIComponent(expected.name), {
-      headers: { "user-agent": "DJI-4G-Assistant/" + RUNTIME_VERSION },
-      timeout: 30000,
-    }, (response) => {
+async function downloadOne(expected, target, options = {}) {
+  const temporary = target + ".download";
+  const url = new URL(encodeURIComponent(expected.name), options.baseUrl || RUNTIME_BASE_URL);
+  const requestFile = options.request || https.get;
+  const onProgress = options.onProgress || (() => {});
+  const addresses = options.addresses || [];
+  const attempts = [...addresses.slice(0, 2), null];
+  let lastError;
+  for (const address of attempts) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs || 20000);
+    let response;
+    try {
+      response = await new Promise((resolve, reject) => {
+        const request = requestFile(url, {
+          headers: { "user-agent": "DJI-4G-Assistant/" + RUNTIME_VERSION },
+          signal: controller.signal,
+          ...(address ? { family: 4, lookup: (_host, _options, callback) => callback(null, address, 4) } : {}),
+        }, resolve);
+        request.on("error", reject);
+      });
       if (response.statusCode !== 200) {
-        response.resume();
-        fail(new Error("Runtime download returned HTTP " + response.statusCode + " for " + expected.name + "."));
-        return;
+        const error = new Error("Runtime download returned HTTP " + response.statusCode + " for " + expected.name + ".");
+        error.code = "VOICE_DOWNLOAD_HTTP";
+        error.retryable = response.statusCode >= 500;
+        throw error;
       }
       const declared = Number(response.headers["content-length"] || 0);
       if (declared && declared !== expected.size) {
-        response.resume();
-        fail(new Error("Runtime download size changed for " + expected.name + "."));
-        return;
+        const error = new Error("Runtime download size changed for " + expected.name + ".");
+        error.code = "VOICE_DOWNLOAD_INTEGRITY";
+        throw error;
       }
-      const hash = crypto.createHash("sha256");
-      const output = fs.createWriteStream(temporary, { flags: "w", mode: expected.mode & 0o777 });
       let received = 0;
-      response.on("data", (chunk) => {
+      const hash = crypto.createHash("sha256");
+      const verify = new Transform({ transform(chunk, _encoding, callback) {
         received += chunk.length;
-        if (received > expected.size) response.destroy(new Error("Runtime file exceeded its pinned size."));
-        else hash.update(chunk);
-      });
-      response.pipe(output);
-      response.on("error", fail);
-      output.on("error", fail);
-      output.on("finish", async () => {
-        output.close();
-        try {
-          if (received !== expected.size || hash.digest("hex") !== expected.sha256) {
-            throw new Error("Runtime verification failed for " + expected.name + ".");
-          }
-          await fs.promises.rename(temporary, target);
-          resolve();
-        } catch (error) { fail(error); }
-      });
-    });
-    request.on("timeout", () => request.destroy(new Error("Runtime download timed out.")));
-    request.on("error", fail);
-  });
+        if (received > expected.size) {
+          const error = new Error("Runtime file exceeded its pinned size.");
+          error.code = "VOICE_DOWNLOAD_INTEGRITY";
+          callback(error);
+          return;
+        }
+        hash.update(chunk);
+        onProgress(received);
+        callback(null, chunk);
+      } });
+      await pipeline(response, verify, fs.createWriteStream(temporary, { mode: expected.mode & 0o777 }), { signal: controller.signal });
+      if (received !== expected.size || hash.digest("hex") !== expected.sha256) {
+        const error = new Error("Runtime verification failed for " + expected.name + ".");
+        error.code = "VOICE_DOWNLOAD_INTEGRITY";
+        throw error;
+      }
+      await fs.promises.rename(temporary, target);
+      return;
+    } catch (error) {
+      lastError = error;
+      response?.destroy();
+      await fs.promises.rm(temporary, { force: true }).catch(() => {});
+      if (error.code === "VOICE_DOWNLOAD_INTEGRITY" || error.retryable === false || ["EACCES", "EPERM", "ENOSPC"].includes(error.code)) break;
+    } finally { clearTimeout(timer); }
+  }
+  if (!lastError.code?.startsWith("VOICE_DOWNLOAD_")) {
+    lastError.code = ["EACCES", "EPERM", "ENOSPC"].includes(lastError.code) ? "VOICE_DOWNLOAD_STORAGE" : "VOICE_DOWNLOAD_NETWORK";
+  }
+  throw lastError;
 }
 
-async function downloadRuntime(directory) {
+async function downloadRuntime(directory, options = {}) {
   await fs.promises.mkdir(directory, { recursive: true });
-  for (const expected of RUNTIME_FILES) {
+  const files = options.files || RUNTIME_FILES;
+  const totalBytes = files.reduce((sum, item) => sum + item.size, 0);
+  let completedBytes = 0;
+  let addresses = options.addresses;
+  if (!addresses) {
+    let timer;
+    try {
+      addresses = await Promise.race([
+        (options.resolve4 || dns.resolve4)(new URL(options.baseUrl || RUNTIME_BASE_URL).hostname),
+        new Promise(resolve => { timer = setTimeout(() => resolve([]), 5000); }),
+      ]);
+    } catch { addresses = []; } finally { clearTimeout(timer); }
+  }
+  for (const expected of files) {
+    const progress = received => options.onProgress?.({ phase: "downloading", file: expected.name, receivedBytes: completedBytes + received, totalBytes });
+    progress(0);
     try { await verifyRuntimeFile(directory, expected); }
     catch {
-      await downloadOne(expected, path.join(directory, expected.name));
+      await downloadOne(expected, path.join(directory, expected.name), { ...options, addresses, onProgress: progress });
       await verifyRuntimeFile(directory, expected);
     }
+    completedBytes += expected.size;
+    progress(0);
   }
+  if (options.files) return { ok: true, totalBytes };
   return verifyRuntime(directory);
 }
 
@@ -242,6 +282,8 @@ class VoiceRuntimeManager {
     this.withAdb = options.withAdb || withAdb;
     this.prepared = false;
     this.routeActive = false;
+    this.downloadProgress = { phase: "idle", receivedBytes: 0, totalBytes: RUNTIME_FILES.reduce((sum, item) => sum + item.size, 0) };
+    this.downloadTask = null;
   }
 
   async localStatus() {
@@ -259,7 +301,20 @@ class VoiceRuntimeManager {
   }
 
   async download() {
-    return { ...(await downloadRuntime(this.directory)), downloaded: true, upstream: RUNTIME_BASE_URL };
+    if (!this.downloadTask) {
+      this.downloadProgress = { ...this.downloadProgress, phase: "downloading", file: "", receivedBytes: 0, errorCode: "" };
+      this.downloadTask = (async () => {
+        try {
+          const result = await downloadRuntime(this.directory, { onProgress: progress => { this.downloadProgress = progress; } });
+          this.downloadProgress = { ...this.downloadProgress, phase: "complete", receivedBytes: result.totalBytes };
+          return { ...result, downloaded: true, upstream: RUNTIME_BASE_URL };
+        } catch (error) {
+          this.downloadProgress = { ...this.downloadProgress, phase: "failed", errorCode: error.code || "VOICE_DOWNLOAD_STORAGE" };
+          throw error;
+        } finally { this.downloadTask = null; }
+      })();
+    }
+    return this.downloadTask;
   }
 
   async probe() {
@@ -430,4 +485,5 @@ module.exports = {
   legacyQadbPassword,
   verifyRuntime,
   downloadRuntime,
+  downloadOne,
 };

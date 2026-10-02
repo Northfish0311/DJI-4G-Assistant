@@ -8,6 +8,7 @@ const QRCode = require("qrcode");
 const { Bonjour } = require("bonjour-service");
 const originalUsb = require("./original-usb");
 const { buildPairingDeepLink } = require("./pairing");
+const { parseVoiceNetwork } = require("./voice-network");
 const {
   VoiceRuntimeManager,
   parseUsbComposition,
@@ -739,7 +740,7 @@ function portArg(url) {
 }
 
 function atAccepted(result) {
-  return Boolean(result?.ok && /(^|\r?\n)OK(\r?\n|$)/i.test(result.stdout || "") && !/(^|\r?\n)ERROR(\r?\n|$)/i.test(result.stdout || ""));
+  return Boolean(result?.ok && /(^|\r?\n)OK(\r?\n|$)/i.test(result.stdout || "") && !/(^|\r?\n)(?:ERROR|NO CARRIER|BUSY|NO ANSWER|\+CM[ES] ERROR:[^\r\n]*)(\r?\n|$)/i.test(result.stdout || ""));
 }
 
 function enqueueVoice(task) {
@@ -855,15 +856,18 @@ function latestVoiceUsbBackup(identity, currentComposition) {
 
 async function voicePnpStatus() {
   const command = [
-    "$devices = @(Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue)",
+    "$ErrorActionPreference = 'Stop'",
+    "$devices = @(Get-CimInstance Win32_PnPEntity -Filter \"Present = TRUE AND (PNPDeviceID LIKE 'USB\\\\VID_2C7C&PID_0125%' OR PNPDeviceID LIKE 'USB\\\\VID_2CA3&PID_4006%' OR PNPClass = 'AudioEndpoint')\" | Select-Object Status,Service,@{Name='Class';Expression={$_.PNPClass}},@{Name='FriendlyName';Expression={$_.Name}},@{Name='InstanceId';Expression={$_.PNPDeviceID}})",
     "$adb = @($devices | Where-Object { $_.InstanceId -like 'USB\\VID_2C7C&PID_0125&MI_06*' -or $_.InstanceId -like 'USB\\VID_2CA3&PID_4006&MI_06*' })",
-    "$services = @($adb | ForEach-Object { (Get-PnpDeviceProperty -InstanceId $_.InstanceId -KeyName 'DEVPKEY_Device_Service' -ErrorAction SilentlyContinue).Data })",
-    "$audio = @($devices | Where-Object { ($_.Class -eq 'AudioEndpoint' -or $_.Class -eq 'MEDIA') -and $_.FriendlyName -match 'AC Interface|AS Interface' })",
-    "$ac = @($audio | Where-Object { $_.FriendlyName -match 'AC Interface' })",
-    "$as = @($audio | Where-Object { $_.FriendlyName -match 'AS Interface' })",
+    "$services = @($adb | Select-Object -ExpandProperty Service)",
+    "$audioUsb = @($devices | Where-Object { $_.Class -eq 'MEDIA' -and $_.Status -eq 'OK' -and $_.FriendlyName -match 'AC Interface|AS Interface' })",
+    "$audio = @($devices | Where-Object { $_.Class -eq 'AudioEndpoint' -and $_.Status -eq 'OK' -and $_.FriendlyName -match 'AC Interface|AS Interface' })",
+    "$ac = @($audio | Where-Object { $_.InstanceId -match '\\{0\\.0\\.1\\.' })",
+    "$as = @($audio | Where-Object { $_.InstanceId -match '\\{0\\.0\\.0\\.' })",
+    "if ($audioUsb.Count -ne 1) { $ac = @(); $as = @() }",
     "[PSCustomObject]@{ adbInterfacePresent = [bool]$adb.Count; adbWinUsb = [bool]($services -contains 'WinUSB'); audioInputPresent = [bool]$ac.Count; audioOutputPresent = [bool]$as.Count; adbInterfaces = @($adb | Select-Object Status,Class,FriendlyName,InstanceId); audioDevices = @($audio | Select-Object Status,Class,FriendlyName,InstanceId) } | ConvertTo-Json -Depth 5 -Compress",
   ].join("; ");
-  const result = await runPowerShell(["-Command", command], 20000);
+  const result = await runPowerShell(["-Command", command], 30000);
   let details = {};
   try { details = JSON.parse(String(result.stdout || "").trim() || "{}"); } catch {}
   return {
@@ -877,6 +881,20 @@ async function voicePnpStatus() {
     audioDevices: details.audioDevices || [],
     error: result.ok ? "" : (result.stderr || "Windows device inspection failed."),
   };
+}
+
+function latestVoiceImsBackup(identity) {
+  const directory = path.join(dataRoot, ".local", "voice-ims-backups");
+  let names;
+  try { names = fs.readdirSync(directory).filter(name => /^ims-[A-Za-z0-9-]+\.json$/.test(name)).sort().reverse(); }
+  catch { return null; }
+  for (const filename of names.slice(0, 100)) {
+    try {
+      const backup = JSON.parse(fs.readFileSync(path.join(directory, filename), "utf8"));
+      if (backup.schemaVersion === 1 && backup.module?.imei === identity.imei && backup.module?.revision === identity.revision && [0, 1, 2].includes(backup.imsMode)) return { filename, backup };
+    } catch {}
+  }
+  return null;
 }
 
 function isSafeAt(command) {
@@ -1257,13 +1275,15 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/call-capabilities") {
-    const result = await enqueueAt(portArg(url), ["ATI", "AT+GMR", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 45000);
+    const result = await enqueueAt(portArg(url), ["ATI", "AT+GMR", "AT+CGSN", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\"", "AT+QCFG=\"ims\"", "AT+CEREG?", "AT+CREG?", "AT+CGDCONT?", "AT+CGACT?"], 60000);
     const pnp = await voicePnpStatus();
     const runtime = await voiceRuntime.status();
     const qpcmvAdvertised = /\+QPCMV:\s*\(/i.test(result.stdout || "");
     const qpcmvKnownBlocked = /QDC507GLEFM21/i.test(result.stdout || "");
+    let imsBackupAvailable = false;
+    try { imsBackupAvailable = Boolean(latestVoiceImsBackup(parseVoiceIdentity(result.stdout))); } catch {}
     sendJson(res, 200, {
-      ...result,
+      ...redactModemIdentifiers(result),
       callerIdSupported: /\+CLIP:/i.test(result.stdout || ""),
       qpcmvAdvertised,
       qpcmvKnownBlocked,
@@ -1271,6 +1291,8 @@ async function handleApi(req, res, url) {
       voiceUsb: pnp,
       runtime,
       voiceSetupSupported: /QDC507GLEFM21/i.test(result.stdout || ""),
+      voiceNetwork: parseVoiceNetwork(result.stdout),
+      imsBackupAvailable,
     });
     return;
   }
@@ -1278,6 +1300,11 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/voice-runtime-status") {
     const [runtime, pnp] = await Promise.all([voiceRuntime.status(), voicePnpStatus()]);
     sendJson(res, 200, { ok: true, runtime, voiceUsb: pnp });
+    return;
+  }
+
+  if (url.pathname === "/api/voice-download-status") {
+    sendJson(res, 200, { ok: true, ...voiceRuntime.downloadProgress });
     return;
   }
 
@@ -1291,8 +1318,81 @@ async function handleApi(req, res, url) {
       sendJson(res, 400, { ok: false, error: "Confirm DOWNLOADVOICE before downloading the pinned voice runtime." });
       return;
     }
-    const result = await enqueueVoice(() => voiceRuntime.download());
-    sendJson(res, 200, result);
+    try {
+      const result = await enqueueVoice(() => voiceRuntime.download());
+      sendJson(res, 200, result);
+    } catch (error) {
+      const code = /^VOICE_DOWNLOAD_(?:NETWORK|HTTP|INTEGRITY|STORAGE)$/.test(error.code) ? error.code : "VOICE_DOWNLOAD_STORAGE";
+      sendJson(res, 502, { ok: false, code, error: code === "VOICE_DOWNLOAD_INTEGRITY"
+        ? "Voice file verification failed. No module setting was changed."
+        : code === "VOICE_DOWNLOAD_STORAGE" ? "Voice files could not be saved. Check free space and app permissions."
+          : "Could not download voice files from GitHub. Check connectivity and retry; verified files are reused." });
+    }
+    return;
+  }
+
+  if (url.pathname === "/api/call-ims-enable" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice setup is disabled on this local server." });
+      return;
+    }
+    const body = await readJsonBody(req);
+    if (String(body.confirm || "").toUpperCase() !== "ENABLEIMS") {
+      sendJson(res, 400, { ok: false, error: "Confirm ENABLEIMS before changing persistent IMS configuration and restarting the module." });
+      return;
+    }
+    const result = await enqueueSerial(async () => {
+      const portName = portArg(url);
+      const baseline = await runAtCommands(portName, ["ATI", "AT+CGSN", "AT+CLCC", 'AT+QCFG="ims"'], 30000);
+      if (parseClcc(baseline.stdout).some(call => call.isVoice && call.state !== "disconnected")) return { ok: false, error: "End the voice call before changing IMS." };
+      let identity;
+      try { identity = parseVoiceIdentity(baseline.stdout); }
+      catch { return { ok: false, code: "VOICE_SETUP_UNSUPPORTED", error: "IMS setup only supports verified QDC507GLEFM21 firmware." }; }
+      const network = parseVoiceNetwork(baseline.stdout);
+      if (!atAccepted(baseline) || network.imsMode === null) return { ok: false, error: "The module did not return a valid IMS baseline." };
+      if (network.imsMode === 1) return { ok: true, alreadyEnabled: true, voiceNetwork: network };
+      const directory = path.join(dataRoot, ".local", "voice-ims-backups");
+      fs.mkdirSync(directory, { recursive: true });
+      const filename = "ims-" + new Date().toISOString().replace(/[:.]/g, "-") + ".json";
+      fs.writeFileSync(path.join(directory, filename), JSON.stringify({ schemaVersion: 1, module: identity, imsMode: network.imsMode, restoreCommand: 'AT+QCFG="ims",' + network.imsMode }, null, 2), { flag: "wx" });
+      const write = await runAtCommands(portName, ['AT+QCFG="ims",1'], 15000);
+      if (!atAccepted(write)) return { ok: false, error: "The module rejected IMS enable. No reboot was requested.", backup: filename };
+      const readback = await runAtCommands(portName, ['AT+QCFG="ims"'], 15000);
+      if (!atAccepted(readback) || parseVoiceNetwork(readback.stdout).imsMode !== 1) return { ok: false, error: "IMS readback did not match. No reboot was requested.", backup: filename };
+      const reboot = await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      return { ok: true, backup: filename, rebootRequested: true, rebootAccepted: atAccepted(reboot), voiceNetwork: parseVoiceNetwork(readback.stdout) };
+    });
+    sendJson(res, result.ok ? 200 : 502, result);
+    return;
+  }
+
+  if (url.pathname === "/api/call-ims-restore" && req.method === "POST") {
+    if (process.env.ALLOW_VOICE_RUNTIME !== "1") {
+      sendJson(res, 403, { ok: false, error: "Voice setup is disabled on this local server." });
+      return;
+    }
+    const body = await readJsonBody(req);
+    if (String(body.confirm || "").toUpperCase() !== "RESTOREIMS") {
+      sendJson(res, 400, { ok: false, error: "Confirm RESTOREIMS before restoring the matching module IMS backup and restarting." });
+      return;
+    }
+    const result = await enqueueSerial(async () => {
+      const portName = portArg(url);
+      const baseline = await runAtCommands(portName, ["ATI", "AT+CGSN", "AT+CLCC", 'AT+QCFG="ims"'], 30000);
+      if (parseClcc(baseline.stdout).some(call => call.isVoice && call.state !== "disconnected")) return { ok: false, error: "End the voice call before restoring IMS." };
+      let identity;
+      try { identity = parseVoiceIdentity(baseline.stdout); }
+      catch { return { ok: false, code: "VOICE_SETUP_UNSUPPORTED", error: "IMS restore only supports verified QDC507GLEFM21 firmware." }; }
+      const matched = latestVoiceImsBackup(identity);
+      if (!matched) return { ok: false, error: "No local IMS backup matches this module." };
+      if (parseVoiceNetwork(baseline.stdout).imsMode === matched.backup.imsMode) return { ok: true, alreadyRestored: true };
+      const write = await runAtCommands(portName, ['AT+QCFG="ims",' + matched.backup.imsMode], 15000);
+      const readback = await runAtCommands(portName, ['AT+QCFG="ims"'], 15000);
+      if (!atAccepted(write) || !atAccepted(readback) || parseVoiceNetwork(readback.stdout).imsMode !== matched.backup.imsMode) return { ok: false, error: "IMS restore was not verified. No reboot was requested." };
+      const reboot = await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      return { ok: true, backup: matched.filename, rebootRequested: true, rebootAccepted: atAccepted(reboot) };
+    });
+    sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
 
@@ -1490,12 +1590,18 @@ async function handleApi(req, res, url) {
       sendJson(res, 400, { ok: false, error: "Invalid call action, number, DTMF digits, or confirmation." });
       return;
     }
-    const result = await enqueueAt(portArg(url), callAction.commands, 30000);
-    const accepted = result.ok && /(^|\r?\n)OK(\r?\n|$)/i.test(result.stdout || "") && !/(^|\r?\n)ERROR(\r?\n|$)/i.test(result.stdout || "");
+    const outcome = await enqueueSerial(async () => {
+      const result = await runAtCommands(portArg(url), callAction.commands, 30000);
+      const accepted = atAccepted(result);
+      if (accepted || callAction.action !== "dial") return { result, accepted };
+      const diagnostic = await runAtCommands(portArg(url), ["AT+CEER", 'AT+QCFG="ims"', "AT+CEREG?", "AT+CREG?", "AT+CGDCONT?", "AT+CGACT?"], 30000);
+      return { result, accepted, voiceNetwork: parseVoiceNetwork(diagnostic.stdout) };
+    });
+    const { result, accepted, voiceNetwork } = outcome;
     if (accepted && ["hangup", "reject"].includes(callAction.action) && voiceRuntime.routeActive) {
       enqueueVoice(() => voiceRuntime.stopRoute()).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
     }
-    sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, action: callAction.action, postDial: callAction.postDial || "" });
+    sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, action: callAction.action, postDial: callAction.postDial || "", ...(voiceNetwork ? { voiceNetwork } : {}) });
     return;
   }
 

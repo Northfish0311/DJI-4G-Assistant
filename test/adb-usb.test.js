@@ -37,6 +37,7 @@ test("checks shell exit status without interpolating user input", () => {
   const token = "0123456789abcdef01234567";
   const command = checkedShellCommand("id -u", token);
   assert.match(command, /printf/);
+  assert.match(checkedShellCommand("exit 7", token), /^\( exit 7 \); __dji_status=\$\?/);
   assert.deepEqual(parseCheckedShellOutput("0\n__DJI_STATUS_0123456789abcdef01234567_0__\n", token), {
     status: 0,
     output: "0",

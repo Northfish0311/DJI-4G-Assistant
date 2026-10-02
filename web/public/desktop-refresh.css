@@ -283,6 +283,9 @@ input, textarea { border-radius: 8px; border-color: #d9e3dc; background: #fbfcfa
 .voice-setup-content .voice-step-action > span {font-size:11px;text-align:left;flex:1;min-width:65px;}
 .voice-setup-content .voice-step-action button {font-size:11px;width:auto;max-width:70%;flex:0 1 auto;}
 .voice-setup-content .voice-setup-footer {flex-wrap:wrap;gap:12px;padding:16px 20px;}
+.voice-setup-content #voiceSetupMessage {flex:1 1 100%;overflow-wrap:anywhere;}
+.voice-setup-content #voiceSetupMessage[data-tone="error"] {color:#b42318;}
+.voice-setup-content #voiceSetupMessage[data-tone="working"] {color:#245b8d;}
 .call-main .call-history-panel .panel-head {padding:18px 20px;}
 .call-main .call-history.empty {min-height:80px;padding:20px;font-size:12px;}
 @media (min-width:1181px) {.esim-workspace {grid-template-columns:minmax(0,1fr) 270px;}.call-workspace {grid-template-columns:minmax(0,1fr) 330px;}}
