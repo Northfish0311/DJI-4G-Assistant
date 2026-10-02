@@ -1274,6 +1274,12 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (url.pathname === "/api/call-end-reason") {
+    const result = await enqueueAt(portArg(url), ["AT+CEER", 'AT+QCFG="ims"', "AT+CEREG?", "AT+CREG?", "AT+CGDCONT?", "AT+CGACT?"], 45000);
+    sendJson(res, 200, { ...redactModemIdentifiers(result), voiceNetwork: parseVoiceNetwork(result.stdout) });
+    return;
+  }
+
   if (url.pathname === "/api/call-capabilities") {
     const result = await enqueueAt(portArg(url), ["ATI", "AT+GMR", "AT+CGSN", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\"", "AT+QCFG=\"ims\"", "AT+CEREG?", "AT+CREG?", "AT+CGDCONT?", "AT+CGACT?"], 60000);
     const pnp = await voicePnpStatus();

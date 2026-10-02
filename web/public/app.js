@@ -244,6 +244,8 @@ function clearCardView() {
   state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = ""; state.signal = ""; state.moduleReadError = false;
   state.temperature = null; state.temperatureSensors = []; state.temperatureSupported = null;
   state.voiceNetwork = null; state.voiceSetupFeedback = null; state.callCapabilityData = null;
+  state.automaticCallAudio = null; state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
+  if (state.audioBridge || state.audioBridgeStarting) stopAudioBridge();
   state.postDialGeneration += 1; state.postDialAbortController?.abort(); state.postDialAbortController = null; state.pendingPostDial = null; state.postDialRunning = false;
   state.cardSignature = null;
   state.networkKind = "";
@@ -1189,6 +1191,8 @@ Object.assign(copy.en, {
   voiceWorking: "Setting up calls...", voiceDownloadStarting: "Connecting to the download server...", voiceDownloadProgress: "Downloading {file} · {percent}%",
   voiceReconnecting: "Settings saved. Module restarting; wait for it to reconnect.", voiceDownloadNetwork: "Download failed: GitHub could not be reached. Retry; verified files will be reused.",
   voiceDownloadIntegrity: "Download failed verification. No module setting was changed.", voiceDownloadStorage: "Could not save voice files. Check free disk space and app permissions.", voiceFailureReason: "Call rejected: {reason}",
+  callAudioPreparing: "Preparing call audio...", callAudioConnecting: "Call connected. Connecting audio...", callEndedReason: "Call ended. Module reason: {reason}", callEndReadFailed: "Call ended. The module's end reason could not be read.",
+  voiceSummaryReady: "Audio ready · Connects automatically for calls you dial or answer here", voiceSummaryPrepare: "Audio files ready · Temporary drivers are prepared before dialing or answering",
 });
 Object.assign(copy.zh, {
   chipInfoUnavailable: "未发现可管理的 eSIM 空间。普通实体 SIM 的功能不受影响；若是 eSIM 卡，管理入口可能暂不支持。",
@@ -1203,6 +1207,8 @@ Object.assign(copy.zh, {
   voiceWorking: "正在设置通话…", voiceDownloadStarting: "正在连接下载服务器…", voiceDownloadProgress: "正在下载 {file} · {percent}%",
   voiceReconnecting: "设置已保存，模块正在重启，请等待重新连接。", voiceDownloadNetwork: "下载失败：无法连接 GitHub。可重新下载，已校验的文件不会重复下载。",
   voiceDownloadIntegrity: "语音文件校验失败，未修改模块设置。", voiceDownloadStorage: "语音文件无法保存，请检查磁盘空间和软件权限。", voiceFailureReason: "拨号被拒绝：{reason}",
+  callAudioPreparing: "正在准备通话声音…", callAudioConnecting: "电话已接通，正在连接声音…", callEndedReason: "通话已结束，模块原因码：{reason}", callEndReadFailed: "通话已结束，暂未读到模块的结束原因。",
+  voiceSummaryReady: "声音已就绪 · 本页拨打或接听后自动连接", voiceSummaryPrepare: "语音文件已就绪 · 拨打或接听前准备临时驱动",
 });
 
 function voiceNetworkText(network) {
@@ -1434,13 +1440,13 @@ function stopModuleVoiceRoute(keepalive = false) {
 }
 
 function stopAudioBridge(messageKey = "audioNotConnected", notifyServer = true) {
+  state.audioStartGeneration = (state.audioStartGeneration || 0) + 1;
   const bridge = state.audioBridge;
   stopStream(bridge?.moduleDownlink);
   stopStream(bridge?.microphoneStream);
   stopAudioElement(bridge?.downlinkAudio);
   stopAudioElement(bridge?.uplinkAudio);
   state.audioBridge = null;
-  state.audioBridgeStarting = false;
   if (notifyServer && bridge?.moduleRouteStarted) stopModuleVoiceRoute();
   const label = document.querySelector("#audioBridgeState");
   if (label) label.textContent = t(messageKey);
@@ -1448,21 +1454,28 @@ function stopAudioBridge(messageKey = "audioNotConnected", notifyServer = true) 
 }
 
 async function startAudioBridge() {
+  if (state.audioBridgeStarting || state.audioBridge) return Boolean(state.audioBridge);
   const call = state.callStatusData?.voiceCalls?.[0] || null;
   if (!call || !["active", "held"].includes(call.state)) {
     append(t("audioBridge"), t("audioNeedsCall"));
-    return;
+    return false;
   }
   if (!localAudioBridgeHost || !navigator.mediaDevices?.getUserMedia || !navigator.mediaDevices?.enumerateDevices) {
     append(t("audioBridge"), t("audioBridgeUnavailable"));
-    return;
+    return false;
   }
   if (!state.callCapabilityData?.standardUsbAudio || !state.voiceRuntimeStatus?.runtime?.local?.downloaded) {
     append(t("audioBridge"), t("audioEndpointMissing"));
-    return;
+    setCallFeedback(t("audioEndpointMissing"), "error");
+    return false;
   }
 
   state.audioBridgeStarting = true;
+  const generation = state.audioStartGeneration = (state.audioStartGeneration || 0) + 1;
+  const epoch = state.cardEpoch;
+  const current = () => generation === state.audioStartGeneration && epoch === state.cardEpoch &&
+    state.callStatusData?.voiceCalls?.some(item => item.id === call.id && item.direction === call.direction && ["active", "held"].includes(item.state));
+  const checkCurrent = () => { if (!current()) throw new Error(t("hangupAccepted")); };
   syncCallButtons();
   let moduleRouteStarted = false;
   let permissionStream = null;
@@ -1488,6 +1501,7 @@ async function startAudioBridge() {
     stopStream(permissionStream);
     permissionStream = null;
     if (!moduleInput || !moduleOutput || !systemInput) throw new Error(t("audioEndpointMissing"));
+    checkCurrent();
 
     const port = encodeURIComponent(portInput.value.trim());
     const routeResponse = await fetch("/api/voice-route-start?port=" + port, {
@@ -1496,8 +1510,9 @@ async function startAudioBridge() {
       body: JSON.stringify({ confirm: "AUDIO" }),
     });
     const routeData = await routeResponse.json();
-    if (!routeResponse.ok) throw new Error(routeData.error || t("audioRouteFailed"));
+    if (!routeResponse.ok || routeData.ok === false) throw new Error(routeData.error || t("audioRouteFailed"));
     moduleRouteStarted = true;
+    checkCurrent();
 
     moduleDownlink = await navigator.mediaDevices.getUserMedia({
       audio: {
@@ -1515,6 +1530,7 @@ async function startAudioBridge() {
         autoGainControl: true,
       },
     });
+    checkCurrent();
 
     downlinkAudio = new Audio();
     downlinkAudio.autoplay = true;
@@ -1529,9 +1545,11 @@ async function startAudioBridge() {
     if (typeof uplinkAudio.setSinkId !== "function") throw new Error(t("audioBridgeUnavailable"));
     await uplinkAudio.setSinkId(moduleOutput.deviceId);
     await Promise.all([downlinkAudio.play(), uplinkAudio.play()]);
+    checkCurrent();
 
     state.audioBridge = { moduleDownlink, microphoneStream, downlinkAudio, uplinkAudio, moduleRouteStarted };
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeActive");
+    return true;
   } catch (error) {
     stopStream(permissionStream);
     stopStream(moduleDownlink);
@@ -1541,9 +1559,65 @@ async function startAudioBridge() {
     if (moduleRouteStarted) await stopModuleVoiceRoute();
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeUnavailable");
     append(t("audioBridge"), t("audioPermissionFailed") + " " + (error.message || ""));
+    if (current()) setCallFeedback(t("audioPermissionFailed") + " " + (error.message || ""), "error");
+    return false;
   } finally {
     state.audioBridgeStarting = false;
     syncCallButtons();
+  }
+}
+
+async function prepareLocalCallAudio() {
+  if (!localAudioBridgeHost || !state.voiceRuntimeEnabled || !state.callCapabilityData?.standardUsbAudio || !state.voiceRuntimeStatus?.runtime?.local?.downloaded) return;
+  const epoch = state.cardEpoch;
+  setCallFeedback(t("callAudioPreparing"), "working");
+  await refreshAudioDeviceOptions(true);
+  if (state.cardEpoch !== epoch) throw new Error(t("cardChangedRetry"));
+  if (!state.voiceRuntimeStatus.runtime.prepared) {
+    const response = await fetch("/api/voice-runtime-prepare", {
+      method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ confirm: "PREPAREVOICE" }), signal: AbortSignal.timeout(90000),
+    });
+    const result = await response.json();
+    if (!response.ok || result.ok !== true || result.prepared !== true) throw new Error(result.error || t("audioRouteFailed"));
+    if (state.cardEpoch !== epoch) throw new Error(t("cardChangedRetry"));
+    state.voiceRuntimeStatus.runtime.prepared = true;
+  }
+  if (state.cardEpoch !== epoch) throw new Error(t("cardChangedRetry"));
+}
+
+function armAutomaticCallAudio(action) {
+  state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
+  state.automaticCallAudio = localAudioBridgeHost ? {
+    epoch: state.cardEpoch, direction: action === "answer" ? "incoming" : "outgoing",
+    id: action === "answer" ? state.callStatusData?.voiceCalls?.[0]?.id : null, attempted: false, createdAt: Date.now(),
+  } : null;
+}
+
+async function connectAutomaticCallAudio(call) {
+  const intent = state.automaticCallAudio;
+  if (intent && Date.now() - intent.createdAt > 90000 && intent.id === null) { state.automaticCallAudio = null; return; }
+  if (!intent || intent.attempted || state.audioBridgeStarting || state.audioBridge ||
+      intent.epoch !== state.cardEpoch || call?.state !== "active" || call.direction !== intent.direction ||
+      (intent.id !== null && intent.id !== call.id) || (state.busy && !state.callActionInFlight)) return;
+  intent.id = call.id;
+  intent.attempted = true;
+  setCallFeedback(t("callAudioConnecting"), "working");
+  await startAudioBridge();
+}
+
+async function inspectEndedCall() {
+  const epoch = state.cardEpoch;
+  const generation = state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
+  const current = () => epoch === state.cardEpoch && generation === state.callEndReadGeneration && !state.callStatusData?.voiceCalls?.length;
+  try {
+    const data = await fetchJson("/api/call-end-reason?port=" + encodeURIComponent(portInput.value.trim()), 60000);
+    if (!current()) return;
+    if (data.ok === false) throw new Error("End reason unavailable");
+    renderVoiceNetwork(data.voiceNetwork);
+    append(t("callStatus"), textFromResult(data));
+    if (data.voiceNetwork?.lastFailure) setCallFeedback(t("callEndedReason", { reason: data.voiceNetwork.lastFailure }), "neutral");
+  } catch {
+    if (current()) setCallFeedback(t("callEndReadFailed"), "neutral");
   }
 }
 
@@ -1662,8 +1736,10 @@ function renderCallStatus(data) {
   } else if (state.lastVoiceCall) {
     rememberCall({ ...state.lastVoiceCall, state: "disconnected", stateCode: 6 });
     state.lastVoiceCall = null;
+    state.automaticCallAudio = null;
+    inspectEndedCall();
   }
-  if (!call && state.audioBridge) stopAudioBridge();
+  if (!call && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
   if (!call && state.pendingPostDial && (endedCall || Date.now() - state.pendingPostDial.createdAt > 90000)) cancelPendingPostDial();
   if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
   else if (state.pendingPostDial) setCallFeedback(t("postDialWaiting"), "working");
@@ -1686,6 +1762,7 @@ function renderCallStatus(data) {
     renderConnectionState();
   }
   syncCallButtons();
+  if (call) connectAutomaticCallAudio(call);
 }
 
 function renderCallCapabilities(data) {
@@ -1718,6 +1795,9 @@ function renderCallCapabilities(data) {
 
 async function refreshCallStatusQuietly(force = false) {
   if (state.callRefreshInFlight || document.hidden || (!force && (!state.callMonitoring || state.busy))) return;
+  const cadence = state.automaticCallAudio || state.callStatusData?.voiceCalls?.length ? 1000 : 3500;
+  if (!force && Date.now() - (state.lastCallReadStarted || 0) < cadence) return;
+  state.lastCallReadStarted = Date.now();
   state.callRefreshInFlight = true;
   try {
     const { data } = await requestAction("call-status");
@@ -1797,6 +1877,7 @@ async function runCallAction(action) {
   setCallFeedback(t("callSending"), "working");
   setBusy(true, "running");
   try {
+    if (["dial", "answer"].includes(action)) await prepareLocalCallAudio();
     const port = encodeURIComponent(portInput.value.trim());
     const res = await fetch(`/api/call-action?port=${port}`, {
       method: "POST",
@@ -1807,6 +1888,8 @@ async function runCallAction(action) {
     const raw = textFromResult(data) || JSON.stringify(data, null, 2);
     append(label, raw);
     if (res.ok) {
+      if (["dial", "answer"].includes(action)) armAutomaticCallAudio(action);
+      if (action === "hangup") state.automaticCallAudio = null;
       if (action === "dial" && data.postDial) schedulePostDial(data.postDial);
       else setCallFeedback(t(successKey), "success");
       if (action === "dtmf") document.querySelector("#dtmfInput").value = "";
@@ -1819,7 +1902,7 @@ async function runCallAction(action) {
       setCallFeedback(detail || (res.status === 502 || /(^|\r?\n)(ERROR|NO CARRIER)(\r?\n|$)/i.test(raw) ? t("callRejected") : (data.error || t("callRequestFailed"))), "error");
     }
   } catch (error) {
-    setCallFeedback(t("callRequestFailed"), "error");
+    setCallFeedback(t("callRequestFailed") + " " + (error.message || ""), "error");
     append(label, error.stack || error.message);
   } finally {
     state.callActionInFlight = false;
@@ -2319,7 +2402,7 @@ function toggleSmsPolling() {
 }
 setInterval(() => {if (state.smsPolling && document.querySelector("#sms").classList.contains("active")) refreshSmsQuietly();}, 20000);
 setInterval(refreshTrafficQuietly, 2000);
-setInterval(refreshCallStatusQuietly, 3500);
+setInterval(refreshCallStatusQuietly, 1000);
 setInterval(refreshModuleStatusQuietly, 30000);
 
 const launchToken = launchParameters.get("token") || "";
