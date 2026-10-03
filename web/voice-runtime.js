@@ -322,11 +322,21 @@ class VoiceRuntimeManager {
       const uid = await adb.shellChecked("id -u", 8000);
       const kernel = await adb.shellChecked("uname -r", 8000);
       const root = uid.status === 0 && uid.output.trim() === "0";
+      const kernelCompatible = kernel.status === 0 && kernel.output.trim() === RUNTIME_KERNEL;
+      const ready = root && kernelCompatible && (await adb.shellChecked(
+        soundDeviceCheck() + " && test -c /dev/ttyGS0 && test -p /run/voc_svr && test -p /run/alsaucm_test && (" +
+        ownedProcessCheck(CALIBRATION_PID, "/usr/bin/alsaucm_test", "") + ") && " +
+        "grep -q 'ACDB -> Sent VocProc Cal!' " + CALIBRATION_LOG,
+        8000,
+      )).status === 0;
+      const routeActive = ready && await this.routeReady(adb);
       return {
         ok: root && kernel.status === 0,
         root,
         kernel: kernel.output.trim(),
-        kernelCompatible: kernel.output.trim() === RUNTIME_KERNEL,
+        kernelCompatible,
+        prepared: Boolean(ready),
+        routeActive: Boolean(routeActive),
       };
     });
   }
@@ -410,28 +420,43 @@ class VoiceRuntimeManager {
 
   async startRoute() {
     if (!this.prepared) await this.prepare();
-    return this.withAdb(async (adb) => {
-      if (await this.routeReady(adb)) {
-        this.routeActive = true;
-        return { ok: true, active: true, reused: true };
-      }
-      const launch =
+    if (await this.withAdb((adb) => this.routeReady(adb))) {
+      this.routeActive = true;
+      return { ok: true, active: true, reused: true };
+    }
+    const launch =
+        "if (" + ownedProcessCheck(ROUTE_PID, HELPER, "--voice-route-session") + "); then exit 0; fi; " +
         "rm -f " + ROUTE_PID + " " + ROUTE_LOG + "; " +
         "nohup " + HELPER + " --voice-route-session --verbose </dev/null >> " + ROUTE_LOG + " 2>&1 & pid=$!; " +
         "born=$(cut -d ' ' -f 22 /proc/$pid/stat 2>/dev/null); " +
         "case \"$pid:$born\" in :*|*:|*[!0-9:]*) exit 70;; *) printf '%s %s\\n' \"$pid\" \"$born\" > " + ROUTE_PID + ";; esac";
-      await adb.shellChecked(launch, 8000);
-      for (let index = 0; index < 100; index += 1) {
-        if (await this.routeReady(adb)) {
+    let launchAttempted = false;
+    let lastError = "";
+    try {
+      await this.withAdb(async (adb) => {
+        launchAttempted = true;
+        shellOk(await adb.shellChecked(launch, 8000), "Could not launch the owned voice helper");
+      });
+    } catch (error) {
+      if (!launchAttempted) throw error;
+      lastError = error.message;
+    }
+    // audio_enable can re-enumerate the USB gadget after launch; never launch twice.
+    const deadline = Date.now() + 30000;
+    for (let index = 0; index < 100 && Date.now() < deadline; index += 1) {
+      try {
+        if (await this.withAdb((adb) => this.routeReady(adb))) {
           this.routeActive = true;
           return { ok: true, active: true, reused: false };
         }
-        await new Promise((resolve) => setTimeout(resolve, 250));
-      }
-      const log = await adb.shellChecked("test ! -f " + ROUTE_LOG + " || tail -n 160 " + ROUTE_LOG, 8000);
-      try { await this.stopRouteWithAdb(adb); } catch {}
-      throw new Error("The QDC507 UAC route did not enter RUNNING: " + (log.output || "no diagnostic output"));
-    });
+      } catch (error) { lastError = error.message; }
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
+    let log = "";
+    try { log = (await this.withAdb((adb) => adb.shellChecked("test ! -f " + ROUTE_LOG + " || tail -n 160 " + ROUTE_LOG, 8000))).output; }
+    catch (error) { lastError = error.message; }
+    try { await this.stopRoute(); } catch (error) { lastError += "; cleanup: " + error.message; }
+    throw new Error("The QDC507 UAC route did not enter RUNNING: " + (log || lastError || "no diagnostic output"));
   }
 
   async stopRouteWithAdb(adb) {
@@ -451,20 +476,25 @@ class VoiceRuntimeManager {
   }
 
   async stopRoute() {
-    try {
-      return await this.withAdb((adb) => this.stopRouteWithAdb(adb));
-    } catch (error) {
-      this.routeActive = false;
-      throw error;
+    let lastError;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try { return await this.withAdb((adb) => this.stopRouteWithAdb(adb)); }
+      catch (error) { lastError = error; }
+      if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 250));
     }
+    throw lastError;
   }
 
   async status() {
     const local = await this.localStatus();
     try {
       const probe = await this.probe();
+      this.prepared = probe.prepared;
+      this.routeActive = probe.routeActive;
       return { ok: true, local, adb: probe, prepared: this.prepared, routeActive: this.routeActive };
     } catch (error) {
+      this.prepared = false;
+      this.routeActive = false;
       return { ok: true, local, adb: { ok: false, error: error.message }, prepared: this.prepared, routeActive: this.routeActive };
     }
   }

@@ -1246,6 +1246,7 @@ function renderVoiceSetup(data) {
   const runtime = data?.runtime || {};
   const pnp = data?.voiceUsb || {};
   const downloaded = Boolean(runtime.local?.downloaded);
+  const moduleVerified = Boolean(state.atPort && state.callCapabilityData?.ok && state.callCapabilityData?.voiceSetupSupported);
   const usbConfigured = Boolean(pnp.adbInterfacePresent || pnp.audioInputPresent || pnp.audioOutputPresent);
   const usbReady = Boolean(pnp.adbWinUsb && pnp.standardUsbAudio);
   const prepared = Boolean(runtime.prepared && runtime.adb?.root && runtime.adb?.kernelCompatible);
@@ -1268,14 +1269,15 @@ function renderVoiceSetup(data) {
   const prepareButton = document.querySelector("#prepareVoiceRuntimeBtn");
   const restoreButton = document.querySelector("#restoreVoiceUsbBtn");
   if (downloadButton) downloadButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || downloaded;
-  if (enableButton) enableButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !downloaded || (pnp.adbInterfacePresent && pnp.standardUsbAudio);
-  if (prepareButton) prepareButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !downloaded || !pnp.adbWinUsb || !pnp.standardUsbAudio || prepared;
-  if (restoreButton) restoreButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled;
+  if (enableButton) enableButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !moduleVerified || !downloaded || (pnp.adbInterfacePresent && pnp.standardUsbAudio);
+  if (prepareButton) prepareButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !moduleVerified || !downloaded || !pnp.adbWinUsb || !pnp.standardUsbAudio || prepared;
+  if (restoreButton) restoreButton.disabled = state.voiceSetupBusy || !state.voiceRuntimeEnabled || !moduleVerified;
 
   const supported = state.callCapabilityData ? Boolean(state.callCapabilityData.voiceSetupSupported) : true;
   const message = document.querySelector("#voiceSetupMessage");
   if (message) {
-    message.textContent = state.voiceSetupFeedback ? t(state.voiceSetupFeedback.key, state.voiceSetupFeedback.params) : !supported
+    message.textContent = !state.atPort ? t("callConnectFirst") : state.voiceSetupFeedback ? t(state.voiceSetupFeedback.key, state.voiceSetupFeedback.params) : !state.callCapabilityData?.ok
+      ? t("callReadFailed") : !supported
       ? t("voiceSetupUnsupported")
       : prepared && usbReady
         ? t(localAudioBridgeHost ? "voiceSetupReady" : "voiceSetupLocalOnly")
@@ -1304,6 +1306,10 @@ async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs 
   if (state.voiceSetupBusy) return;
   if (!state.voiceRuntimeEnabled) {
     append(t("voiceSetupTitle"), t("voiceActionFailed"));
+    return;
+  }
+  if (pathname !== "/api/voice-runtime-download" && (!state.atPort || !state.callCapabilityData?.ok || !state.callCapabilityData?.voiceSetupSupported)) {
+    showVoiceSetupFeedback(!state.atPort ? "callConnectFirst" : !state.callCapabilityData?.ok ? "callReadFailed" : "voiceSetupUnsupported", {}, "error");
     return;
   }
   if (!window.confirm(t(promptKey))) return;
@@ -1453,6 +1459,20 @@ function stopAudioBridge(messageKey = "audioNotConnected", notifyServer = true) 
   syncCallButtons();
 }
 
+async function waitForModuleAudioDevices(checkCurrent) {
+  const deadline = Date.now() + 8000;
+  do {
+    checkCurrent();
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const physical = devices.filter(device => !["default", "communications"].includes(device.deviceId));
+    const moduleInput = physical.find(device => device.kind === "audioinput" && isModuleAudioDevice(device));
+    const moduleOutput = physical.find(device => device.kind === "audiooutput" && isModuleAudioDevice(device));
+    if (moduleInput && moduleOutput) return { devices, moduleInput, moduleOutput };
+    await new Promise(resolve => setTimeout(resolve, 200));
+  } while (Date.now() < deadline);
+  throw new Error(t("audioEndpointMissing"));
+}
+
 async function startAudioBridge() {
   if (state.audioBridgeStarting || state.audioBridge) return Boolean(state.audioBridge);
   const call = state.callStatusData?.voiceCalls?.[0] || null;
@@ -1486,21 +1506,8 @@ async function startAudioBridge() {
 
   try {
     permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const { systemInputs, systemOutputs } = renderAudioDeviceOptions(devices);
-    const microphoneId = document.querySelector("#callMicrophoneSelect").value;
-    const speakerId = document.querySelector("#callSpeakerSelect").value;
-    const moduleInput = devices.find((device) => device.kind === "audioinput" && isModuleAudioDevice(device));
-    const moduleOutput = devices.find((device) => device.kind === "audiooutput" && isModuleAudioDevice(device));
-    const systemInput = systemInputs.find((device) => device.deviceId === microphoneId)
-      || systemInputs.find((device) => device.deviceId === "default")
-      || systemInputs[0];
-    const systemOutput = systemOutputs.find((device) => device.deviceId === speakerId)
-      || systemOutputs.find((device) => device.deviceId === "default")
-      || systemOutputs[0];
     stopStream(permissionStream);
     permissionStream = null;
-    if (!moduleInput || !moduleOutput || !systemInput) throw new Error(t("audioEndpointMissing"));
     checkCurrent();
 
     const port = encodeURIComponent(portInput.value.trim());
@@ -1508,10 +1515,22 @@ async function startAudioBridge() {
       method: "POST",
       headers: apiHeaders({ "content-type": "application/json" }),
       body: JSON.stringify({ confirm: "AUDIO" }),
+      signal: AbortSignal.timeout(90000),
     });
     const routeData = await routeResponse.json();
     if (!routeResponse.ok || routeData.ok === false) throw new Error(routeData.error || t("audioRouteFailed"));
     moduleRouteStarted = true;
+    checkCurrent();
+
+    const { devices, moduleInput, moduleOutput } = await waitForModuleAudioDevices(checkCurrent);
+    const { systemInputs, systemOutputs } = renderAudioDeviceOptions(devices);
+    const microphoneId = document.querySelector("#callMicrophoneSelect").value;
+    const speakerId = document.querySelector("#callSpeakerSelect").value;
+    const systemInput = systemInputs.find(device => device.deviceId === microphoneId)
+      || systemInputs.find(device => device.deviceId === "default") || systemInputs[0];
+    const systemOutput = systemOutputs.find(device => device.deviceId === speakerId)
+      || systemOutputs.find(device => device.deviceId === "default") || systemOutputs[0];
+    if (!systemInput || !systemOutput) throw new Error(t("audioEndpointMissing"));
     checkCurrent();
 
     moduleDownlink = await navigator.mediaDevices.getUserMedia({
@@ -1558,8 +1577,10 @@ async function startAudioBridge() {
     stopAudioElement(uplinkAudio);
     if (moduleRouteStarted) await stopModuleVoiceRoute();
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeUnavailable");
-    append(t("audioBridge"), t("audioPermissionFailed") + " " + (error.message || ""));
-    if (current()) setCallFeedback(t("audioPermissionFailed") + " " + (error.message || ""), "error");
+    const messageKey = ["NotAllowedError", "SecurityError"].includes(error.name) ? "audioPermissionFailed"
+      : ["NotFoundError", "OverconstrainedError"].includes(error.name) ? "audioEndpointMissing" : "audioRouteFailed";
+    append(t("audioBridge"), t(messageKey) + " " + (error.message || ""));
+    if (current()) setCallFeedback(t(messageKey) + " " + (error.message || ""), "error");
     return false;
   } finally {
     state.audioBridgeStarting = false;

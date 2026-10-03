@@ -96,7 +96,7 @@ test("call-end diagnostics are read-only and display the exact modem code withou
 function audioFixture(endDuringRoute = false) {
   const bridgeSource = source.slice(source.indexOf("function stopStream(stream)"), source.indexOf("async function prepareLocalCallAudio()"));
   const state = { cardEpoch: 1, callStatusData: { voiceCalls: [{ id: 5, direction: "outgoing", state: "active" }] }, callCapabilityData: { standardUsbAudio: true }, voiceRuntimeStatus: { runtime: { local: { downloaded: true } } } };
-  const streams = [], sinks = [], writes = [];
+  const streams = [], sinks = [], writes = [], captures = [];
   const elements = new Map([["#callMicrophoneSelect", { value: "headset-mic" }], ["#callSpeakerSelect", { value: "headset-output" }], ["#audioBridgeState", {}]]);
   const devices = [
     { kind: "audioinput", deviceId: "module-in", label: "AC Interface" },
@@ -104,8 +104,9 @@ function audioFixture(endDuringRoute = false) {
     { kind: "audioinput", deviceId: "headset-mic", label: "Headset Microphone" },
     { kind: "audiooutput", deviceId: "headset-output", label: "Headphones" },
   ];
-  const context = vm.createContext({ state, localAudioBridgeHost: true, portInput: { value: "COM5" },
-    navigator: { mediaDevices: { enumerateDevices: async () => devices, getUserMedia: async () => {
+  const context = vm.createContext({ state, localAudioBridgeHost: true, AbortSignal, setTimeout, portInput: { value: "COM5" },
+    navigator: { mediaDevices: { enumerateDevices: async () => devices, getUserMedia: async (request) => {
+      captures.push(request);
       const stream = { stopped: false, getTracks: () => [{ stop: () => { stream.stopped = true; } }] };
       streams.push(stream); return stream;
     } } },
@@ -117,7 +118,7 @@ function audioFixture(endDuringRoute = false) {
     fetch: async (url) => { writes.push(url); if (endDuringRoute && url.startsWith("/api/voice-route-start")) state.callStatusData.voiceCalls = []; return { ok: true, json: async () => ({ ok: true }) }; },
   });
   vm.runInContext(bridgeSource, context);
-  return { state, streams, sinks, writes, context };
+  return { state, streams, sinks, writes, captures, context, devices };
 }
 
 test("voice output targets the selected headphones and microphone targets only the module speaker", async () => {
@@ -136,4 +137,19 @@ test("a call ending during audio setup releases the route without opening a stal
   assert.equal(f.streams.every(stream => stream.stopped), true);
   assert.equal(f.sinks.length, 0);
   assert.equal(f.writes.includes("/api/voice-route-stop"), true);
+});
+
+test("USB audio is reacquired after route startup and never targets default-device aliases", async () => {
+  const f = audioFixture();
+  let reads = 0;
+  f.context.navigator.mediaDevices.enumerateDevices = async () => {
+    reads++;
+    if (reads === 1) return [{ kind: "audioinput", deviceId: "default", label: "Default - AC Interface" }, { kind: "audiooutput", deviceId: "communications", label: "Communications - AC Interface" }];
+    return f.devices.map(device => ({ ...device, deviceId: device.deviceId.startsWith("module-") ? "new-" + device.deviceId : device.deviceId }));
+  };
+  assert.equal(await vm.runInContext("startAudioBridge()", f.context), true);
+  assert.equal(reads, 2);
+  assert.equal(f.captures[1].audio.deviceId.exact, "new-module-in");
+  assert.deepEqual(f.sinks, ["headset-output", "new-module-out"]);
+  vm.runInContext("stopAudioBridge()", f.context);
 });

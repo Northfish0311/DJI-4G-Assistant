@@ -668,6 +668,28 @@ function parseClcc(text) {
   return calls;
 }
 
+function parseCallStatusResult(result) {
+  const text = String(result?.stdout || "").replace(/\r/g, "");
+  const sections = text.split(/^----- ([^\n]+) -----\s*$/m);
+  const index = sections.findIndex((section, position) => position % 2 === 1 && section.trim() === "AT+CLCC");
+  const response = index >= 0 ? sections[index + 1] : sections.length === 1 ? text : "";
+  const calls = parseClcc(response);
+  const lines = String(response).match(/^\s*\+CLCC:[^\n]*$/gmi) || [];
+  const ok = atAccepted({ ok: result?.ok, stdout: response }) && calls.length === lines.length;
+  return {
+    ...result,
+    ok,
+    ...(ok ? {} : { code: "CALL_STATUS_UNAVAILABLE", error: "The module did not return a complete successful AT+CLCC response. Existing call audio was not stopped." }),
+    calls: ok ? calls : [],
+    voiceCalls: ok ? calls.filter((call) => call.isVoice) : [],
+    dataCalls: ok ? calls.filter((call) => !call.isVoice) : [],
+  };
+}
+
+function hasVoiceSession(snapshot) {
+  return snapshot.voiceCalls.some((call) => call.state !== "disconnected");
+}
+
 function parseModuleTemperature(text) {
   const sensors = [];
   const source = String(text || "");
@@ -1254,19 +1276,21 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/call-status") {
-    const result = await enqueueAt(portArg(url), ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
-    const calls = parseClcc(result.stdout);
-    const voiceCalls = calls.filter((call) => call.isVoice);
+    const portName = portArg(url);
+    const result = await enqueueAt(portName, ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
+    const snapshot = parseCallStatusResult(result);
     const activityMatch = String(result.stdout || "").match(/\+CPAS:\s*(\d+)/i);
     const clipMatch = String(result.stdout || "").match(/\+CLIP:\s*(\d+)/i);
-    if (voiceRuntime.routeActive && !voiceCalls.some((call) => ["active", "held"].includes(call.state))) {
-      enqueueVoice(() => voiceRuntime.stopRoute()).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
+    if (voiceRuntime.routeActive && snapshot.ok && !hasVoiceSession(snapshot)) {
+      enqueueVoice(async () => {
+        if (!voiceRuntime.routeActive) return;
+        // A new call may have arrived while another voice operation held the queue.
+        const latest = parseCallStatusResult(await enqueueAt(portName, ["AT+CLCC"], 20000));
+        if (latest.ok && !hasVoiceSession(latest)) await voiceRuntime.stopRoute();
+      }).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
     }
     sendJson(res, 200, {
-      ...result,
-      calls,
-      voiceCalls,
-      dataCalls: calls.filter((call) => !call.isVoice),
+      ...snapshot,
       activity: activityMatch ? Number(activityMatch[1]) : null,
       callerIdEnabled: clipMatch ? Number(clipMatch[1]) === 1 : null,
       voiceRouteActive: voiceRuntime.routeActive,
@@ -1283,7 +1307,7 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/call-capabilities") {
     const result = await enqueueAt(portArg(url), ["ATI", "AT+GMR", "AT+CGSN", "AT+CLIP?", "AT+QPCMV=?", "AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\"", "AT+QCFG=\"ims\"", "AT+CEREG?", "AT+CREG?", "AT+CGDCONT?", "AT+CGACT?"], 60000);
     const pnp = await voicePnpStatus();
-    const runtime = await voiceRuntime.status();
+    const runtime = await enqueueVoice(() => voiceRuntime.status());
     const qpcmvAdvertised = /\+QPCMV:\s*\(/i.test(result.stdout || "");
     const qpcmvKnownBlocked = /QDC507GLEFM21/i.test(result.stdout || "");
     let imsBackupAvailable = false;
@@ -1304,7 +1328,7 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/voice-runtime-status") {
-    const [runtime, pnp] = await Promise.all([voiceRuntime.status(), voicePnpStatus()]);
+    const [runtime, pnp] = await Promise.all([enqueueVoice(() => voiceRuntime.status()), voicePnpStatus()]);
     sendJson(res, 200, { ok: true, runtime, voiceUsb: pnp });
     return;
   }
@@ -1560,8 +1584,12 @@ async function handleApi(req, res, url) {
       return;
     }
     const portName = portArg(url);
-    const baseline = await enqueueAt(portName, ["AT+CLCC"], 20000);
-    const active = parseClcc(baseline.stdout).some((call) => call.isVoice && ["active", "held"].includes(call.state));
+    const baseline = parseCallStatusResult(await enqueueAt(portName, ["AT+CLCC"], 20000));
+    if (!baseline.ok) {
+      sendJson(res, 502, { ok: false, code: baseline.code, error: "Call status could not be verified. The voice route was not changed." });
+      return;
+    }
+    const active = baseline.voiceCalls.some((call) => ["active", "held"].includes(call.state));
     if (!active) {
       sendJson(res, 409, { ok: false, error: "Connect or answer a voice call before starting audio." });
       return;
@@ -2125,4 +2153,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };
