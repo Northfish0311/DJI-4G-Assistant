@@ -668,11 +668,15 @@ function parseClcc(text) {
   return calls;
 }
 
-function parseCallStatusResult(result) {
+function extractAtResponse(result, command) {
   const text = String(result?.stdout || "").replace(/\r/g, "");
   const sections = text.split(/^----- ([^\n]+) -----\s*$/m);
-  const index = sections.findIndex((section, position) => position % 2 === 1 && section.trim() === "AT+CLCC");
-  const response = index >= 0 ? sections[index + 1] : sections.length === 1 ? text : "";
+  const index = sections.findIndex((section, position) => position % 2 === 1 && section.trim() === command);
+  return index >= 0 ? sections[index + 1] : sections.length === 1 ? text : "";
+}
+
+function parseCallStatusResult(result) {
+  const response = extractAtResponse(result, "AT+CLCC");
   const calls = parseClcc(response);
   const lines = String(response).match(/^\s*\+CLCC:[^\n]*$/gmi) || [];
   const ok = atAccepted({ ok: result?.ok, stdout: response }) && calls.length === lines.length;
@@ -1277,7 +1281,8 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/call-status") {
     const portName = portArg(url);
-    const result = await enqueueAt(portName, ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
+    const brief = url.searchParams?.get("brief") === "1";
+    const result = await enqueueAt(portName, brief ? ["AT+CLCC"] : ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
     const snapshot = parseCallStatusResult(result);
     const activityMatch = String(result.stdout || "").match(/\+CPAS:\s*(\d+)/i);
     const clipMatch = String(result.stdout || "").match(/\+CLIP:\s*(\d+)/i);
@@ -1315,6 +1320,7 @@ async function handleApi(req, res, url) {
     sendJson(res, 200, {
       ...redactModemIdentifiers(result),
       callerIdSupported: /\+CLIP:/i.test(result.stdout || ""),
+      callerIdEnabled: /\+CLIP:\s*[01]\b/i.test(result.stdout || "") ? /\+CLIP:\s*1\b/i.test(result.stdout || "") : null,
       qpcmvAdvertised,
       qpcmvKnownBlocked,
       standardUsbAudio: pnp.standardUsbAudio,
@@ -1584,7 +1590,7 @@ async function handleApi(req, res, url) {
       return;
     }
     const portName = portArg(url);
-    const baseline = parseCallStatusResult(await enqueueAt(portName, ["AT+CLCC"], 20000));
+    const baseline = parseCallStatusResult(await enqueueAt(portName, ["AT+GMR", "AT+CLCC"], 20000));
     if (!baseline.ok) {
       sendJson(res, 502, { ok: false, code: baseline.code, error: "Call status could not be verified. The voice route was not changed." });
       return;
@@ -1594,11 +1600,12 @@ async function handleApi(req, res, url) {
       sendJson(res, 409, { ok: false, error: "Connect or answer a voice call before starting audio." });
       return;
     }
-    const pnp = await voicePnpStatus();
-    if (!pnp.standardUsbAudio || !pnp.adbWinUsb) {
-      sendJson(res, 409, { ok: false, error: "The verified ADB/UAC Windows interfaces are not ready.", voiceUsb: pnp });
+    const firmware = extractAtResponse(baseline, "AT+GMR");
+    if (!atAccepted({ ok: baseline.ok, stdout: firmware }) || !/^\s*QDC507GLEFM21\s*$/m.test(firmware)) {
+      sendJson(res, 409, { ok: false, error: "The live module firmware is not the verified QDC507GLEFM21. The voice route was not changed." });
       return;
     }
+    // ADB and audio capture verify the real interfaces without a slow full Windows inventory.
     const result = await enqueueVoice(() => voiceRuntime.startRoute());
     sendJson(res, 200, result);
     return;
@@ -2153,4 +2160,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };

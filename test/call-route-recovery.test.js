@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const { parseCallStatusResult, hasVoiceSession } = require("../web/server");
-const { VoiceRuntimeManager, RUNTIME_KERNEL } = require("../web/voice-runtime");
+const { parseCallStatusResult, hasVoiceSession, extractAtResponse, atAccepted } = require("../web/server");
+const { VoiceRuntimeManager, RUNTIME_KERNEL, RUNTIME_FILES, routeLaunchCommand } = require("../web/voice-runtime");
 const serverSource = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
 const statusHandler = serverSource.slice(serverSource.indexOf('  if (url.pathname === "/api/call-status")'), serverSource.indexOf('  if (url.pathname === "/api/call-end-reason")'));
 const call = '+CLCC: 1,0,0,0,0,"10086",129\nOK\n';
@@ -34,7 +34,7 @@ test("only the CLCC response determines call validity, not optional CPAS or CLIP
   assert.equal(hasVoiceSession(data), false);
 });
 
-async function runStatus(first, second = first) {
+async function runStatus(first, second = first, brief = false) {
   const queued = [], commands = [];
   let stops = 0, reply;
   const context = vm.createContext({
@@ -44,7 +44,7 @@ async function runStatus(first, second = first) {
     voiceRuntime: { routeActive: true, stopRoute: async () => { stops++; } },
     sendJson: (_res, _status, data) => { reply = data; },
   });
-  await vm.runInContext("(async function(req,res,url){" + statusHandler + "})", context)({}, {}, { pathname: "/api/call-status" });
+  await vm.runInContext("(async function(req,res,url){" + statusHandler + "})", context)({}, {}, { pathname: "/api/call-status", searchParams: new URLSearchParams(brief ? "brief=1" : "") });
   for (const task of queued) await task();
   return { stops, reply, commands, queued: queued.length };
 }
@@ -55,6 +55,35 @@ test("a transport failure or modem ERROR never closes an existing voice route", 
     assert.equal(outcome.reply.ok, false);
     assert.equal(outcome.stops, 0);
     assert.equal(outcome.queued, 0);
+  }
+});
+
+test("fast call polling reads only CLCC without repeating CPAS and CLIP", async () => {
+  const outcome = await runStatus({ ok: true, stdout: call }, undefined, true);
+  assert.deepEqual(Array.from(outcome.commands[0]), ["AT+CLCC"]);
+  assert.equal(outcome.reply.ok, true);
+  assert.equal(outcome.stops, 0);
+});
+
+test("live audio validates firmware and call state without a slow Windows PnP inventory", async () => {
+  const handler = serverSource.slice(serverSource.indexOf('  if (url.pathname === "/api/voice-route-start"'), serverSource.indexOf('  if (url.pathname === "/api/voice-route-stop"'));
+  for (const firmware of ["QDC507GLEFM21", "EC25_UNKNOWN", "QDC507GLEFM21_FAKE", "ERROR"]) {
+    const commands = [];
+    let starts = 0, reply, status;
+    const context = vm.createContext({
+      process: { env: { ALLOW_VOICE_RUNTIME: "1" } },
+      readJsonBody: async () => ({ confirm: "AUDIO" }), portArg: () => "COM5",
+      parseCallStatusResult, extractAtResponse, atAccepted,
+      enqueueAt: async (_port, items) => { commands.push(items); return { ok: true, stdout: "----- AT+GMR -----\n" + firmware + "\nOK\n----- AT+CLCC -----\n" + call }; },
+      enqueueVoice: async task => task(), voiceRuntime: { startRoute: async () => { starts++; return { ok: true, active: true }; } },
+      voicePnpStatus: async () => { throw new Error("Full Windows inventory cannot run on the connected-call path"); },
+      sendJson: (_res, code, data) => { status = code; reply = data; },
+    });
+    await vm.runInContext("(async function(req,res,url){" + handler + "})", context)({ method: "POST" }, {}, { pathname: "/api/voice-route-start" });
+    assert.deepEqual(Array.from(commands[0]), ["AT+GMR", "AT+CLCC"]);
+    assert.equal(starts, firmware === "QDC507GLEFM21" ? 1 : 0);
+    assert.equal(status, firmware === "QDC507GLEFM21" ? 200 : 409);
+    assert.equal(reply.ok, firmware === "QDC507GLEFM21");
   }
 });
 
@@ -132,12 +161,13 @@ test("a lost launch reply reconnects ADB and verifies the owned route without re
     const id = ++connections;
     if (id === 3) throw new Error("USB gadget re-enumerating");
     return task({ id, shellChecked: async command => {
-      assert.match(command, /if .*--voice-route-session/);
+      assert.match(command, /nohup \/bin\/sh -c/);
       launches++;
       throw new Error("LIBUSB_ERROR_NO_DEVICE after audio_enable");
     } });
   } });
   runtime.prepared = true;
+  runtime.recoverOwnedRoute = async () => false;
   runtime.routeReady = async adb => adb.id >= 4;
   const result = await runtime.startRoute();
   assert.equal(result.active, true);
@@ -153,10 +183,53 @@ test("failure to connect before launch does not pretend that the helper was star
     return task({});
   } });
   runtime.prepared = true;
+  runtime.recoverOwnedRoute = async () => false;
   runtime.routeReady = async () => false;
   await assert.rejects(runtime.startRoute(), /ADB driver unavailable/);
   assert.equal(connections, 2);
   assert.equal(runtime.routeActive, false);
+});
+
+test("detached child records its own PID and birth before exec can re-enumerate USB", () => {
+  const launch = routeLaunchCommand();
+  assert.match(launch, /nohup \/bin\/sh -c/);
+  assert.match(launch, /pid=\$\$/);
+  assert.ok(launch.indexOf("printf") < launch.indexOf("exec /tmp/dji4g-assistant-voice/mavo-pcm-bridge.armv7"));
+  assert.match(launch, /> \/run\/dji4g-assistant-route\.pid \|\| exit 71/);
+  assert.doesNotMatch(launch, /pid=\$!/);
+});
+
+test("orphan recovery requires the private path, exact route argument and pinned executable checksum", async () => {
+  let command;
+  const runtime = new VoiceRuntimeManager(__dirname);
+  const recovered = await runtime.recoverOwnedRoute({ shellChecked: async value => {
+    command = value;
+    return { status: 0, output: "OWNED_ROUTE=1\n" };
+  } });
+  assert.equal(recovered, true);
+  assert.match(command, /\/tmp\/dji4g-assistant-voice\/mavo-pcm-bridge\.armv7/);
+  assert.match(command, /grep -Fxq -- '--voice-route-session'/);
+  assert.match(command, /grep -Fxq -- "--voice-route-session"/);
+  assert.ok(command.includes(RUNTIME_FILES.find(file => file.name === "mavo-pcm-bridge.armv7").sha256));
+  assert.match(command, /sha256sum/);
+  assert.doesNotMatch(command, /kill|pkill|killall/);
+  assert.equal(await runtime.recoverOwnedRoute({ shellChecked: async () => ({ status: 0, output: "OWNED_ROUTE=0\n" }) }), false);
+  await assert.rejects(runtime.recoverOwnedRoute({ shellChecked: async () => ({ status: 79, output: "" }) }), /Multiple verified/);
+  await assert.rejects(runtime.recoverOwnedRoute({ shellChecked: async () => ({ status: 0, output: "unexpected" }) }), /valid owned/);
+});
+
+test("an orphaned inactive route is stopped before one fresh helper is launched", async () => {
+  const events = [];
+  const runtime = new VoiceRuntimeManager(__dirname, { withAdb: async task => task({ shellChecked: async () => {
+    events.push("launch"); return { status: 0, output: "" };
+  } }) });
+  runtime.prepared = true;
+  runtime.recoverOwnedRoute = async () => { events.push("recover"); return true; };
+  let checks = 0;
+  runtime.routeReady = async () => ++checks > 1;
+  runtime.stopRouteWithAdb = async () => { events.push("stop-orphan"); };
+  assert.equal((await runtime.startRoute()).active, true);
+  assert.deepEqual(events, ["recover", "stop-orphan", "launch"]);
 });
 
 test("route cleanup reconnects after the helper disables USB audio", async () => {

@@ -168,7 +168,10 @@ Object.assign(copy.en, {trafficNotSynced: "Not refreshed", trafficRefreshing: "R
 Object.assign(copy.zh, {trafficNotSynced: "尚未刷新", trafficRefreshing: "正在刷新", trafficUpdated: "更新于 {time}", trafficRefreshFailed: "刷新失败 · 保留上次采样"});
 Object.assign(copy.en, {smsNoConversations: "No conversations"});
 Object.assign(copy.zh, {smsNoConversations: "暂无会话"});
+Object.assign(copy.en, {automaticCallAudio: "Connect audio automatically"});
+Object.assign(copy.zh, {automaticCallAudio: "自动接入声音"});
 const state = {
+  automaticCallAudioEnabled: localStorage.getItem("callAutomaticAudio") !== "0", callCapabilityRefresh: null,
   viewScrollPositions: new Map(), trafficLastRead: 0, trafficReadError: false, trafficFailureCount: 0, trafficRetryAfter: 0,
   overviewRefreshInFlight: false, moduleReadError: false,
   smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
@@ -239,11 +242,12 @@ function clearCardView() {
   state.cardEpoch += 1; state.smsDrafts.clear(); state.smsSentThisSession = []; state.smsLastRead = 0; state.smsReadError = false; state.failedViews.clear(); setSmsFeedback(null);
   state.activeEid = ""; state.activeAid = ""; state.euiccProbes = [];
   state.euiccCandidatesChecked = 0;
-  state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms");
+  state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms"); state.autoLoadedViews.delete("calls");
   state.chipText = ""; state.profileText = ""; state.discoveryText = ""; state.notificationText = "";
   state.smsText = ""; state.sim = ""; state.carrier = ""; state.radio = ""; state.moduleIp = ""; state.registrationCode = ""; state.signal = ""; state.moduleReadError = false;
   state.temperature = null; state.temperatureSensors = []; state.temperatureSupported = null;
-  state.voiceNetwork = null; state.voiceSetupFeedback = null; state.callCapabilityData = null;
+  state.voiceNetwork = null; state.voiceSetupFeedback = null; state.callCapabilityData = null; state.voiceRuntimeStatus = null;
+  state.callStatusData = null; state.callStatusReadError = true; state.lastVoiceCall = null;
   state.automaticCallAudio = null; state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
   if (state.audioBridge || state.audioBridgeStarting) stopAudioBridge();
   state.postDialGeneration += 1; state.postDialAbortController?.abort(); state.postDialAbortController = null; state.pendingPostDial = null; state.postDialRunning = false;
@@ -1287,19 +1291,34 @@ function renderVoiceSetup(data) {
 }
 
 async function refreshVoiceSetup() {
-  if (state.voiceSetupBusy) return;
+  const epoch = state.cardEpoch;
+  const portName = state.atPort;
+  if (state.callCapabilityRefresh && state.callCapabilityRefreshEpoch === epoch) return state.callCapabilityRefresh;
+  if (state.voiceSetupBusy && !state.callCapabilityRefresh) return null;
   state.voiceSetupBusy = true;
+  state.callCapabilityRefreshEpoch = epoch;
   if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
-  try {
-    const port = encodeURIComponent(portInput.value.trim());
-    const capabilities = await fetchJson("/api/call-capabilities?port=" + port, 90000);
-    renderCallCapabilities(capabilities);
-  } catch (error) {
-    append(t("voiceSetupTitle"), error.message || String(error));
-  } finally {
-    state.voiceSetupBusy = false;
-    if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
-  }
+  const pending = (async () => {
+    try {
+      const port = encodeURIComponent(portInput.value.trim());
+      const capabilities = await fetchJson("/api/call-capabilities?port=" + port, 90000);
+      if (state.cardEpoch !== epoch || state.atPort !== portName) return null;
+      if (capabilities.ok === false) throw new Error(t("callReadFailed"));
+      renderCallCapabilities(capabilities);
+      return capabilities;
+    } catch (error) {
+      if (state.cardEpoch === epoch) append(t("voiceSetupTitle"), error.message || String(error));
+      return null;
+    } finally {
+      if (state.callCapabilityRefresh === pending) {
+        state.callCapabilityRefresh = null;
+        state.voiceSetupBusy = false;
+        if (state.voiceRuntimeStatus) renderVoiceSetup(state.voiceRuntimeStatus);
+      }
+    }
+  })();
+  state.callCapabilityRefresh = pending;
+  return pending;
 }
 
 async function runVoiceSetupAction(pathname, confirmation, promptKey, timeoutMs = 360000) {
@@ -1406,9 +1425,14 @@ async function refreshAudioDeviceOptions(requestPermission = false) {
   if (!localAudioBridgeHost || !navigator.mediaDevices?.enumerateDevices) return [];
   let permissionStream = null;
   try {
-    if (requestPermission) permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const devices = await navigator.mediaDevices.enumerateDevices();
+    let devices = await navigator.mediaDevices.enumerateDevices();
     renderAudioDeviceOptions(devices);
+    const labeledSystemInput = devices.some(device => device.kind === "audioinput" && device.label && !isModuleAudioDevice(device));
+    if (requestPermission && !labeledSystemInput) {
+      permissionStream = await openChosenMicrophone(devices);
+      devices = await navigator.mediaDevices.enumerateDevices();
+      renderAudioDeviceOptions(devices);
+    }
     return devices;
   } finally {
     stopStream(permissionStream);
@@ -1459,6 +1483,24 @@ function stopAudioBridge(messageKey = "audioNotConnected", notifyServer = true) 
   syncCallButtons();
 }
 
+function physicalSystemAudioDevice(devices, kind, preferred) {
+  const physical = devices.filter(device => device.kind === kind && !isModuleAudioDevice(device) && !["default", "communications"].includes(device.deviceId));
+  const selected = devices.find(device => device.kind === kind && device.deviceId === preferred && !isModuleAudioDevice(device));
+  return physical.find(device => device.deviceId === preferred)
+    || (selected?.groupId ? physical.find(device => device.groupId === selected.groupId) : null)
+    || physical[0];
+}
+
+async function openChosenMicrophone(devices) {
+  const { systemInputs } = renderAudioDeviceOptions(devices);
+  const microphone = physicalSystemAudioDevice(systemInputs, "audioinput", document.querySelector("#callMicrophoneSelect").value);
+  if (!microphone) throw new Error(t("audioEndpointMissing"));
+  // A plugged-in modem can become Windows' default microphone before its route is ready.
+  return navigator.mediaDevices.getUserMedia({ audio: {
+    deviceId: { exact: microphone.deviceId }, echoCancellation: true, noiseSuppression: true, autoGainControl: true,
+  } });
+}
+
 async function waitForModuleAudioDevices(checkCurrent) {
   const deadline = Date.now() + 8000;
   do {
@@ -1498,16 +1540,12 @@ async function startAudioBridge() {
   const checkCurrent = () => { if (!current()) throw new Error(t("hangupAccepted")); };
   syncCallButtons();
   let moduleRouteStarted = false;
-  let permissionStream = null;
   let moduleDownlink = null;
   let microphoneStream = null;
   let downlinkAudio = null;
   let uplinkAudio = null;
 
   try {
-    permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stopStream(permissionStream);
-    permissionStream = null;
     checkCurrent();
 
     const port = encodeURIComponent(portInput.value.trim());
@@ -1523,14 +1561,12 @@ async function startAudioBridge() {
     checkCurrent();
 
     const { devices, moduleInput, moduleOutput } = await waitForModuleAudioDevices(checkCurrent);
-    const { systemInputs, systemOutputs } = renderAudioDeviceOptions(devices);
-    const microphoneId = document.querySelector("#callMicrophoneSelect").value;
+    microphoneStream = await openChosenMicrophone(devices);
+    checkCurrent();
+    const { systemOutputs } = renderAudioDeviceOptions(devices);
     const speakerId = document.querySelector("#callSpeakerSelect").value;
-    const systemInput = systemInputs.find(device => device.deviceId === microphoneId)
-      || systemInputs.find(device => device.deviceId === "default") || systemInputs[0];
-    const systemOutput = systemOutputs.find(device => device.deviceId === speakerId)
-      || systemOutputs.find(device => device.deviceId === "default") || systemOutputs[0];
-    if (!systemInput || !systemOutput) throw new Error(t("audioEndpointMissing"));
+    const systemOutput = physicalSystemAudioDevice(systemOutputs, "audiooutput", speakerId);
+    if (!systemOutput || microphoneStream.getTracks().some(track => track.readyState === "ended")) throw new Error(t("audioEndpointMissing"));
     checkCurrent();
 
     moduleDownlink = await navigator.mediaDevices.getUserMedia({
@@ -1539,14 +1575,6 @@ async function startAudioBridge() {
         echoCancellation: false,
         noiseSuppression: false,
         autoGainControl: false,
-      },
-    });
-    microphoneStream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        ...(systemInput.deviceId && systemInput.deviceId !== "default" ? { deviceId: { exact: systemInput.deviceId } } : {}),
-        echoCancellation: true,
-        noiseSuppression: true,
-        autoGainControl: true,
       },
     });
     checkCurrent();
@@ -1570,7 +1598,6 @@ async function startAudioBridge() {
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeActive");
     return true;
   } catch (error) {
-    stopStream(permissionStream);
     stopStream(moduleDownlink);
     stopStream(microphoneStream);
     stopAudioElement(downlinkAudio);
@@ -1589,8 +1616,12 @@ async function startAudioBridge() {
 }
 
 async function prepareLocalCallAudio() {
-  if (!localAudioBridgeHost || !state.voiceRuntimeEnabled || !state.callCapabilityData?.standardUsbAudio || !state.voiceRuntimeStatus?.runtime?.local?.downloaded) return;
+  if (!localAudioBridgeHost || !state.voiceRuntimeEnabled || state.automaticCallAudioEnabled === false) return;
   const epoch = state.cardEpoch;
+  if (!state.callCapabilityData?.ok) await refreshVoiceSetup();
+  if (state.cardEpoch !== epoch) throw new Error(t("cardChangedRetry"));
+  if (!state.callCapabilityData?.ok) throw new Error(t("callReadFailed"));
+  if (!state.callCapabilityData.standardUsbAudio || !state.voiceRuntimeStatus?.runtime?.local?.downloaded) return;
   setCallFeedback(t("callAudioPreparing"), "working");
   await refreshAudioDeviceOptions(true);
   if (state.cardEpoch !== epoch) throw new Error(t("cardChangedRetry"));
@@ -1606,9 +1637,17 @@ async function prepareLocalCallAudio() {
   if (state.cardEpoch !== epoch) throw new Error(t("cardChangedRetry"));
 }
 
+function setAutomaticCallAudio(enabled) {
+  state.automaticCallAudioEnabled = Boolean(enabled);
+  state.automaticCallAudio = null;
+  try { localStorage.setItem("callAutomaticAudio", enabled ? "1" : "0"); }
+  catch (error) { append(t("audioBridge"), error.message); }
+  syncCallButtons();
+}
+
 function armAutomaticCallAudio(action) {
   state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
-  state.automaticCallAudio = localAudioBridgeHost ? {
+  state.automaticCallAudio = localAudioBridgeHost && state.automaticCallAudioEnabled !== false ? {
     epoch: state.cardEpoch, direction: action === "answer" ? "incoming" : "outgoing",
     id: action === "answer" ? state.callStatusData?.voiceCalls?.[0]?.id : null, attempted: false, createdAt: Date.now(),
   } : null;
@@ -1617,7 +1656,7 @@ function armAutomaticCallAudio(action) {
 async function connectAutomaticCallAudio(call) {
   const intent = state.automaticCallAudio;
   if (intent && Date.now() - intent.createdAt > 90000 && intent.id === null) { state.automaticCallAudio = null; return; }
-  if (!intent || intent.attempted || state.audioBridgeStarting || state.audioBridge ||
+  if (state.automaticCallAudioEnabled === false || !intent || intent.attempted || state.audioBridgeStarting || state.audioBridge ||
       intent.epoch !== state.cardEpoch || call?.state !== "active" || call.direction !== intent.direction ||
       (intent.id !== null && intent.id !== call.id) || (state.busy && !state.callActionInFlight)) return;
   intent.id = call.id;
@@ -1657,6 +1696,11 @@ function syncCallButtons() {
   const refreshAudioDevices = document.querySelector("#refreshAudioDevicesBtn");
   const microphoneSelect = document.querySelector("#callMicrophoneSelect");
   const speakerSelect = document.querySelector("#callSpeakerSelect");
+  const automaticAudio = document.querySelector("#automaticCallAudioInput");
+  if (automaticAudio) {
+    automaticAudio.checked = state.automaticCallAudioEnabled !== false;
+    automaticAudio.disabled = !localAudioBridgeHost || state.audioBridgeStarting || state.callActionInFlight;
+  }
   const refreshSetup = document.querySelector("#refreshVoiceSetupBtn");
   const audioReady = Boolean(
     localAudioBridgeHost &&
@@ -1747,6 +1791,7 @@ async function runPendingPostDial(call) {
 
 function renderCallStatus(data) {
   if (data?.ok === false) {state.callStatusReadError = true; syncCallButtons(); return;}
+  data = { ...data, callerIdEnabled: data?.callerIdEnabled ?? state.callStatusData?.callerIdEnabled ?? state.callCapabilityData?.callerIdEnabled ?? null };
   state.callStatusReadError = false;
   state.callStatusData = data;
   const call = Array.isArray(data?.voiceCalls) ? data.voiceCalls[0] || null : null;
@@ -1815,18 +1860,24 @@ function renderCallCapabilities(data) {
 }
 
 async function refreshCallStatusQuietly(force = false) {
-  if (state.callRefreshInFlight || document.hidden || (!force && (!state.callMonitoring || state.busy))) return;
+  const liveOrPending = Boolean(state.callActionInFlight || state.automaticCallAudio || state.callStatusData?.voiceCalls?.length);
+  // A hidden desktop window must still connect and release audio for its own call.
+  if (state.callRefreshInFlight || (document.hidden && !force && !liveOrPending) || (!force && !liveOrPending && (!state.callMonitoring || state.busy))) return;
   const cadence = state.automaticCallAudio || state.callStatusData?.voiceCalls?.length ? 1000 : 3500;
   if (!force && Date.now() - (state.lastCallReadStarted || 0) < cadence) return;
   state.lastCallReadStarted = Date.now();
   state.callRefreshInFlight = true;
+  const epoch = state.cardEpoch;
   try {
     const { data } = await requestAction("call-status");
+    if (state.cardEpoch !== epoch) return;
     renderCallStatus(data);
   } catch (error) {
-    state.callStatusReadError = true;
-    syncCallButtons();
-    if (force) append(t("callStatus"), error.message);
+    if (state.cardEpoch === epoch) {
+      state.callStatusReadError = true;
+      syncCallButtons();
+      if (force) append(t("callStatus"), error.message);
+    }
   } finally {
     state.callRefreshInFlight = false;
     syncCallButtons();
@@ -1909,6 +1960,10 @@ async function runCallAction(action) {
     const raw = textFromResult(data) || JSON.stringify(data, null, 2);
     append(label, raw);
     if (res.ok) {
+      if (action === "caller-id") {
+        if (state.callCapabilityData) state.callCapabilityData.callerIdEnabled = true;
+        if (state.callStatusData) state.callStatusData.callerIdEnabled = true;
+      }
       if (["dial", "answer"].includes(action)) armAutomaticCallAudio(action);
       if (action === "hangup") state.automaticCallAudio = null;
       if (action === "dial" && data.postDial) schedulePostDial(data.postDial);
@@ -1951,7 +2006,7 @@ async function fetchJson(path, timeoutMs = 90000) {
 async function requestAction(action) {
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, "module-temperature": `/api/module-temperature?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
+  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, "module-temperature": `/api/module-temperature?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}&brief=1`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const data = await fetchJson(paths[action], action === "euicc-inventory" ? 600000 : 90000);
   if (action === "find-at" && Object.hasOwn(data, "port")) {
     state.atPort = data.port || "";
@@ -2089,6 +2144,7 @@ async function quickStart() {
   } finally {
     state.connecting = false;
     setBusy(false);
+    if (state.atPort && document.querySelector(".view.active")?.id === "calls") refreshVoiceSetup();
   }
 }
 
@@ -2563,6 +2619,7 @@ document.querySelector("#enableCallerIdBtn")?.addEventListener("click", () => ru
 document.querySelector("#startAudioBridgeBtn").addEventListener("click", startAudioBridge);
 document.querySelector("#stopAudioBridgeBtn").addEventListener("click", () => stopAudioBridge());
 document.querySelector("#refreshAudioDevicesBtn").addEventListener("click", refreshAudioDevicesFromButton);
+document.querySelector("#automaticCallAudioInput").addEventListener("change", event => setAutomaticCallAudio(event.target.checked));
 document.querySelector("#callMicrophoneSelect").addEventListener("change", (event) => localStorage.setItem("callMicrophoneId", event.target.value));
 document.querySelector("#callSpeakerSelect").addEventListener("change", (event) => localStorage.setItem("callSpeakerId", event.target.value));
 navigator.mediaDevices?.addEventListener?.("devicechange", () => refreshAudioDeviceOptions(false).catch(() => {}));

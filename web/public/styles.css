@@ -2075,6 +2075,26 @@ textarea:focus {
   align-items: end;
 }
 
+.call-audio-preference {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  margin-top: 10px;
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.call-audio-preference input {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .audio-device-grid label {
   display: grid;
   gap: 6px;

@@ -273,7 +273,21 @@ function ownedProcessCheck(pidFile, executable, requiredArgument) {
   return "test -s " + pidFile + " && read pid born < " + pidFile +
     " && test \"$(cut -d ' ' -f 22 /proc/$pid/stat 2>/dev/null)\" = \"$born\"" +
     " && test \"$(tr '\\000' '\\n' < /proc/$pid/cmdline 2>/dev/null | sed -n '1p')\" = \"" + executable + "\"" +
-    (requiredArgument ? " && tr '\\000' '\\n' < /proc/$pid/cmdline 2>/dev/null | grep -Fxq \"" + requiredArgument + "\"" : "");
+    (requiredArgument ? " && tr '\\000' '\\n' < /proc/$pid/cmdline 2>/dev/null | grep -Fxq -- \"" + requiredArgument + "\"" : "");
+}
+
+function routeLaunchCommand() {
+  // Record the detached shell before exec; the helper can disconnect ADB immediately.
+  const child = "trap '' HUP; pid=$$; born=$(cut -d ' ' -f 22 /proc/$pid/stat 2>/dev/null); " +
+    "case \"$pid:$born\" in :*|*:|*[!0-9:]*) exit 70;; esac; " +
+    "printf '%s %s\\n' \"$pid\" \"$born\" > " + ROUTE_PID + " || exit 71; " +
+    "printf 'Starting owned voice route pid=%s\\n' \"$pid\"; " +
+    "exec " + HELPER + " --voice-route-session --verbose";
+  const quote = value => "'" + value.replace(/'/g, "'\\''") + "'";
+  return "rm -f " + ROUTE_PID + " " + ROUTE_LOG + "; " +
+    "nohup /bin/sh -c " + quote(child) + " </dev/null >> " + ROUTE_LOG + " 2>&1 & " +
+    "n=0; while test $n -lt 40; do (" + ownedProcessCheck(ROUTE_PID, HELPER, "--voice-route-session") + ") && exit 0; " +
+    "sleep 0.05; n=$((n+1)); done; exit 72";
 }
 
 class VoiceRuntimeManager {
@@ -418,18 +432,44 @@ class VoiceRuntimeManager {
     return (await adb.shellChecked(check, 8000)).status === 0;
   }
 
+  async recoverOwnedRoute(adb) {
+    const expected = RUNTIME_FILES.find(file => file.name === "mavo-pcm-bridge.armv7").sha256;
+    const owned = ownedProcessCheck(ROUTE_PID, HELPER, "--voice-route-session");
+    const command = "if (" + owned + "); then printf 'OWNED_ROUTE=1\\n'; exit 0; fi; " +
+      "count=0; candidate=''; candidate_born=''; " +
+      "for proc in /proc/[0-9]*; do " +
+      "test -r \"$proc/cmdline\" || continue; " +
+      "test \"$(tr '\\000' '\\n' < \"$proc/cmdline\" 2>/dev/null | sed -n '1p')\" = \"" + HELPER + "\" || continue; " +
+      "tr '\\000' '\\n' < \"$proc/cmdline\" 2>/dev/null | grep -Fxq -- '--voice-route-session' || continue; " +
+      "test \"$(sha256sum \"$proc/exe\" 2>/dev/null | cut -d ' ' -f 1)\" = " + expected + " || continue; " +
+      "pid=${proc##*/}; born=$(cut -d ' ' -f 22 \"$proc/stat\" 2>/dev/null); " +
+      "case \"$pid:$born\" in :*|*:|*[!0-9:]*) continue;; esac; " +
+      "count=$((count+1)); candidate=$pid; candidate_born=$born; done; " +
+      "test $count -le 1 || exit 79; " +
+      "if test $count -eq 1; then " +
+      "test \"$(cut -d ' ' -f 22 /proc/$candidate/stat 2>/dev/null)\" = \"$candidate_born\" || exit 78; " +
+      "printf '%s %s\\n' \"$candidate\" \"$candidate_born\" > " + ROUTE_PID + " || exit 77; " +
+      "(" + owned + ") || exit 78; fi; printf 'OWNED_ROUTE=%s\\n' \"$count\"";
+    const result = await adb.shellChecked(command, 12000);
+    if (result.status === 79) throw new Error("Multiple verified app voice helpers are running. Reconnect the module before retrying.");
+    shellOk(result, "Could not verify the app-owned voice process");
+    const marker = result.output.trim().match(/^OWNED_ROUTE=([01])$/);
+    if (!marker) throw new Error("The module did not return a valid owned voice process result.");
+    return marker[1] === "1";
+  }
+
   async startRoute() {
     if (!this.prepared) await this.prepare();
-    if (await this.withAdb((adb) => this.routeReady(adb))) {
+    if (await this.withAdb(async adb => {
+      const recovered = await this.recoverOwnedRoute(adb);
+      if (await this.routeReady(adb)) return true;
+      if (recovered) await this.stopRouteWithAdb(adb);
+      return false;
+    })) {
       this.routeActive = true;
       return { ok: true, active: true, reused: true };
     }
-    const launch =
-        "if (" + ownedProcessCheck(ROUTE_PID, HELPER, "--voice-route-session") + "); then exit 0; fi; " +
-        "rm -f " + ROUTE_PID + " " + ROUTE_LOG + "; " +
-        "nohup " + HELPER + " --voice-route-session --verbose </dev/null >> " + ROUTE_LOG + " 2>&1 & pid=$!; " +
-        "born=$(cut -d ' ' -f 22 /proc/$pid/stat 2>/dev/null); " +
-        "case \"$pid:$born\" in :*|*:|*[!0-9:]*) exit 70;; *) printf '%s %s\\n' \"$pid\" \"$born\" > " + ROUTE_PID + ";; esac";
+    const launch = routeLaunchCommand();
     let launchAttempted = false;
     let lastError = "";
     try {
@@ -460,6 +500,7 @@ class VoiceRuntimeManager {
   }
 
   async stopRouteWithAdb(adb) {
+    await this.recoverOwnedRoute(adb);
     const owned = ownedProcessCheck(ROUTE_PID, HELPER, "--voice-route-session");
     const stop =
       "stopped=1; if (" + owned + "); then read pid born < " + ROUTE_PID + "; kill -TERM $pid 2>/dev/null || true; " +
@@ -516,4 +557,5 @@ module.exports = {
   verifyRuntime,
   downloadRuntime,
   downloadOne,
+  routeLaunchCommand,
 };
