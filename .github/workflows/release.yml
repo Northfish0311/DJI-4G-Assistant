@@ -26,6 +26,8 @@ jobs:
         run: powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\windows\install-lpac.ps1
       - run: npm test
       - run: npm run build
+      - name: Verify packaged app without modem access
+        run: node scripts/verify-windows-package.cjs
       - name: Create SHA256 checksums
         shell: powershell
         run: |

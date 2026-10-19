@@ -5,11 +5,13 @@ $tools = Join-Path $root "tools"
 $installRoot = Join-Path $tools "lpac"
 $headers = @{ "User-Agent" = "DJI-Cellular-Dongle-Windows-Hub" }
 if ($env:GITHUB_TOKEN) { $headers.Authorization = "Bearer $env:GITHUB_TOKEN" }
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/estkme-group/lpac/releases/latest" -Headers $headers
+$version = "v2.3.0"
+$expectedHash = "4781e8673d19c08c41cd104e8bc59f901e352eb10e8c952bcf2aa199a915ea6f"
+$release = Invoke-RestMethod -Uri "https://api.github.com/repos/estkme-group/lpac/releases/tags/$version" -Headers $headers
 $asset = @($release.assets) | Where-Object { $_.name -match "windows-x86_64-mingw\.zip$" } | Select-Object -First 1
 
 if (-not $asset) {
-  throw "The latest lpac release did not include the expected Windows x86_64 archive."
+  throw "The pinned lpac release did not include the expected Windows x86_64 archive."
 }
 
 $temporary = Join-Path $env:TEMP ("lpac-" + [guid]::NewGuid().ToString("N"))
@@ -19,6 +21,9 @@ $expanded = Join-Path $temporary "expanded"
 try {
   New-Item -ItemType Directory -Path $temporary -Force | Out-Null
   Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $archive
+  if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) {
+    throw "lpac SHA-256 verification failed. No files were installed."
+  }
   Expand-Archive -LiteralPath $archive -DestinationPath $expanded -Force
   $lpac = Get-ChildItem -LiteralPath $expanded -Filter "lpac.exe" -Recurse | Select-Object -First 1
   if (-not $lpac) { throw "lpac.exe was not found after extracting the official release." }

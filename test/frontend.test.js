@@ -182,26 +182,27 @@ test("keeps mobile eSIM profiles readable after desktop refinements", () => {
   assert.match(mobile, /\.rail \{[\s\S]*overflow-x:auto/);
 });
 
-test("keeps System content and connection tools on the same inset", () => {
+test("aligns unframed System headings, fields and tools on the same edge", () => {
   const css = read("web/public/desktop-refresh.css");
   const rule = selector => {
-    const start = css.indexOf(selector + " {");
+    const start = css.lastIndexOf(selector + " {");
     assert.ok(start >= 0, "Missing System layout rule: " + selector);
     return css.slice(start, css.indexOf("}", start) + 1);
   };
   const scope = "html:not(.native-companion) .system-grid";
-  assert.match(rule(scope + " > .panel"), /--system-inset: 22px/);
-  assert.match(rule(scope + " > .panel > .panel-head"), /padding: 18px var\(--system-inset\)/);
-  assert.match(rule(scope + " .info-list"), /padding: 16px var\(--system-inset\) 22px/);
-  assert.match(rule(scope + " .field-row"), /padding: 16px var\(--system-inset\) 0/);
-  assert.match(rule(scope + " .action-grid"), /padding: 16px var\(--system-inset\) 22px/);
+  assert.match(rule(scope + " > .panel"), /background: transparent; border: 0/);
+  assert.match(rule(scope + " > .panel > .panel-head"), /padding: 0 0 16px/);
+  assert.match(rule(scope + " .info-list"), /padding: 4px 0 0/);
+  assert.match(rule(scope + " .field-row"), /padding: 16px 0 0/);
+  assert.match(rule(scope + " .action-grid"), /padding: 20px 0 0/);
 });
 
 test("keeps network metrics and the AT tool clear of their edges", () => {
   const css = read("web/public/desktop-refresh.css");
   const metrics = [...css.matchAll(/html:not\(\.native-companion\) \.network-metric \{([^}]+)\}/g)];
   assert.ok(metrics.length > 0);
-  for (const [, declarations] of metrics) assert.match(declarations, /padding: 18px 22px/);
+  for (const [, declarations] of metrics) assert.match(declarations, /padding: (?:18px 22px|16px);/);
+  assert.match(css, /@media \(max-width: 879px\) \{[^}]*\}[\s\S]*html:not\(\.native-companion\) \.network-metric \{ padding: 16px;/);
   assert.match(css, /html:not\(\.native-companion\) \.network-metric-grid \{[^}]*background: #fff/);
   assert.match(css, /#atlab > \.panel > \.panel-head \{ padding: 18px 22px/);
   assert.match(css, /#atlab > \.panel > \.at-row \{ padding: 16px 22px 12px/);

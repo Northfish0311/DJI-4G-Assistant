@@ -270,7 +270,7 @@ test("accepts only the verified QDC507 voice identity", () => {
 test("returns the queued serial operation to API callers", async () => {
   const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
   const queueSource = source.slice(source.indexOf("function enqueueSerial("), source.indexOf("function enqueueAt("));
-  const context = vm.createContext({});
+  const context = vm.createContext({serialQueue: require("../web/serial-queue").createSerialQueue()});
   vm.runInContext("let atQueue = Promise.resolve();\n" + queueSource, context);
   assert.equal(await context.enqueueSerial(() => Promise.resolve("operation result")), "operation result");
 });

@@ -9,6 +9,7 @@ const { Bonjour } = require("bonjour-service");
 const originalUsb = require("./original-usb");
 const { buildPairingDeepLink } = require("./pairing");
 const { parseVoiceNetwork } = require("./voice-network");
+const { createSerialQueue } = require("./serial-queue");
 const {
   VoiceRuntimeManager,
   parseUsbComposition,
@@ -23,9 +24,9 @@ const dataRoot = path.resolve(process.env.ROAMDOCK_DATA_ROOT || root);
 const publicDir = path.join(__dirname, "public");
 const port = Number(process.env.PORT || 8787);
 let detectedAtPort = "";
-const host = process.env.HOST || "0.0.0.0";
+const host = process.env.HOST || "127.0.0.1";
 const consoleToken = process.env.CONSOLE_TOKEN || "";
-let atQueue = Promise.resolve();
+const serialQueue = createSerialQueue();
 let driverInstallRunning = false;
 const voiceRuntime = new VoiceRuntimeManager(dataRoot);
 let voiceQueue = Promise.resolve();
@@ -239,6 +240,20 @@ function findLpac() {
 
 function runLpac(lpac, portName, args, timeoutMs = 60000, options = {}) {
   return enqueueSerial(() => runLpacProcess(lpac, portName, args, timeoutMs, options));
+}
+
+function runLpacWrite(lpac, portName, args, timeoutMs, aid, expectedEid) {
+  if (!isEid(expectedEid)) throw new RequestError(400, "EID_REQUIRED", "Refresh the card list and choose an EID before writing.");
+  return enqueueSerial(async () => {
+    const calls = parseCallStatusResult(await runAtCommands(portName, ["AT+CLCC"], 15000));
+    if (!calls.ok) throw new RequestError(409, "CALL_STATUS_UNAVAILABLE", "Could not verify call state. No eSIM write was performed.");
+    if (hasVoiceSession(calls)) throw new RequestError(409, "CALL_ACTIVE", "Finish the call before changing eSIM profiles.");
+    const result = await runLpacProcess(lpac, portName, ["chip", "info"], 30000, {aid});
+    const chip = result.ok ? parseLpacData(result.stdout) : null;
+    if (!chip || !isEid(chip.eidValue)) throw new RequestError(409, "EID_UNAVAILABLE", "Could not verify the target eUICC. No write was performed.");
+    if (chip.eidValue !== expectedEid) throw new RequestError(409, "EID_CHANGED", "The card changed. Refresh profiles and confirm again.");
+    return runLpacProcess(lpac, portName, args, timeoutMs, {aid});
+  });
 }
 
 function runLpacProcess(lpac, portName, args, timeoutMs, options) {
@@ -966,11 +981,8 @@ try {
   return runPowerShell(["-Command", ps], timeoutMs);
 }
 
-function enqueueSerial(task) {
-  const queued = atQueue.then(task);
-  // Recover the queue tail; the caller still receives the original rejection.
-  atQueue = queued.catch(() => {});
-  return queued;
+function enqueueSerial(task, options) {
+  return serialQueue(task, options);
 }
 
 function enqueueAt(portName, commands, timeoutMs = 60000) {
@@ -1088,6 +1100,7 @@ async function readJsonBody(req) {
 }
 
 function handleRequestError(req, res, error) {
+  if (["SERIAL_QUEUE_TIMEOUT", "SERIAL_QUEUE_FULL"].includes(error?.code)) error = new RequestError(503, error.code, error.message);
   const expected = error instanceof RequestError;
   if (!expected) console.error("API_ERROR", diagnosticCode(error));
   if (res.destroyed || res.writableEnded) return;
@@ -1637,7 +1650,7 @@ async function handleApi(req, res, url) {
       if (accepted || callAction.action !== "dial") return { result, accepted };
       const diagnostic = await runAtCommands(portArg(url), ["AT+CEER", 'AT+QCFG="ims"', "AT+CEREG?", "AT+CREG?", "AT+CGDCONT?", "AT+CGACT?"], 30000);
       return { result, accepted, voiceNetwork: parseVoiceNetwork(diagnostic.stdout) };
-    });
+    }, {priority: 10, waitMs: 30000});
     const { result, accepted, voiceNetwork } = outcome;
     if (accepted && ["hangup", "reject"].includes(callAction.action) && voiceRuntime.routeActive) {
       enqueueVoice(() => voiceRuntime.stopRoute()).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
@@ -1888,7 +1901,8 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const result = await enqueueAt(portArg(url), [command.trim()], 30000);
-    sendJson(res, 200, result);
+    const accepted = atAccepted(result);
+    sendJson(res, accepted ? 200 : 502, { ...result, ok: accepted, ...(accepted ? {} : { error: "The modem did not return a successful final OK response." }) });
     return;
   }
 
@@ -2012,7 +2026,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const args = action === "delete" ? ["profile", "delete", id] : ["profile", action, id, "1"];
-    const result = await runLpac(lpac, portArg(url), args, 90000, { aid });
+    const result = await runLpacWrite(lpac, portArg(url), args, 90000, aid, body.expectedEid);
     const verification = action === "enable" && result.ok ? await verifyProfileActivation(portArg(url), id) : null;
     sendJson(res, result.ok ? 200 : 502, { ...result, verification });
     return;
@@ -2036,7 +2050,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["profile", "nickname", id, nickname], 90000, { aid });
+    const result = await runLpacWrite(lpac, portArg(url), ["profile", "nickname", id, nickname], 90000, aid, body.expectedEid);
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -2070,7 +2084,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, code: null, stdout: "", stderr: "lpac.exe not found" });
       return;
     }
-    const result = await runLpac(lpac, portArg(url), ["notification", "process", "-a", "-r"], 180000, { aid });
+    const result = await runLpacWrite(lpac, portArg(url), ["notification", "process", "-a", "-r"], 180000, aid, body.expectedEid);
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -2096,7 +2110,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
     }
 
     const result = redactResult(
-      await runLpac(lpac, portArg(url), ["profile", "download", "-a", code], 300000, { aid }),
+      await runLpacWrite(lpac, portArg(url), ["profile", "download", "-a", code], 300000, aid, body.expectedEid),
       code,
     );
     sendJson(res, result.ok ? 200 : 502, result);
@@ -2134,6 +2148,7 @@ const server = http.createServer((req, res) => {
 server.on("close", stopBonjour);
 
 function startServer() {
+  if (!["127.0.0.1", "::1", "localhost"].includes(host) && !consoleToken) return Promise.reject(new Error("LAN access requires CONSOLE_TOKEN. Use the desktop app, launcher, or bind HOST=127.0.0.1."));
   if (server.listening) return Promise.resolve(server);
   return new Promise((resolve, reject) => {
     const onError = (error) => reject(error);

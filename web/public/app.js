@@ -166,6 +166,18 @@ Object.assign(copy.en, {"replyTo":"Reply to {number}","writeMessage":"Write a me
 Object.assign(copy.zh, {"replyTo":"回复给 {number}","writeMessage":"输入短信内容…","replyMessage":"输入回复内容…","chooseEidCompact":"查看卡片空间","compactProfiles":"{count} 个套餐 · {active} 个已启用","callNextReady":"在拨号盘输入或粘贴号码。有来电时，这里会显示接听按钮。","callNextLocked":"当前可以查看通话状态。拨号和接听需要先在本地服务中开放电话控制。","callNextDisconnected":"用 USB 连接模块，再扫描查找设备。","callNextWaiting":"正在等待下一次自动状态检查。","callFocusDialer":"输入号码","callRetryStatus":"重新检查","voiceSummaryUnknown":"首次通话前，检查声音是否就绪","voiceSummaryReady":"声音已就绪 · 接通后可启动","voiceSummaryRuntime":"下一步：下载已校验的语音文件","voiceSummaryUsb":"下一步：设置模块声音接口","voiceSummaryPrepare":"可准备声音 · 接通后也可自动完成","voiceSummaryUnsupported":"当前模块不支持自动声音设置","voiceSummaryRemote":"声音由连接模块的 Windows 电脑处理"});
 Object.assign(copy.en, {trafficNotSynced: "Not refreshed", trafficRefreshing: "Refreshing", trafficUpdated: "Updated {time}", trafficRefreshFailed: "Refresh failed · Last sample kept"});
 Object.assign(copy.zh, {trafficNotSynced: "尚未刷新", trafficRefreshing: "正在刷新", trafficUpdated: "更新于 {time}", trafficRefreshFailed: "刷新失败 · 保留上次采样"});
+Object.assign(copy.en, {
+  atCommand: "AT command", atReady: "Ready", atSending: "Waiting for {command}...", atSucceeded: "{command} completed", atFailed: "{command} failed. See the response below.",
+  logFollow: "Follow latest", logLatest: "Jump to latest", copyLog: "Copy log", logEmpty: "No logs yet", logCount: "{count} entries", logLimited: "{count} recent entries · Older logs cleared", logPending: "{count} new entries", logPaused: "Reading history", logLive: "Following latest", logCopied: "Copied. Check for personal data before sharing.", logCopyFailed: "Copy unavailable. Select log text and copy manually.", logTruncated: "[Entry shortened]",
+  trafficStale: "Speed unavailable. Connection details and totals are from the last successful sample.", trafficDisconnected: "USB adapter disconnected. Waiting for a new connection."
+});
+Object.assign(copy.en, {finishCallFirst: "Finish the call before scanning or changing card profiles.", eidChangedWrite: "The target card changed. Nothing was written. Refresh profiles and confirm again.", eidVerifyFailed: "The target EID could not be verified. Nothing was written.", callVerifyFailed: "Call state could not be verified. No eSIM write was performed.", writeFailed: "The operation did not complete. Your input was kept; check the log before retrying.", writeUnknown: "The response timed out. The operation may still be running. Your input was kept; refresh the card before retrying.", writeDone: "Operation completed.", callQueued: "Call control submitted. Waiting for the current serial operation to finish...", atIncomplete: "No final OK response from the module. Success is not confirmed."});
+Object.assign(copy.zh, {
+  atCommand: "AT 指令", atReady: "等待输入指令", atSending: "正在等待 {command} 返回…", atSucceeded: "{command} 已完成", atFailed: "{command} 未成功，请查看下方返回结果。",
+  logFollow: "跟随最新", logLatest: "跳到最新", copyLog: "复制日志", logEmpty: "暂无日志", logCount: "{count} 条记录", logLimited: "保留最近 {count} 条 · 较早日志已清理", logPending: "{count} 条新记录", logPaused: "正在阅读历史记录", logLive: "正在跟随最新记录", logCopied: "已复制，分享前请检查个人信息。", logCopyFailed: "无法直接复制，请选中日志文字后手动复制。", logTruncated: "[此条记录过长，已截短]",
+  trafficStale: "实时速率暂不可用；连接信息和累计流量保留最后一次成功采样。", trafficDisconnected: "USB 网卡已断开，等待重新连接。"
+});
+Object.assign(copy.zh, {finishCallFirst: "请先结束通话，再扫描或修改卡片套餐。", eidChangedWrite: "目标卡已变化，本次未写入。请刷新套餐列表后重新确认。", eidVerifyFailed: "无法核对目标 EID，本次未写入。", callVerifyFailed: "无法核对通话状态，本次未执行 eSIM 写入。", writeFailed: "操作未完成，输入内容已保留；请查看日志后再重试。", writeUnknown: "等待结果超时，后台操作可能仍在执行。输入已保留，请刷新卡片确认结果，勿立即重复提交。", writeDone: "操作已完成。", callQueued: "通话操作已提交，正在等待当前串口任务结束…", atIncomplete: "模块没有返回最终 OK，暂不能确认成功。"});
 Object.assign(copy.en, {smsNoConversations: "No conversations"});
 Object.assign(copy.zh, {smsNoConversations: "暂无会话"});
 Object.assign(copy.en, {automaticCallAudio: "Connect audio automatically"});
@@ -176,6 +188,7 @@ const state = {
   profileFilters: new Map(), profileDrafts: new Map(), profileDetailsOpen: new Set(), smsPendingKeys: new Set(),
   automaticCallAudioEnabled: localStorage.getItem("callAutomaticAudio") !== "0", callCapabilityRefresh: null,
   viewScrollPositions: new Map(), trafficLastRead: 0, trafficReadError: false, trafficFailureCount: 0, trafficRetryAfter: 0,
+  logEntries: [], logCharacters: 0, logFollow: true, logPending: 0, logDropped: false, logCopying: false, logActionKey: "", logOpenViews: new Map(), atFeedback: null,
   overviewRefreshInFlight: false, moduleReadError: false,
   smsDrafts: new Map(), smsSentThisSession: [], cardEpoch: 0, smsSending: false, smsRefreshing: false, smsLastRead: 0, smsReadError: false, confirming: false, failedViews: new Set(),
   language: localStorage.getItem("uiLanguage") || (navigator.language.toLowerCase().startsWith("zh") ? "zh" : "en"),
@@ -217,6 +230,7 @@ function applyLanguage() {
   document.querySelector("#dialBackspaceBtn").title = state.language === "zh" ? "退格" : "Backspace";
   if (state.networkText) renderTraffic(state.networkText, false);
   renderTrafficSyncState();
+  renderLogControls(); renderAtFeedback();
   if (state.callStatusData) {
     const readError = state.callStatusReadError;
     renderCallStatus(state.callStatusData);
@@ -277,7 +291,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
     if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, #smsNewMessagesBtn, #clearProfileSearchBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
-    if (button.id === "clearBtn" || button.closest("#calls") || button.closest("#pairingDialog")) continue;
+    if (button.closest(".log-actions, #calls, #pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
         : button.dataset.profileNickname ? isBusy || !state.profileNicknameEnabled
@@ -298,8 +312,67 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
 
 function append(title, text) {
   const stamp = new Date().toLocaleTimeString();
-  output.textContent += `\n[${stamp}] ${title}\n${text || "(no output)"}\n`;
+  let entry = `[${stamp}] ${title}\n${text || "(no output)"}\n`;
+  if (entry.length > 24000) entry = entry.slice(0, 24000) + `\n${t("logTruncated")}\n`;
+  const top = output.scrollTop;
+  const node = document.createElement("span");
+  node.className = "log-entry";
+  node.textContent = entry;
+  output.append(node);
+  state.logEntries.push(node); state.logCharacters += entry.length;
+  const heightBeforeTrim = output.scrollHeight;
+  // Bound both DOM size and text size without rebuilding entries being read.
+  while (state.logEntries.length > 200 || state.logCharacters > 200000) {
+    const removed = state.logEntries.shift();
+    state.logCharacters -= removed.textContent.length;
+    removed.remove(); state.logDropped = true;
+  }
+  if (state.logFollow) output.scrollTop = output.scrollHeight;
+  else {
+    output.scrollTop = Math.max(0, top - (heightBeforeTrim - output.scrollHeight));
+    state.logPending += 1;
+  }
+  renderLogControls();
+}
+
+function renderLogControls() {
+  document.querySelector("#logFollowInput").checked = state.logFollow;
+  document.querySelector("#logCount").textContent = t(state.logDropped ? "logLimited" : "logCount", {count: state.logEntries.length});
+  document.querySelector("#logReadState").textContent = t(state.logFollow ? "logLive" : state.logPending ? "logPending" : "logPaused", {count: state.logPending});
+  document.querySelector("#logReadState").dataset.tone = state.logPending ? "pending" : "normal";
+  document.querySelector("#logActionStatus").textContent = state.logActionKey ? t(state.logActionKey) : "";
+  document.querySelector("#logEmpty").hidden = state.logEntries.length > 0;
+  document.querySelector("#clearBtn").disabled = state.logEntries.length === 0;
+  document.querySelector("#copyLogBtn").disabled = state.logCopying || state.logEntries.length === 0;
+  document.querySelector("#logLatestBtn").disabled = state.logFollow || state.logEntries.length === 0;
+}
+
+function followLatestLog() {
+  state.logFollow = true; state.logPending = 0;
   output.scrollTop = output.scrollHeight;
+  renderLogControls();
+}
+
+function clearLog() {
+  output.replaceChildren();
+  state.logEntries = []; state.logCharacters = 0; state.logDropped = false;
+  state.logActionKey = "";
+  followLatestLog();
+}
+
+async function copyLog() {
+  if (state.logCopying || !state.logEntries.length) return;
+  state.logCopying = true; state.logActionKey = ""; renderLogControls();
+  try { await navigator.clipboard.writeText(output.textContent); state.logActionKey = "logCopied"; }
+  catch { state.logActionKey = "logCopyFailed"; }
+  finally { state.logCopying = false; renderLogControls(); }
+}
+
+function renderAtFeedback() {
+  const element = document.querySelector("#atFeedback");
+  const feedback = state.atFeedback;
+  element.textContent = t(feedback?.key || "atReady", {command: feedback?.command || ""});
+  element.dataset.tone = feedback?.tone || "neutral";
 }
 
 function actionTitle(action) {
@@ -813,6 +886,7 @@ function renderTraffic(text, freshSample = true) {
   }
   const rx = adapter.receivedBytes;
   const tx = adapter.sentBytes;
+  const connected = String(adapter.status).toLowerCase() === "up";
   const statisticsReliable = adapter.statisticsReliable !== false && Number.isSafeInteger(rx) && rx >= 0 && Number.isSafeInteger(tx) && tx >= 0;
   const now = Number(adapter.sampledAt) || Date.now();
   const key = `${adapter.name}|${adapter.description}|${adapter.interfaceIndex || ""}|${adapter.statisticsSource || "adapter"}`;
@@ -824,7 +898,7 @@ function renderTraffic(text, freshSample = true) {
   }
   let rxRate = null;
   let txRate = null;
-  if (statisticsReliable && state.trafficPrevious?.key === key) {
+  if (statisticsReliable && connected && state.trafficPrevious?.key === key) {
     if (now === state.trafficPrevious.time) {
       rxRate = state.trafficPrevious.rxRate;
       txRate = state.trafficPrevious.txRate;
@@ -834,12 +908,12 @@ function renderTraffic(text, freshSample = true) {
       txRate = Math.max(0, tx - state.trafficPrevious.tx) / seconds;
     }
   }
-  state.trafficPrevious = statisticsReliable ? { key, rx, tx, time: now, rxRate, txRate } : null;
+  state.trafficPrevious = statisticsReliable && connected ? { key, rx, tx, time: now, rxRate, txRate } : null;
   if (!statisticsReliable) state.trafficBaseline = null;
   ids.adapter.textContent = `${adapter.description || adapter.name || t("unknown")} | ${adapter.status || "--"}`;
-  ids.rxRate.textContent = rxRate !== null ? formatBytes(rxRate, true) : "--";
-  ids.txRate.textContent = txRate !== null ? formatBytes(txRate, true) : "--";
-  ids.status.textContent = t(!statisticsReliable ? "trafficCountersUnavailable" : rxRate === null ? "trafficWaiting" : "trafficActive");
+  ids.rxRate.textContent = !state.trafficReadError && rxRate !== null ? formatBytes(rxRate, true) : "--";
+  ids.txRate.textContent = !state.trafficReadError && txRate !== null ? formatBytes(txRate, true) : "--";
+  ids.status.textContent = t(state.trafficReadError ? "trafficStale" : !connected ? "trafficDisconnected" : !statisticsReliable ? "trafficCountersUnavailable" : rxRate === null ? "trafficWaiting" : "trafficActive");
   ids.rxSession.textContent = statisticsReliable ? formatBytes(rx - state.trafficBaseline.rx) : "--";
   ids.txSession.textContent = statisticsReliable ? formatBytes(tx - state.trafficBaseline.tx) : "--";
   ids.ipv4.textContent = adapter.ipv4 || "--";
@@ -868,6 +942,11 @@ function renderTrafficSyncState() {
   const time = state.trafficLastRead ? new Date(state.trafficLastRead).toLocaleTimeString(state.language === "zh" ? "zh-CN" : "en-GB", {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "";
   element.textContent = t(state.trafficReadError ? "trafficRefreshFailed" : state.trafficRefreshInFlight ? "trafficRefreshing" : time ? "trafficUpdated" : "trafficNotSynced", {time});
   element.dataset.tone = state.trafficReadError ? "error" : "normal";
+  if (state.trafficReadError) {
+    document.querySelector("#trafficRxRate").textContent = "--";
+    document.querySelector("#trafficTxRate").textContent = "--";
+    document.querySelector("#trafficStatus").textContent = t("trafficStale");
+  }
 }
 
 function noteTrafficReadFailure() {
@@ -1081,6 +1160,7 @@ function confirmOperation({title, description, details = [], confirmLabel}) {
 
 function ensureCurrentViewLoaded() {
   const target = document.querySelector(".view.active")?.id;
+  if (state.callStatusData?.voiceCalls?.length && ["sms", "euicc"].includes(target)) return;
   if (state.failedViews.has(target)) return;
   if (!state.started || state.busy || state.connecting || state.autoLoadedViews.has(target)) return;
   state.autoLoadedViews.add(target);
@@ -1776,7 +1856,8 @@ async function inspectEndedCall() {
 
 function syncCallButtons() {
   const call = state.callStatusData?.voiceCalls?.[0] || null;
-  const locked = !state.callActionsEnabled || state.callActionInFlight || state.busy || !state.atPort || state.cardReady === false;
+  const unavailable = !state.callActionsEnabled || state.callActionInFlight || !state.atPort || state.cardReady === false;
+  const locked = unavailable || state.busy;
   const incoming = call && ["incoming", "waiting"].includes(call.state);
   const connected = call && ["active", "held"].includes(call.state);
   const answer = document.querySelector("#answerCallBtn");
@@ -1800,8 +1881,8 @@ function syncCallButtons() {
     state.callCapabilityData?.standardUsbAudio === true &&
     state.voiceRuntimeStatus?.runtime?.local?.downloaded === true,
   );
-  if (answer) answer.disabled = locked || !incoming;
-  if (hangup) hangup.disabled = locked || !call;
+  if (answer) answer.disabled = unavailable || !incoming;
+  if (hangup) hangup.disabled = unavailable || !call;
   if (dial) dial.disabled = locked || state.postDialRunning || state.callStatusReadError || state.callStatusData?.ok !== true || Boolean(call) || !parseDialInput(document.querySelector("#callNumberInput").value);
   if (dtmf) dtmf.disabled = locked || state.postDialRunning || !connected;
   if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
@@ -1995,7 +2076,8 @@ function setCallFeedback(message, tone = "neutral") {
 }
 
 async function runCallAction(action) {
-  if (state.busy || state.callActionInFlight || state.confirming) return;
+  const urgent = action === "answer" || action === "hangup";
+  if ((!urgent && state.busy) || state.callActionInFlight || state.confirming) return;
   if (!state.callActionsEnabled) {
     setCallFeedback(t("callControlsLocked"), "error");
     append(t("calls"), t("callControlsLocked"));
@@ -2039,8 +2121,9 @@ async function runCallAction(action) {
   }
 
   state.callActionInFlight = true;
-  setCallFeedback(t("callSending"), "working");
-  setBusy(true, "running");
+  setCallFeedback(t(state.busy ? "callQueued" : "callSending"), "working");
+  if (!urgent) setBusy(true, "running");
+  else syncCallButtons();
   try {
     if (["dial", "answer"].includes(action)) await prepareLocalCallAudio();
     const port = encodeURIComponent(portInput.value.trim());
@@ -2048,11 +2131,12 @@ async function runCallAction(action) {
       method: "POST",
       headers: apiHeaders({ "content-type": "application/json" }),
       body: JSON.stringify(body),
+      signal: AbortSignal.timeout(90000),
     });
     const data = await res.json();
     const raw = textFromResult(data) || JSON.stringify(data, null, 2);
     append(label, raw);
-    if (res.ok) {
+    if (res.ok && data.ok === true) {
       if (action === "caller-id") {
         if (state.callCapabilityData) state.callCapabilityData.callerIdEnabled = true;
         if (state.callStatusData) state.callStatusData.callerIdEnabled = true;
@@ -2075,7 +2159,8 @@ async function runCallAction(action) {
     append(label, error.stack || error.message);
   } finally {
     state.callActionInFlight = false;
-    setBusy(false);
+    if (!urgent) setBusy(false);
+    else syncCallButtons();
   }
 }
 
@@ -2114,6 +2199,9 @@ function applyHealth(data) {
 }
 
 async function callApi(action) {
+  if (state.callStatusData?.voiceCalls?.length && !["health", "network-traffic", "call-status", "call-capabilities"].includes(action)) {
+    showFeedback(t("finishCallFirst"), "neutral"); return;
+  }
   const view = document.querySelector(".view.active")?.id;
   if (action === "sms-list") {state.smsRefreshing = true; renderSmsRefreshState();}
   setBusy(true, action === "health" ? "checking" : "running");
@@ -2152,6 +2240,7 @@ async function callApi(action) {
 }
 
 async function rescueScan() {
+  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
   const actions = ["health", "ports", "device-check", "find-at", "windows-network", "stock-module-probe"];
   setBusy(true, "starting");
   append(t("rescueScan"), t("rescueDescription"));
@@ -2173,6 +2262,7 @@ async function rescueScan() {
   }
 }
 async function autoScan() {
+  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
   const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "euicc-inventory", "sms-list"];
   setBusy(true, "starting");
   try {
@@ -2272,16 +2362,59 @@ async function monitorCard() {
 }
 
 async function sendAt() {
+  if (state.busy || state.confirming) return;
   const port = encodeURIComponent(portInput.value.trim()); const command = document.querySelector("#atInput").value.trim(); if (!command) return;
+  document.querySelector("#logPanel").open = true;
+  state.atFeedback = {key: "atSending", command}; renderAtFeedback();
   setBusy(true, "at");
-  try { const res = await fetch(`/api/at?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ command }) }); const data = await res.json(); const text = textFromResult(data) || JSON.stringify(data, null, 2); append(`AT ${command}`, text); updateSummary(text); }
-  catch (error) { append(`AT ${command}`, error.name === "AbortError" ? t("atTimedOut") : error.stack || error.message); }
-  finally { setBusy(false); }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 90000);
+  try {
+    const res = await fetch(`/api/at?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ command }), signal: controller.signal });
+    const data = await res.json(); const text = textFromResult(data) || JSON.stringify(data, null, 2);
+    append(command, text);
+    const failed = !res.ok || data.ok === false || /(?:^|\n)\s*(?:ERROR|\+(?:CME|CMS) ERROR(?::[^\r\n]*)?)\s*(?:\r?\n|$)/i.test(text);
+    const completed = /(?:^|\r?\n)\s*OK\s*(?:\r?\n|$)/i.test(data.stdout || "");
+    state.atFeedback = {key: failed ? "atFailed" : !completed ? "atIncomplete" : "atSucceeded", command, tone: failed || !completed ? "error" : "success"};
+    if (!failed && completed) updateSummary(text);
+  }
+  catch (error) {
+    const timedOut = error.name === "AbortError";
+    append(command, timedOut ? t("atTimedOut") : error.message);
+    state.atFeedback = {key: timedOut ? "atTimedOut" : "atFailed", command, tone: "error"};
+  }
+  finally { clearTimeout(timer); renderAtFeedback(); setBusy(false); }
+}
+
+function profileWriteTarget() {
+  if (state.busy || state.callActionInFlight || state.confirming) return null;
+  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "error"); return null;}
+  if (!state.activeAid || !/^89[0-9]{30}$/.test(state.activeEid)) {showFeedback(t("selectEidFirst"), "error"); return null;}
+  return {aid: state.activeAid, expectedEid: state.activeEid, epoch: state.cardEpoch};
+}
+
+function profileWriteError(error) {
+  const key = error.name === "AbortError" ? "writeUnknown" : ({EID_CHANGED: "eidChangedWrite", EID_REQUIRED: "eidVerifyFailed", EID_UNAVAILABLE: "eidVerifyFailed", CALL_ACTIVE: "finishCallFirst", CALL_STATUS_UNAVAILABLE: "callVerifyFailed"})[error.code] || "writeFailed";
+  showFeedback(t(key), "error", "euicc");
+  append(t("esim"), error.message || t(key));
+}
+
+async function postProfileWrite(endpoint, body, target) {
+  if (target.epoch !== state.cardEpoch || target.expectedEid !== state.activeEid || target.aid !== state.activeAid) throw Object.assign(new Error(t("eidChangedWrite")), {code: "EID_CHANGED"});
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 600000);
+  try {
+    const response = await fetch(endpoint + "?port=" + encodeURIComponent(portInput.value.trim()), {method: "POST", headers: apiHeaders({"content-type":"application/json"}), body: JSON.stringify({...body, aid: target.aid, expectedEid: target.expectedEid}), signal: controller.signal});
+    const data = await response.json();
+    if (!response.ok || data.ok !== true) throw Object.assign(new Error(data.error || data.stderr || t("writeFailed")), {code: data.code});
+    return data;
+  } finally {clearTimeout(timer);}
 }
 
 async function runProfileAction(action, id) {
   const label = action === "enable" ? t("switchProfile") : t("disable"), item = activeEuicc();
   if (state.busy || !state.profileActionsEnabled || !item || !state.activeAid) return;
+  const target = profileWriteTarget(); if (!target) return;
   const aid = state.activeAid, epoch = state.cardEpoch;
   const profile = item.profiles?.find(p => (p.iccid || p.isdpAid) === id);
   if (!profile) return;
@@ -2291,9 +2424,8 @@ async function runProfileAction(action, id) {
   try {
     const found = await requestAction("find-at"); updateSummary(found.text);
     if (!state.atPort || epoch !== state.cardEpoch) throw new Error("Card unavailable");
-    const res = await fetch('/api/lpac-profile-action?port=' + encodeURIComponent(state.atPort), {method:"POST", headers:apiHeaders({"content-type":"application/json"}), body:JSON.stringify({action, id, aid, confirm:action.toUpperCase()})});
-    const data = await res.json(); append(label, textFromResult(data) || JSON.stringify(data));
-    if (!res.ok || data.ok === false) throw new Error(data.error || "Profile action failed");
+    const data = await postProfileWrite('/api/lpac-profile-action', {action, id, confirm:action.toUpperCase()}, target);
+    append(label, textFromResult(data) || JSON.stringify(data));
     const refreshed = await requestAction("lpac-profiles");
     if (!refreshed.data.ok || !Array.isArray(parseLpaData(refreshed.text))) throw new Error("Could not confirm profile state");
     renderProfiles(refreshed.text);
@@ -2306,30 +2438,24 @@ async function runProfileAction(action, id) {
           ? { message: t("profileSwitchNetworkPending"), tone: "neutral" }
           : { message: t("profileSwitchPending"), tone: "neutral" };
     showFeedback(feedback.message, feedback.tone, "euicc");
-  } catch (error) {showFeedback(t("profileActionFailed"), "error", "euicc"); append(label, error.message);}
+  } catch (error) {profileWriteError(error);}
   finally {setBusy(false);}
 }
 
 async function deleteProfile(id) {
   if (!state.activeAid) { append(t("deleteProfile"), t("selectEidFirst")); return; }
   if (!state.profileDeleteEnabled) { append(t("deleteProfile"), t("locked")); return; }
+  const target = profileWriteTarget(); if (!target) return;
   if (!window.confirm(t("deleteIrreversible"))) return;
   if (window.prompt(t("confirmDeleteProfile")) !== "DELETE") return;
   setBusy(true, "deleteProfile");
   try {
-    const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-profile-action?port=${port}`, {
-      method: "POST",
-      headers: apiHeaders({ "content-type": "application/json" }),
-      body: JSON.stringify({ action: "delete", id, aid: state.activeAid, confirm: "DELETE" }),
-    });
-    const data = await res.json();
+    const data = await postProfileWrite('/api/lpac-profile-action', {action: "delete", id, confirm: "DELETE"}, target);
     append(t("deleteProfile"), textFromResult(data) || JSON.stringify(data, null, 2));
-    if (res.ok) {
-      await callApi("lpac-profiles");
-      await callApi("lpac-notifications");
-    }
-  } catch (error) { append(t("deleteProfile"), error.stack || error.message); }
+    await callApi("lpac-profiles");
+    await callApi("lpac-notifications");
+    showFeedback(t("writeDone"), "success", "euicc");
+  } catch (error) { profileWriteError(error); }
   finally { setBusy(false); }
 }
 async function downloadProfile() {
@@ -2337,17 +2463,18 @@ async function downloadProfile() {
   if (!state.activeAid) { append(t("profileDownload"), t("selectEidFirst")); return; }
   if (!state.profileDownloadEnabled) { append(t("profileDownload"), t("profileDownloadLocked")); return; }
   if (!activationCode.startsWith("LPA:1$") || activationCode.split("$").length < 3) { append(t("profileDownload"), t("invalidActivationCode")); return; }
-  const target = activeEuicc();
-  const targetLabel = target ? euiccDisplayLabel(target, state.euiccInventory.indexOf(target)) : shortEid(state.activeEid);
+  const target = profileWriteTarget(); if (!target) return;
+  const item = activeEuicc();
+  const targetLabel = item ? euiccDisplayLabel(item, state.euiccInventory.indexOf(item)) : shortEid(state.activeEid);
   if (!window.confirm(`${t("confirmDownload")}\n${t("targetEid", { label: targetLabel })}`)) return;
   setBusy(true, "profileDownload");
   try {
-    const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-profile-download?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ activationCode, aid: state.activeAid, confirm: "DOWNLOAD" }) });
-    const data = await res.json();
+    const data = await postProfileWrite('/api/lpac-profile-download', {activationCode, confirm: "DOWNLOAD"}, target);
     append(t("profileDownload"), textFromResult(data) || JSON.stringify(data, null, 2));
-    if (res.ok) { document.querySelector("#activationCodeInput").value = ""; await callApi("lpac-profiles"); }
-  } catch (error) { append(t("profileDownload"), error.stack || error.message); }
+    document.querySelector("#activationCodeInput").value = "";
+    await callApi("lpac-profiles");
+    showFeedback(t("writeDone"), "success", "euicc");
+  } catch (error) { profileWriteError(error); }
   finally { setBusy(false); }
 }
 
@@ -2365,7 +2492,7 @@ async function addEuiccAid() {
       body: JSON.stringify({ aid, confirm: "ADD" }),
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "The private AID could not be verified.");
+    if (!res.ok || data.ok !== true) throw new Error(data.error || "The private AID could not be verified.");
     input.value = "";
     append(t("privateAid"), t("aidAdded"));
     await callApi("euicc-inventory");
@@ -2392,30 +2519,30 @@ async function renameProfile(id) {
   if (!state.activeAid) { append(t("profileNickname"), t("selectEidFirst")); return; }
   if (!state.profileNicknameEnabled) { append(t("profileNickname"), t("nicknameLocked")); return; }
   if (!nickname || nickname.length > 64) { append(t("profileNickname"), t("invalidNickname")); return; }
+  const target = profileWriteTarget(); if (!target) return;
   if (!window.confirm(t("confirmNickname"))) return;
   setBusy(true, "profileNickname");
   try {
-    const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-profile-nickname?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ id, nickname, aid: state.activeAid, confirm: "RENAME" }) });
-    const data = await res.json();
+    const data = await postProfileWrite('/api/lpac-profile-nickname', {id, nickname, confirm: "RENAME"}, target);
     append(t("profileNickname"), textFromResult(data) || JSON.stringify(data, null, 2));
-    if (res.ok) await callApi("lpac-profiles");
-  } catch (error) { append(t("profileNickname"), error.stack || error.message); }
+    await callApi("lpac-profiles");
+    showFeedback(t("writeDone"), "success", "euicc");
+  } catch (error) { profileWriteError(error); }
   finally { setBusy(false); }
 }
 
 async function processNotifications() {
   if (!state.activeAid) { append(t("profileNotifications"), t("selectEidFirst")); return; }
   if (!state.profileNotificationsEnabled) { append(t("profileNotifications"), t("profileNotificationsLocked")); return; }
+  const target = profileWriteTarget(); if (!target) return;
   if (!window.confirm(t("confirmNotifications"))) return;
   setBusy(true, "profileNotifications");
   try {
-    const port = encodeURIComponent(portInput.value.trim());
-    const res = await fetch(`/api/lpac-notifications-process?port=${port}`, { method: "POST", headers: apiHeaders({ "content-type": "application/json" }), body: JSON.stringify({ aid: state.activeAid, confirm: "PROCESS" }) });
-    const data = await res.json();
+    const data = await postProfileWrite('/api/lpac-notifications-process', {confirm: "PROCESS"}, target);
     append(t("profileNotifications"), textFromResult(data) || JSON.stringify(data, null, 2));
-    if (res.ok) await callApi("lpac-notifications");
-  } catch (error) { append(t("profileNotifications"), error.stack || error.message); }
+    await callApi("lpac-notifications");
+    showFeedback(t("writeDone"), "success", "euicc");
+  } catch (error) { profileWriteError(error); }
   finally { setBusy(false); }
 }
 
@@ -2626,6 +2753,11 @@ function selectView(target, updateHash = false) {
   const view = document.querySelector(`#${target}`);
   if (!button || !view) return;
   const previous = document.querySelector(".view.active")?.id;
+  if (previous !== target) {
+    const logPanel = document.querySelector("#logPanel");
+    if (previous) state.logOpenViews.set(previous, logPanel.open);
+    logPanel.open = target === "atlab" || state.logOpenViews.get(target) === true;
+  }
   if (!nativeCompanion && previous && previous !== target) state.viewScrollPositions.set(previous, window.scrollY);
   document.querySelectorAll(".nav-btn").forEach((item) => item.classList.remove("active"));
   document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
@@ -2754,8 +2886,25 @@ document.querySelector("#clearProfileSearchBtn").addEventListener("click", () =>
 });
 document.querySelector("#stockConvertBtn").addEventListener("click", () => runStockSetup("/api/stock-module-convert", t("confirmStockConvert"), t("stockConvert")));
 document.querySelector("#stockUsbnetBtn").addEventListener("click", () => runStockSetup("/api/stock-module-usbnet", t("confirmStockUsbnet"), t("stockUsbnet")));
-document.querySelector("#atInput").addEventListener("keydown", (event) => { if (event.key === "Enter") sendAt(); });
-document.querySelector("#clearBtn").addEventListener("click", () => { output.textContent = ""; });
+document.querySelector("#atInput").addEventListener("keydown", (event) => { if (event.key === "Enter" && !event.isComposing && !event.repeat) { event.preventDefault(); sendAt(); } });
+document.querySelector("#clearBtn").addEventListener("click", clearLog);
+document.querySelector("#copyLogBtn").addEventListener("click", copyLog);
+document.querySelector("#logLatestBtn").addEventListener("click", followLatestLog);
+document.querySelector("#logFollowInput").addEventListener("change", event => {
+  if (event.target.checked) followLatestLog();
+  else {state.logFollow = false; renderLogControls();}
+});
+output.addEventListener("scroll", () => {
+  if (!output.clientHeight) return;
+  if (state.logFollow && output.scrollHeight - output.scrollTop - output.clientHeight > 24) {
+    state.logFollow = false; renderLogControls();
+  } else if (output.scrollHeight - output.scrollTop - output.clientHeight <= 24 && state.logPending) {
+    state.logPending = 0; renderLogControls();
+  }
+});
+document.querySelector("#logPanel").addEventListener("toggle", event => {
+  if (event.target.open && state.logFollow) followLatestLog();
+});
 
 applyLanguage();
 quickStart().finally(() => {

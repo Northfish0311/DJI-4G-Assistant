@@ -473,7 +473,7 @@
           </div>
           <div class="panel">
             <div class="panel-head"><h2 data-i18n="safeAtConsole">Safe AT Console</h2><button data-action="baseline" data-i18n="baseline">Baseline</button></div>
-            <div class="at-row"><input id="atInput" value="AT+CSQ" autocomplete="off"><button id="sendAtBtn" data-i18n="send">Send</button></div>
+            <div class="at-row"><label for="atInput" class="visually-hidden" data-i18n="atCommand">AT command</label><input id="atInput" value="AT+CSQ" autocomplete="off" spellcheck="false"><button id="sendAtBtn" data-i18n="send">Send</button></div>
             <div class="preset-row">
               <button class="secondary preset" data-command="ATI">ATI</button>
               <button class="secondary preset" data-command="AT+CSQ" data-i18n="signal">Signal</button>
@@ -481,7 +481,7 @@
               <button class="secondary preset" data-command="AT+QNWINFO" data-i18n="network">Network</button>
               <button class="secondary preset" data-command="AT+QCFG=&quot;usbnet&quot;">usbnet</button>
             </div>
-            <p class="hint" data-i18n="readonlyAtHint">Read-only AT commands are allowed. Configuration writes remain blocked by default.</p>
+            <p id="atFeedback" class="hint at-feedback" role="status" data-i18n="atReady">Ready</p>
           </div>
         </section>
 
@@ -518,11 +518,21 @@
           </div>
         </section>
 
-        <details class="panel output-panel disclosure-panel">
+        <details id="logPanel" class="panel output-panel disclosure-panel">
           <summary><span><span class="summary-kicker" data-i18n="console">Console</span><strong data-i18n="liveLog">Live Log</strong></span></summary>
           <div class="disclosure-content">
-            <div class="panel-actions disclosure-toolbar"><button id="clearBtn" class="secondary" data-i18n="clear">Clear</button></div>
-            <pre id="output"></pre>
+            <div class="log-toolbar">
+              <span id="logCount" class="log-count"></span>
+              <label class="log-follow"><input id="logFollowInput" type="checkbox" checked><span data-i18n="logFollow">Follow latest</span></label>
+              <div class="log-actions">
+                <button id="logLatestBtn" class="secondary" data-i18n="logLatest">Jump to latest</button>
+                <button id="copyLogBtn" class="secondary" data-i18n="copyLog">Copy log</button>
+                <button id="clearBtn" class="secondary" data-i18n="clear">Clear</button>
+              </div>
+            </div>
+            <div class="log-status-line"><span id="logReadState" role="status"></span><span id="logActionStatus" role="status"></span></div>
+            <pre id="output" tabindex="0" data-i18n-aria="liveLog" aria-label="Live Log"></pre>
+            <p id="logEmpty" class="log-empty" data-i18n="logEmpty">No logs yet</p>
           </div>
         </details>
       </section>

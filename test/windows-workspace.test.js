@@ -103,6 +103,39 @@ test("traffic polling shares one read and pauses during confirmation or hidden p
   assert.equal(ui.state.trafficRefreshInFlight, false);
 });
 
+test("failed reads hide stale speeds while keeping totals and adapter details", () => {
+  const ui = trafficHarness();
+  ui.renderTraffic(sample());
+  ui.renderTraffic(sample({sampledAt: 12000, receivedBytes: 5096, sentBytes: 2548}));
+  assert.equal(ui.element("#trafficRxRate").textContent, "2.00 KB/s");
+  ui.noteTrafficReadFailure();
+  assert.equal(ui.element("#trafficRxRate").textContent, "--");
+  assert.equal(ui.element("#trafficTxRate").textContent, "--");
+  assert.equal(ui.element("#trafficRxSession").textContent, "4.00 KB");
+  assert.match(ui.element("#trafficStatus").textContent, /last successful sample/);
+  ui.state.language = "zh";
+  ui.renderTraffic(ui.state.networkText, false);
+  assert.equal(ui.element("#trafficRxRate").textContent, "--");
+  assert.match(ui.element("#trafficStatus").textContent, /实时速率暂不可用/);
+  ui.renderTraffic(sample({sampledAt: 14000, receivedBytes: 9192, sentBytes: 4596}));
+  assert.equal(ui.element("#trafficRxRate").textContent, "2.00 KB/s");
+});
+
+test("disconnected adapters never present zero traffic as a live connection", () => {
+  const ui = trafficHarness();
+  ui.renderTraffic(sample());
+  ui.renderTraffic(sample({sampledAt: 12000, receivedBytes: 5096}));
+  ui.renderTraffic(sample({sampledAt: 14000, receivedBytes: 5096, status: "Disconnected"}));
+  assert.equal(ui.element("#trafficRxRate").textContent, "--");
+  assert.equal(ui.element("#trafficRxSession").textContent, "4.00 KB");
+  assert.match(ui.element("#trafficStatus").textContent, /disconnected/);
+  assert.equal(ui.state.trafficPrevious, null);
+  ui.renderTraffic(sample({sampledAt: 16000, receivedBytes: 6096}));
+  assert.equal(ui.element("#trafficRxRate").textContent, "--");
+  ui.renderTraffic(sample({sampledAt: 18000, receivedBytes: 10192}));
+  assert.equal(ui.element("#trafficRxRate").textContent, "2.00 KB/s");
+});
+
 test("rapid page switching cannot restore scroll for a page that is no longer active", () => {
   const frames = [], positions = [];
   let active = "sms";

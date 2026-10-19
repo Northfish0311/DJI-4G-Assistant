@@ -8,7 +8,7 @@ function refreshDesktopIcons() {
     icon.setAttribute("aria-hidden", "true");
     button.prepend(icon);
   }
-  const controls = { autoScanBtn: "refresh-cw", languageBtn: "languages", pairIosBtn: "qr-code", sendSmsBtn: "send", dialCallBtn: "phone", answerCallBtn: "phone-incoming", hangupCallBtn: "phone-off", startAudioBridgeBtn: "volume-2", stopAudioBridgeBtn: "volume-x", refreshAudioDevicesBtn: "audio-lines" };
+  const controls = { autoScanBtn: "refresh-cw", languageBtn: "languages", pairIosBtn: "qr-code", sendSmsBtn: "send", sendAtBtn: "send", dialCallBtn: "phone", answerCallBtn: "phone-incoming", hangupCallBtn: "phone-off", startAudioBridgeBtn: "volume-2", stopAudioBridgeBtn: "volume-x", refreshAudioDevicesBtn: "audio-lines" };
   for (const [id, name] of Object.entries(controls)) {
     const button = document.getElementById(id);
     if (!button || button.querySelector("svg, [data-lucide]")) continue;
@@ -27,7 +27,7 @@ function refreshDesktopIcons() {
   }
   const native = document.documentElement.classList.contains("native-companion");
   {
-    for (const [id, name] of Object.entries({newSmsBtn: "square-pen", dialBackspaceBtn: "delete", clearBtn: "trash-2"})) {
+    for (const [id, name] of Object.entries({newSmsBtn: "square-pen", dialBackspaceBtn: "delete", clearBtn: "trash-2", copyLogBtn: "copy", logLatestBtn: "arrow-down-to-line"})) {
       const button = document.getElementById(id);
       if (!button) continue;
       const label = button.textContent.trim() || button.getAttribute("aria-label");

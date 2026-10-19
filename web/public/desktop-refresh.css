@@ -564,3 +564,96 @@ html:not(.native-companion) .sms-card time { font-variant-numeric: tabular-nums;
   #profileFilterCount { grid-column: auto; }
   html:not(.native-companion) .profile-panel > .panel-head { padding: 16px; }
 }
+
+/* Diagnostic tools keep one readable surface and stable controls during polling. */
+.output-panel .log-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  padding: 14px 20px 10px;
+  background: #f7f8fa;
+  color: #515c6b;
+  border-top: 1px solid var(--line);
+}
+.log-count { margin-right: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
+.log-follow { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+.log-follow input { width: 16px; height: 16px; margin: 0; accent-color: #177660; }
+.log-actions { display: flex; gap: 8px; }
+.log-actions button { background: #fff; color: #435269; border: 1px solid #d7dee7; }
+.log-actions button:disabled { opacity: .45; }
+.log-status-line { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; min-height: 34px; padding: 0 20px 10px; background: #f7f8fa; color: #637080; font-size: 12px; }
+#logReadState[data-tone="pending"] { color: #276091; }
+.output-panel #output {
+  margin: 0;
+  height: 280px;
+  min-height: 0;
+  max-height: 360px;
+  padding: 16px 20px;
+  overflow: auto;
+  overflow-anchor: none;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: #202328;
+  color: #e5e9f0;
+  border: 0;
+  border-radius: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  tab-size: 2;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  outline-offset: -3px;
+}
+.output-panel #output:empty { display: none; }
+.log-entry { display: block; padding-block: 0 12px; }
+.log-empty { margin: 0; padding: 48px 20px; text-align: center; color: #818b98; background: #202328; }
+.log-empty[hidden] { display: none; }
+.at-feedback { min-height: 44px; overflow-wrap: anywhere; }
+.at-feedback[data-tone="error"] { color: #aa3d30; }
+.at-feedback[data-tone="success"] { color: #20724f; }
+html:not(.native-companion) .output-panel { opacity: 1; overflow: hidden; }
+html:not(.native-companion) #atInput { font-family: "Cascadia Mono", Consolas, monospace; font-size: 14px; }
+html:not(.native-companion) #atlab > .panel > .panel-head { padding: 18px 22px; }
+html:not(.native-companion) .system-grid { align-items: start; gap: 32px; }
+html:not(.native-companion) .system-grid > .panel { background: transparent; border: 0; border-radius: 0; box-shadow: none; }
+html:not(.native-companion) .system-grid > .panel > .panel-head { border-bottom: 1px solid var(--line); padding: 0 0 16px; }
+html:not(.native-companion) .system-grid .info-list { padding: 4px 0 0; gap: 0; }
+html:not(.native-companion) .system-grid .info-list p { display: grid; grid-template-columns: 106px minmax(0, 1fr); gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+html:not(.native-companion) .system-grid .info-list strong { color: var(--ink); font-weight: 600; }
+html:not(.native-companion) .system-grid .field-row { padding: 16px 0 0; }
+html:not(.native-companion) .system-grid .action-grid { padding: 20px 0 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+html:not(.native-companion) .network-metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+html:not(.native-companion) .network-metric:first-child { grid-column: 1 / -1; min-height: 68px; border-bottom: 1px solid var(--line); }
+html:not(.native-companion) .network-metric strong { overflow-wrap: anywhere; }
+html:not(.native-companion) #trafficRxRate { color: #217a62; }
+html:not(.native-companion) #trafficTxRate { color: #356cb0; }
+html:not(.native-companion) .network-metric:has(#trafficIpv4),
+html:not(.native-companion) .network-metric:has(#trafficGateway),
+html:not(.native-companion) .network-metric:has(#trafficDriver),
+html:not(.native-companion) .network-metric:has(#trafficDhcp) { border-top: 1px solid var(--line); }
+html:not(.native-companion) #network .driver-panel { border-top: 1px solid var(--line); padding-top: 20px; }
+@media (min-width: 880px) {
+  html:not(.native-companion) #network .driver-panel { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 24px; }
+  html:not(.native-companion) #network .driver-panel > .panel-head { grid-column: 1 / -1; padding: 0; }
+  html:not(.native-companion) #network .driver-panel > .driver-detail { padding: 0; margin: 0; align-self: center; }
+  html:not(.native-companion) #network .driver-panel > .panel-actions { padding: 0; margin: 0; }
+  html:not(.native-companion) #network .driver-panel > .hint { grid-column: 1 / -1; padding: 0; margin: 0; }
+}
+@media (max-width: 1180px) {
+  html:not(.native-companion) .network-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 879px) {
+  html:not(.native-companion) .view-heading { text-align: left; align-items: flex-start; gap: 12px; padding: 0; }
+  html:not(.native-companion) .view-heading > div:first-child { align-items: flex-start; }
+  html:not(.native-companion) .view-heading .view-actions { justify-content: flex-start; }
+  html:not(.native-companion) .system-grid { gap: 28px; }
+  html:not(.native-companion) .system-grid .info-list p { grid-template-columns: 84px minmax(0, 1fr); }
+  html:not(.native-companion) .network-metric { padding: 16px; }
+  html:not(.native-companion) #network .driver-panel { padding-inline: 16px; }
+  .output-panel .log-toolbar { gap: 12px; padding-inline: 14px; }
+  .log-count { flex-basis: 100%; }
+  .log-follow { margin-right: auto; }
+  .log-status-line { padding-inline: 14px; }
+  .output-panel #output { padding: 14px; height: 260px; font-size: 12px; }
+}

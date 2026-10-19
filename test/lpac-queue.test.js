@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const { EventEmitter } = require("node:events");
+const { createSerialQueue } = require("../web/serial-queue");
 
 const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
 const lpacSource = source.slice(source.indexOf("function runLpac("), source.indexOf("function euiccInventoryPath("));
@@ -11,7 +12,7 @@ const queueSource = source.slice(source.indexOf("function enqueueSerial("), sour
 
 test("a rejected queue task reaches its caller without preventing the next task", async () => {
   const voiceSource = source.slice(source.indexOf("function enqueueVoice("), source.indexOf("function redactAtResult("));
-  const context = vm.createContext({});
+  const context = vm.createContext({serialQueue: createSerialQueue()});
   vm.runInContext("let atQueue = Promise.resolve(), voiceQueue = Promise.resolve();\n" + queueSource + voiceSource, context);
   for (const name of ["enqueueSerial", "enqueueVoice"]) {
     const error = new Error("expected failure");
@@ -48,6 +49,7 @@ function harness(onSpawn) {
       return child;
     },
     root: ".", process: { env: {} }, setTimeout, clearTimeout,
+    serialQueue: createSerialQueue(),
     normalizeIsdrAid: (value) => value, DEFAULT_ISDR_AID: "default",
   });
   vm.runInContext("let atQueue = Promise.resolve();\n" + queueSource + lpacSource, context);
