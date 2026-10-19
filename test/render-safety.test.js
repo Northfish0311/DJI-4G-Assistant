@@ -9,7 +9,7 @@ const payload = `"><img src=x onerror="window.injected=1"><script>window.injecte
 function harness(nativeCompanion = false) {
   const elements = new Map();
   const element = id => {
-    if (!elements.has(id)) elements.set(id, { textContent: "", innerHTML: "", value: "", dataset: {}, querySelectorAll: () => [] });
+    if (!elements.has(id)) elements.set(id, { textContent: "", innerHTML: "", value: "", dataset: {}, scrollTop: 0, scrollHeight: 400, clientHeight: 400, querySelectorAll: () => [], contains: () => false, getBoundingClientRect: () => ({top: 0, bottom: 400}) });
     return elements.get(id);
   };
   const context = vm.createContext({
@@ -24,7 +24,7 @@ function harness(nativeCompanion = false) {
     fragment("function escapeHtml(", "function formatBytes("),
     fragment("function smsStatus(", "function parseSmsStorageText("),
     fragment("function normalizePhone(", "function parseDialInput("),
-    fragment("function renderSms(", "function selectSmsConversation("),
+    fragment("function renderSmsNewMessages(", "function selectSmsConversation("),
     fragment("function callStateText(", "function rememberCall("),
     fragment("function renderCallHistory(", "function setVoiceStep("),
   ].join("\n"), context);

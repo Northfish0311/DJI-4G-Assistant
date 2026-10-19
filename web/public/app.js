@@ -170,7 +170,10 @@ Object.assign(copy.en, {smsNoConversations: "No conversations"});
 Object.assign(copy.zh, {smsNoConversations: "暂无会话"});
 Object.assign(copy.en, {automaticCallAudio: "Connect audio automatically"});
 Object.assign(copy.zh, {automaticCallAudio: "自动接入声音"});
+Object.assign(copy.en, {searchProfiles: "Search name, provider or ICCID", clearSearch: "Clear search", profileStatusFilter: "Profile status", allProfiles: "All profiles", profileFilterCount: "{visible} / {total} profiles", noMatchingProfiles: "No profiles match these filters.", newSmsMessages: "{count} new messages"});
+Object.assign(copy.zh, {searchProfiles: "搜索名称、运营商或 ICCID", clearSearch: "清除搜索", profileStatusFilter: "套餐状态", allProfiles: "全部套餐", profileFilterCount: "显示 {visible} / {total} 个套餐", noMatchingProfiles: "没有符合当前筛选条件的套餐。", newSmsMessages: "{count} 条新短信"});
 const state = {
+  profileFilters: new Map(), profileDrafts: new Map(), profileDetailsOpen: new Set(), smsPendingKeys: new Set(),
   automaticCallAudioEnabled: localStorage.getItem("callAutomaticAudio") !== "0", callCapabilityRefresh: null,
   viewScrollPositions: new Map(), trafficLastRead: 0, trafficReadError: false, trafficFailureCount: 0, trafficRetryAfter: 0,
   overviewRefreshInFlight: false, moduleReadError: false,
@@ -239,6 +242,9 @@ function showFeedback(message, tone = "neutral", view) {
 }
 
 function clearCardView() {
+  state.profileFilters.clear(); state.profileDrafts.clear(); state.profileDetailsOpen.clear(); state.smsPendingKeys.clear();
+  const profileList = document.querySelector("#profilesList");
+  profileList.replaceChildren(); delete profileList.dataset.markup;
   state.cardEpoch += 1; state.smsDrafts.clear(); state.smsSentThisSession = []; state.smsLastRead = 0; state.smsReadError = false; state.failedViews.clear(); setSmsFeedback(null);
   state.activeEid = ""; state.activeAid = ""; state.euiccProbes = [];
   state.euiccCandidatesChecked = 0;
@@ -270,7 +276,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   renderConnectionState();
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
-    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
+    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, #smsNewMessagesBtn, #clearProfileSearchBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
     if (button.id === "clearBtn" || button.closest("#calls") || button.closest("#pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
@@ -598,10 +604,33 @@ function renderProfiles(text) {
   renderProfileItems(profiles);
 }
 
+function profileViewKey(id) {
+  return JSON.stringify([state.activeEid, id]);
+}
+
+function filterProfiles(profiles, filter) {
+  const terms = filter.query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  return profiles.filter(profile => {
+    const text = [profile.profileNickname, profile.profileName, profile.serviceProviderName, profile.iccid, profile.isdpAid].filter(Boolean).join(" ").toLocaleLowerCase();
+    return (filter.status === "all" || profile.profileState === filter.status) && terms.every(term => text.includes(term));
+  });
+}
+
 function renderProfileItems(profiles) {
   const list = document.querySelector("#profilesList");
   const count = document.querySelector("#profileCount");
+  for (const card of list.querySelectorAll("[data-profile-key]")) {
+    if (card.querySelector("details").open) state.profileDetailsOpen.add(card.dataset.profileKey);
+    else state.profileDetailsOpen.delete(card.dataset.profileKey);
+  }
+  const filter = state.profileFilters.get(state.activeEid) || {query: "", status: "all"};
+  document.querySelector("#profileToolbar").hidden = !Array.isArray(profiles);
+  document.querySelector("#profileSearchInput").value = filter.query;
+  document.querySelector("#profileStatusFilter").value = filter.status;
+  document.querySelector("#clearProfileSearchBtn").hidden = !filter.query;
+  document.querySelector("#clearProfileSearchBtn").title = t("clearSearch");
   if (!Array.isArray(profiles)) {
+    delete list.dataset.markup;
     list.className = "profile-list empty";
     list.textContent = state.activeEid ? t("noProfileData") : t("selectEidFirst");
     count.textContent = t("profilesNotLoaded");
@@ -611,29 +640,48 @@ function renderProfileItems(profiles) {
   count.textContent = t("profilesSummary", { count: profiles.length, active: activeCount });
   document.querySelector("#installedProfileCount").textContent = String(profiles.length);
   document.querySelector("#activeProfileCount").textContent = String(activeCount);
+  const filtered = filterProfiles(profiles, filter);
+  document.querySelector("#profileFilterCount").textContent = t("profileFilterCount", {visible: filtered.length, total: profiles.length});
+  // Prune UI-only state when a refreshed inventory no longer contains a profile.
+  const validKeys = new Set(profiles.map(profile => profileViewKey(profile.iccid || profile.isdpAid || "")));
+  for (const key of state.profileDrafts.keys()) if (JSON.parse(key)[0] === state.activeEid && !validKeys.has(key)) state.profileDrafts.delete(key);
+  for (const key of state.profileDetailsOpen) if (JSON.parse(key)[0] === state.activeEid && !validKeys.has(key)) state.profileDetailsOpen.delete(key);
   if (!profiles.length) {
+    delete list.dataset.markup;
     list.className = "profile-list empty";
     list.textContent = t("noProfiles");
     return;
   }
+  if (!filtered.length) {
+    delete list.dataset.markup;
+    list.className = "profile-list empty";
+    list.textContent = t("noMatchingProfiles");
+    return;
+  }
   list.className = "profile-list";
-  list.innerHTML = [...profiles].sort((a, b) => Number(b.profileState === "enabled") - Number(a.profileState === "enabled")).map((profile) => {
+  const focused = list.contains(document.activeElement) ? document.activeElement : null;
+  const focusId = focused?.dataset.profileNicknameInput;
+  const selection = focusId ? [focused.selectionStart, focused.selectionEnd] : null;
+  const markup = [...filtered].sort((a, b) => Number(b.profileState === "enabled") - Number(a.profileState === "enabled")).map((profile) => {
     const enabled = profile.profileState === "enabled";
+    const key = profileViewKey(profile.iccid || profile.isdpAid || "");
     const id = escapeHtml(profile.iccid || profile.isdpAid || "");
     const action = enabled ? "disable" : "enable";
-    const nickname = escapeHtml(profile.profileNickname || profile.profileName || "");
+    const savedName = profile.profileNickname || profile.profileName || "";
+    if (state.profileDrafts.get(key) === savedName) state.profileDrafts.delete(key);
+    const nickname = escapeHtml(state.profileDrafts.get(key) ?? savedName);
     const title = escapeHtml(profile.profileNickname || profile.profileName || profile.serviceProviderName || t("unnamed"));
     const provider = escapeHtml(profile.serviceProviderName || profile.profileName || "");
     const profileClass = escapeHtml(profile.profileClass || "operational");
     const actionLabel = enabled ? t("disable") : t("switchProfile");
-    const actionButton = `<button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>`;
-    return `<article class="profile-card ${enabled ? "active" : ""}">
+    const actionButton = `<button class="profile-action ${enabled ? "secondary" : ""}" data-profile-action="${action}" data-profile-id="${id}" ${state.profileActionsEnabled && !state.busy ? "" : "disabled"}>${escapeHtml(actionLabel)}</button>`;
+    return `<article class="profile-card ${enabled ? "active" : ""}" data-profile-key="${escapeHtml(key)}">
       <div class="profile-card-head">
-        <div class="profile-title"><span>${nativeCompanion && provider === title ? "" : provider}</span><strong>${title}</strong></div>
+        <div class="profile-title">${provider && provider !== title ? `<span>${provider}</span>` : ""}<strong>${title}</strong></div>
         <span class="profile-state ${enabled ? "active" : "inactive"}">${enabled ? t("currentProfile") : t("inactiveProfile")}</span>
       </div>
       ${nativeCompanion && enabled ? "" : `<div class="profile-actions profile-primary-actions">${actionButton}</div>`}
-      <details class="profile-more">
+      <details class="profile-more" ${state.profileDetailsOpen.has(key) ? "open" : ""}>
       <summary>${escapeHtml(t("moreProfile"))}</summary>
       ${nativeCompanion && enabled ? `<div class="profile-actions">${actionButton}</div>` : ""}
       <div class="profile-detail-grid">
@@ -642,15 +690,30 @@ function renderProfileItems(profiles) {
         <div class="profile-traffic"><span>${escapeHtml(t("trafficBalance"))}</span><strong>${escapeHtml(t("trafficUnavailable"))}</strong></div>
       </div>
       <div class="profile-actions">
-        ${enabled ? "" : `<button class="profile-action danger" data-profile-delete data-profile-id="${id}" ${state.profileDeleteEnabled ? "" : "disabled"}>${escapeHtml(t("deleteProfile"))}</button>`}
-        <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled ? "" : "disabled"}>${t("save")}</button></div>
+        ${enabled ? "" : `<button class="profile-action danger" data-profile-delete data-profile-id="${id}" ${state.profileDeleteEnabled && !state.busy ? "" : "disabled"}>${escapeHtml(t("deleteProfile"))}</button>`}
+        <div class="inline-edit"><input class="nickname-input" data-profile-nickname-input="${id}" value="${nickname}" maxlength="64" aria-label="${t("profileNickname")}"><button class="secondary" data-profile-nickname data-profile-id="${id}" ${state.profileNicknameEnabled && !state.busy ? "" : "disabled"}>${t("save")}</button></div>
       </div>
       </details>
     </article>`;
   }).join("");
+  if (list.dataset.markup === markup) return;
+  list.innerHTML = markup; list.dataset.markup = markup;
+  for (const card of list.querySelectorAll("[data-profile-key]")) {
+    const key = card.dataset.profileKey;
+    const details = card.querySelector("details");
+    details.addEventListener("toggle", () => {
+      if (!details.isConnected) return;
+      if (details.open) state.profileDetailsOpen.add(key); else state.profileDetailsOpen.delete(key);
+    });
+    card.querySelector(".nickname-input").addEventListener("input", event => state.profileDrafts.set(key, event.target.value));
+  }
   for (const button of list.querySelectorAll("button[data-profile-action]")) button.addEventListener("click", () => runProfileAction(button.dataset.profileAction, button.dataset.profileId));
   for (const button of list.querySelectorAll("button[data-profile-nickname]")) button.addEventListener("click", () => renameProfile(button.dataset.profileId));
   for (const button of list.querySelectorAll("button[data-profile-delete]")) button.addEventListener("click", () => deleteProfile(button.dataset.profileId));
+  if (focusId) {
+    const input = [...list.querySelectorAll(".nickname-input")].find(input => input.dataset.profileNicknameInput === focusId);
+    input?.focus({preventScroll: true}); input?.setSelectionRange(...selection);
+  }
 }
 
 function renderNotifications(text) {
@@ -1026,10 +1089,24 @@ function ensureCurrentViewLoaded() {
   if (target === "euicc") callApi("euicc-inventory");
 }
 
+function renderSmsNewMessages() {
+  const button = document.querySelector("#smsNewMessagesBtn");
+  const list = document.querySelector("#smsList");
+  if (list.scrollHeight - list.scrollTop - list.clientHeight < 24) state.smsPendingKeys.clear();
+  button.hidden = !state.smsPendingKeys.size;
+  document.querySelector("#smsNewMessagesText").textContent = t("newSmsMessages", {count: state.smsPendingKeys.size});
+}
+
 function renderSms(text, data = {}) {
   state.smsText = text;
   const list = document.querySelector("#smsList");
   const wasAtBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
+  const previousTop = list.scrollTop;
+  const previousCards = [...list.querySelectorAll("[data-sms-key]")];
+  const previousKeys = new Set(previousCards.map(card => card.dataset.smsKey));
+  const listTop = list.getBoundingClientRect().top;
+  const anchor = previousCards.find(card => card.getBoundingClientRect().bottom > listTop);
+  const anchorOffset = anchor ? anchor.getBoundingClientRect().top - listTop : 0;
   state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
   renderSmsStorage(state.smsStorage);
   const matches = [...text.matchAll(/\+CMGL:\s*([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n\+CMGL:|\r?\nOK|$)/g)];
@@ -1052,7 +1129,7 @@ function renderSms(text, data = {}) {
     else {state.smsActiveSender = groups.keys().next().value ?? null; document.querySelector("#smsNumberInput").value = state.smsActiveSender ?? "";}
   }
   const threads = document.querySelector("#smsThreads");
-  const filtered = [...groups].filter(([sender, messages]) => (sender + " " + messages.map(m => decodeSmsBody(m[2])).join(" ") + " " + (state.smsDrafts.get(sender)?.message || "")).toLowerCase().includes(state.smsQuery.toLowerCase()));
+  const filtered = [...groups].filter(([sender, messages]) => (sender + " " + messages.map(m => decodeSmsBody(m[2])).join(" ") + " " + (state.smsDrafts.get(sender)?.message || "")).toLowerCase().includes(state.smsQuery.trim().toLowerCase()));
   threads.className = "sms-threads" + (filtered.length ? "" : " empty");
   const threadHtml = filtered.map(([sender, messages]) => {
     const unread = messages.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "unread").length;
@@ -1061,16 +1138,24 @@ function renderSms(text, data = {}) {
     return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${escapeHtml(sender || t("unknown"))}</strong><small>${escapeHtml(preview)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
   }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t(state.smsLastRead ? "smsNoConversations" : "noSms"));
   if (threads.dataset.markup !== threadHtml) {
+    const threadTop = threads.scrollTop, focusSender = document.activeElement?.dataset.smsThread;
     threads.innerHTML = threadHtml; threads.dataset.markup = threadHtml;
     for (const button of threads.querySelectorAll("[data-sms-thread]")) button.addEventListener("click", () => selectSmsConversation(button.dataset.smsThread));
+    threads.scrollTop = threadTop;
+    if (focusSender !== undefined) [...threads.querySelectorAll("[data-sms-thread]")].find(button => button.dataset.smsThread === focusSender)?.focus({preventScroll: true});
   }
   const visible = state.smsNewDraft ? [] : (groups.get(state.smsActiveSender) || []);
+  const conversationKey = JSON.stringify([state.cardEpoch, state.smsNewDraft, state.smsActiveSender]);
+  const sameConversation = list.dataset.conversation === conversationKey;
+  list.dataset.conversation = conversationKey;
+  if (!sameConversation) state.smsPendingKeys.clear();
   document.querySelector("#smsCount").textContent = t(visible.length === 1 ? "conversationMessage" : "conversationMessages", {count:visible.length});
   document.querySelector("#smsConversationTitle").textContent = state.smsNewDraft ? t("newMessage") : (state.smsActiveSender || t("smsInbox"));
   list.className = "sms-list" + (visible.length ? "" : " empty");
   const markup = visible.map(match => {
     const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]), status = smsStatus(rawStatus || "READ"), body = decodeSmsBody(match[2]), code = extractVerificationCode(body);
-    return `<article class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}"><div class="sms-card-head"><div class="sms-contact"><strong>${escapeHtml(sender || t("unknown"))}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}<p class="sms-body">${escapeHtml(body)}</p>${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}<div class="sms-card-foot"><span>${escapeHtml(match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index}))}</span>${match.local ? "" : `<button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index)}" ${state.smsDeleteEnabled ? "" : "disabled"}>${t("deleteSms")}</button>`}</div></article>`;
+    const key = JSON.stringify([index, sender, receivedAt, body]);
+    return `<article data-sms-key="${escapeHtml(key)}" class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}"><div class="sms-card-head"><div class="sms-contact"><strong>${escapeHtml(sender || t("unknown"))}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}<p class="sms-body">${escapeHtml(body)}</p>${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}<div class="sms-card-foot"><span>${escapeHtml(match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index}))}</span>${match.local ? "" : `<button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index)}" ${state.smsDeleteEnabled ? "" : "disabled"}>${t("deleteSms")}</button>`}</div></article>`;
   }).join("") || escapeHtml(state.smsNewDraft || state.smsDrafts.get(state.smsActiveSender)?.message ? t("newMessageHint") : state.smsLastRead || text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"));
   if (list.dataset.markup !== markup) {
     list.innerHTML = markup; list.dataset.markup = markup;
@@ -1087,9 +1172,17 @@ function renderSms(text, data = {}) {
       }
     }
     if (nativeCompanion) window.lucide?.createIcons();
-    if (wasAtBottom) list.scrollTop = list.scrollHeight;
+    const currentCards = [...list.querySelectorAll("[data-sms-key]")];
+    if (sameConversation && !wasAtBottom) {
+      const keys = new Set(currentCards.map(card => card.dataset.smsKey));
+      for (const key of keys) if (!previousKeys.has(key)) state.smsPendingKeys.add(key);
+      for (const key of state.smsPendingKeys) if (!keys.has(key)) state.smsPendingKeys.delete(key);
+      list.scrollTop = previousTop;
+      const restored = currentCards.find(card => card.dataset.smsKey === anchor?.dataset.smsKey);
+      if (restored) list.scrollTop += restored.getBoundingClientRect().top - list.getBoundingClientRect().top - anchorOffset;
+    } else {list.scrollTop = list.scrollHeight; state.smsPendingKeys.clear();}
   }
-  updateSmsComposer(); renderSmsRefreshState();
+  updateSmsComposer(); renderSmsRefreshState(); renderSmsNewMessages();
 }
 
 function selectSmsConversation(sender) {
@@ -2644,6 +2737,21 @@ document.querySelector("#sendUssdBtn").addEventListener("click", sendUssdRequest
 document.querySelector("#installEcmDriverBtn").addEventListener("click", installEcmDriver);
 for (const button of document.querySelectorAll("button[data-usb-mode]")) button.addEventListener("click", () => switchUsbMode(Number(button.dataset.usbMode)));
 document.querySelector("#smsPollingBtn").addEventListener("click", toggleSmsPolling);
+document.querySelector("#smsList").addEventListener("scroll", renderSmsNewMessages, {passive: true});
+document.querySelector("#smsNewMessagesBtn").addEventListener("click", () => {
+  const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
+  renderSmsNewMessages();
+});
+function updateProfileFilter() {
+  state.profileFilters.set(state.activeEid, {query: document.querySelector("#profileSearchInput").value, status: document.querySelector("#profileStatusFilter").value});
+  renderProfileItems(activeEuicc()?.profiles);
+}
+document.querySelector("#profileSearchInput").addEventListener("input", updateProfileFilter);
+document.querySelector("#profileStatusFilter").addEventListener("change", updateProfileFilter);
+document.querySelector("#clearProfileSearchBtn").addEventListener("click", () => {
+  document.querySelector("#profileSearchInput").value = ""; updateProfileFilter();
+  document.querySelector("#profileSearchInput").focus();
+});
 document.querySelector("#stockConvertBtn").addEventListener("click", () => runStockSetup("/api/stock-module-convert", t("confirmStockConvert"), t("stockConvert")));
 document.querySelector("#stockUsbnetBtn").addEventListener("click", () => runStockSetup("/api/stock-module-usbnet", t("confirmStockUsbnet"), t("stockUsbnet")));
 document.querySelector("#atInput").addEventListener("keydown", (event) => { if (event.key === "Enter") sendAt(); });

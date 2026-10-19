@@ -521,3 +521,46 @@ html:not(.native-companion) #atlab > .panel > .hint { padding: 0 22px 22px; }
   .euicc-slot-card {display:grid;grid-template-columns:minmax(0,1fr) auto;}
   .profile-card-head {padding:14px;}
 }
+
+.profile-toolbar {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) 142px;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 16px 0 0;
+}
+.profile-toolbar[hidden], .sms-new-messages[hidden] { display: none; }
+.profile-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--muted);
+}
+.profile-search:focus-within { outline: 2px solid #3577b7; outline-offset: 2px; }
+.profile-search > svg { width: 17px; height: 17px; flex: 0 0 17px; }
+.profile-search input { min-width: 0; width: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; outline: 0; font-size: 13px; }
+.profile-search input::-webkit-search-cancel-button { display: none; }
+.profile-search button { width: 28px; height: 28px; min-height: 28px; flex: 0 0 28px; padding: 5px; border: 0; background: transparent; }
+.profile-search button > svg { margin: 0; }
+.profile-toolbar select { width: 100%; height: 42px; min-width: 0; padding: 0 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 13px; }
+#profileFilterCount { grid-column: 1 / -1; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.sms-reading-area { position: relative; min-width: 0; isolation: isolate; }
+.sms-new-messages { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); max-width: calc(100% - 32px); min-height: 36px; padding: 8px 14px; border-radius: 6px; background: #245f91; color: #fff; border: 1px solid #1a507d; box-shadow: 0 2px 8px #14385422; font-size: 13px; white-space: nowrap; }
+.sms-reading-area .sms-list { overflow-anchor: none; scrollbar-gutter: stable; overscroll-behavior-y: contain; }
+.sms-reading-area > .sms-new-messages { z-index: 2; }
+.sms-reading-area > .sms-new-messages:active { transform: translateX(-50%); }
+html:not(.native-companion) .profile-panel > .panel-head { padding: 0 0 16px; }
+html:not(.native-companion) .profile-title strong { font-size: 16px; line-height: 1.5; }
+html:not(.native-companion) .sms-body { font-size: 14px; line-height: 1.75; }
+html:not(.native-companion) .sms-card time { font-variant-numeric: tabular-nums; }
+@media (max-width: 879px) {
+  .profile-toolbar { padding: 14px 10px 0; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  #profileFilterCount { grid-column: auto; }
+  html:not(.native-companion) .profile-panel > .panel-head { padding: 16px; }
+}

@@ -199,6 +199,11 @@
           <p class="profile-source-note" data-i18n="profileSourceNote">Enabled and disabled profiles stored on the selected EID are listed. Provider app orders are not card profiles.</p>
           </details>
               <p id="profileWriteState" class="profile-write-state" role="status"></p>
+              <div id="profileToolbar" class="profile-toolbar" hidden>
+                <label class="profile-search"><i data-lucide="search" aria-hidden="true"></i><input id="profileSearchInput" type="search" maxlength="160" autocomplete="off" data-i18n-placeholder="searchProfiles" data-i18n-aria="searchProfiles" aria-label="Search profiles"><button id="clearProfileSearchBtn" class="secondary" data-i18n-aria="clearSearch" aria-label="Clear search" hidden><i data-lucide="x" aria-hidden="true"></i></button></label>
+                <select id="profileStatusFilter" data-i18n-aria="profileStatusFilter" aria-label="Profile status"><option value="all" data-i18n="allProfiles">All profiles</option><option value="enabled" data-i18n="active">Active</option><option value="disabled" data-i18n="inactiveProfile">Not active</option></select>
+                <span id="profileFilterCount" role="status"></span>
+              </div>
               <div id="profilesList" class="profile-list empty" data-i18n="selectEidFirst">Select an EID first.</div>
             </div>
 
@@ -269,7 +274,10 @@
                 <div><h2 id="smsConversationTitle" tabindex="-1">SMS</h2><p class="panel-subtitle"><span id="smsCount">0</span></p></div>
               </div>
               <div id="smsStorageWarning" class="sms-storage-banner" hidden></div>
-              <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
+              <div class="sms-reading-area">
+                <div id="smsList" class="sms-list empty" data-i18n="noSms">No SMS loaded.</div>
+                <button id="smsNewMessagesBtn" class="sms-new-messages" hidden><i data-lucide="arrow-down" aria-hidden="true"></i><span id="smsNewMessagesText" role="status"></span></button>
+              </div>
             </div>
 
 
