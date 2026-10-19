@@ -997,6 +997,13 @@ function parseSmsStorage(text) {
   return { ...storage, full: storage.used >= storage.total, percent: Math.round((storage.used / storage.total) * 100) };
 }
 
+function parseSmsListResult(result) {
+  const response = extractAtResponse(result, 'AT+CMGL="ALL"');
+  // SMS bodies can contain literal ERROR/OK lines. Check the terminal response, not body text.
+  const ok = Boolean(result?.ok && /(?:^|\n)OK\s*$/i.test(response));
+  return {...result, ok, storage: parseSmsStorage(result?.stdout), ...(ok ? {} : {code: "SMS_READ_INCOMPLETE", error: "The module did not return a complete successful SMS list. Previous messages were kept."})};
+}
+
 function normalizeNetworkTrafficResult(result) {
   if (!result?.ok || !String(result.stdout || "").trim()) return result;
   try {
@@ -1666,8 +1673,8 @@ async function handleApi(req, res, url) {
       "AT+CPMS?",
       "AT+CMGL=\"ALL\"",
     ];
-    const result = await enqueueAt(portArg(url), commands, 60000);
-    sendJson(res, 200, { ...result, storage: parseSmsStorage(result.stdout) });
+    const result = parseSmsListResult(await enqueueAt(portArg(url), commands, 60000));
+    sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
 

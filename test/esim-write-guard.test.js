@@ -75,7 +75,7 @@ function browserHarness(response) {
     portInput: {value: "COM5"}, apiHeaders: value => value,
     fetch: async (url, options) => {requests.push(JSON.parse(options.body));return response;},
     textFromResult: data => data.stderr || data.stdout || "", append() {}, showFeedback: message => feedback.push(message),
-    callApi: async action => refreshed.push(action),
+    callApi: async action => {refreshed.push(action);return true;},
   });
   vm.runInContext(browser.slice(browser.indexOf("function profileWriteTarget()"), browser.indexOf("async function runProfileAction(")) + browser.slice(browser.indexOf("async function downloadProfile()"), browser.indexOf("async function addEuiccAid()")), context);
   return {context, state, input, requests, feedback, refreshed};
@@ -114,4 +114,48 @@ test("every existing profile mutation uses the execution-time identity guard", (
   for (const operation of ['args, 90000', '["profile", "nickname", id, nickname]', '["notification", "process", "-a", "-r"]', '["profile", "download", "-a", code]']) {
     assert.ok(source.includes('runLpacWrite(lpac, portArg(url), ' + operation));
   }
+});
+
+test("a completed write with a failed refresh shows a warning and never submits again", async () => {
+  const ui = browserHarness({ok: true, json: async () => ({ok: true, stdout: "done"})});
+  ui.context.callApi = async (action, options) => {
+    assert.equal(options.manageBusy, false);
+    assert.equal(ui.state.busy, true);
+    return false;
+  };
+  await ui.context.downloadProfile();
+  assert.deepEqual(ui.feedback, ["writeRefreshFailed"]);
+  assert.equal(ui.input.value, "");
+  assert.equal(ui.requests.length, 1);
+  assert.equal(ui.state.busy, false);
+});
+
+test("a late successful write never clears input or refreshes a different card", async () => {
+  const ui = browserHarness();
+  ui.context.fetch = async () => {
+    ui.state.activeEid = otherEid;ui.input.value = "LPA:1$new.example$new-code";
+    return {ok: true, json: async () => ({ok: true})};
+  };
+  await ui.context.downloadProfile();
+  assert.deepEqual(ui.feedback, ["writeTargetChanged"]);
+  assert.deepEqual(ui.refreshed, []);
+  assert.equal(ui.input.value, "LPA:1$new.example$new-code");
+});
+
+test("a lost write response is uncertain and keeps the activation code", async () => {
+  const ui = browserHarness();ui.context.fetch = async () => {throw new TypeError("Network error");};
+  await ui.context.downloadProfile();
+  assert.deepEqual(ui.feedback, ["writeUnknown"]);
+  assert.equal(ui.input.value, "LPA:1$example.invalid$dummy");
+  assert.deepEqual(ui.refreshed, []);
+});
+
+test("a newly typed activation code is not cleared by the previous completed download", async () => {
+  const ui = browserHarness();ui.context.fetch = async () => {
+    ui.input.value = "LPA:1$new.example$new-code";
+    return {ok: true, json: async () => ({ok: true})};
+  };
+  await ui.context.downloadProfile();
+  assert.equal(ui.input.value, "LPA:1$new.example$new-code");
+  assert.deepEqual(ui.feedback, ["writeDone"]);
 });
