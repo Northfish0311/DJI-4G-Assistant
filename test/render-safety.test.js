@@ -20,7 +20,7 @@ function harness(nativeCompanion = false) {
   });
   const fragment = (start, end) => source.slice(source.indexOf(start), source.indexOf(end));
   vm.runInContext([
-    fragment("const copy =", "function applyLanguage()"),
+    require("./helpers/browser-state.cjs"),
     fragment("function escapeHtml(", "function formatBytes("),
     fragment("function smsStatus(", "function parseSmsStorageText("),
     fragment("function normalizePhone(", "function parseDialInput("),

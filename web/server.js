@@ -701,9 +701,13 @@ function parseCallStatusResult(result) {
   const calls = parseClcc(response);
   const lines = String(response).match(/^\s*\+CLCC:[^\n]*$/gmi) || [];
   const ok = atAccepted({ ok: result?.ok, stdout: response }) && calls.length === lines.length;
+  const activityResponse = extractAtResponse(result, "AT+CPAS");
+  const activityMatch = activityResponse.match(/^\s*\+CPAS:\s*([0-5])\s*$/m);
+  const activity = activityMatch && atAccepted({ ok: result?.ok, stdout: activityResponse }) ? Number(activityMatch[1]) : null;
   return {
     ...result,
     ok,
+    activity,
     ...(ok ? {} : { code: "CALL_STATUS_UNAVAILABLE", error: "The module did not return a complete successful AT+CLCC response. Existing call audio was not stopped." }),
     calls: ok ? calls : [],
     voiceCalls: ok ? calls.filter((call) => call.isVoice) : [],
@@ -1312,20 +1316,17 @@ async function handleApi(req, res, url) {
     const brief = url.searchParams?.get("brief") === "1";
     const result = await enqueueAt(portName, brief ? ["AT+CLCC", "AT+CPAS"] : ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
     const snapshot = parseCallStatusResult(result);
-    const activityMatch = String(result.stdout || "").match(/\+CPAS:\s*(\d+)/i);
     const clipMatch = String(result.stdout || "").match(/\+CLIP:\s*(\d+)/i);
-    const callStillActive = activityMatch ? [3, 4].includes(Number(activityMatch[1])) : false;
-    if (voiceRuntime.routeActive && snapshot.ok && !hasVoiceSession(snapshot) && !callStillActive) {
+    if (voiceRuntime.routeActive && snapshot.ok && !hasVoiceSession(snapshot) && snapshot.activity === 0) {
       enqueueVoice(async () => {
         if (!voiceRuntime.routeActive) return;
         // A new call may have arrived while another voice operation held the queue.
-        const latest = parseCallStatusResult(await enqueueAt(portName, ["AT+CLCC"], 20000));
-        if (latest.ok && !hasVoiceSession(latest)) await voiceRuntime.stopRoute();
+        const latest = parseCallStatusResult(await enqueueAt(portName, ["AT+CLCC", "AT+CPAS"], 20000));
+        if (latest.ok && !hasVoiceSession(latest) && latest.activity === 0) await voiceRuntime.stopRoute();
       }).catch((error) => console.error("VOICE_ROUTE_STOP", error.message));
     }
     sendJson(res, 200, {
       ...snapshot,
-      activity: activityMatch ? Number(activityMatch[1]) : null,
       callerIdEnabled: clipMatch ? Number(clipMatch[1]) === 1 : null,
       voiceRouteActive: voiceRuntime.routeActive,
     });

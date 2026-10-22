@@ -954,7 +954,7 @@ function renderSmsRefreshState() {
 }
 
 async function refreshSmsQuietly() {
-  if (!state.started || state.busy || state.smsRefreshing || state.smsSending || !state.atPort || state.cardReady === false || state.confirming || document.hidden || state.callActionInFlight || state.callStatusData?.voiceCalls?.length) return;
+  if (!state.started || state.busy || state.smsRefreshing || state.smsSending || !state.atPort || state.cardReady === false || state.confirming || document.hidden || state.callActionInFlight || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   const epoch = state.cardEpoch;
   state.smsRefreshing = true;
   renderSmsRefreshState();
@@ -979,21 +979,22 @@ function renderCallGuidance() {
   const hasDevice = Boolean(state.atPort) && state.cardReady !== false;
   let key = !hasDevice ? "callConnectFirst" : !state.callActionsEnabled ? "callControlsLocked" : !state.callStatusData ? "callChecking" : call ? "callInProgressHint" : "callReadyFeedback";
   if (hasDevice && state.callStatusReadError) key = "callReadFailed";
+  if (hasDevice && state.callStatusData?.callStateUncertain) key = "callStatePending";
   const availability = document.querySelector("#callAvailability");
   availability.textContent = t(key);
   availability.hidden = nativeCompanion && key === "callReadyFeedback";
-  if (!call) document.querySelector("#callStateLabel").textContent = t(!hasDevice ? "cardNotConnected" : !state.callActionsEnabled ? "callReadOnly" : !state.callStatusData ? "callChecking" : "callIdle");
-  if (!call && state.callStatusReadError) document.querySelector("#callStateLabel").textContent = t("callStatusUncertain");
-  document.querySelector(".call-inline-control").hidden = !call || !["active", "held"].includes(call.state);
-  document.querySelector(".call-primary-actions").hidden = !call;
+  if (!call) document.querySelector("#callStateLabel").textContent = t(!hasDevice ? "cardNotConnected" : !state.callActionsEnabled ? "callReadOnly" : !state.callStatusData || state.callStatusData.callStateUncertain ? "callChecking" : "callIdle");
+  if (!call && state.callStatusReadError && !state.callStatusData?.callStateUncertain) document.querySelector("#callStateLabel").textContent = t("callStatusUncertain");
+  document.querySelector(".call-inline-control").hidden = state.callStatusData?.callStateUncertain || !call || !["active", "held"].includes(call.state);
+  document.querySelector(".call-primary-actions").hidden = !call && !state.callStatusData?.callStateUncertain;
   document.querySelector(".call-audio-actions").hidden = !call && !state.audioBridge;
   renderCallNextStep(call, hasDevice);
 }
 
 
 function renderCallNextStep(call, hasDevice) {
-  document.querySelector(".call-identity").hidden = !call;
-  document.querySelector("#callNextStep").hidden = Boolean(call);
+  document.querySelector(".call-identity").hidden = !call && !state.callStatusData?.callStateUncertain;
+  document.querySelector("#callNextStep").hidden = Boolean(call) || Boolean(state.callStatusData?.callStateUncertain);
   const button = document.querySelector("#callNextBtn");
   const uncertain = state.callStatusReadError || state.callStatusData?.ok !== true;
   const key = !hasDevice ? "callNextDisconnected" : !state.callActionsEnabled ? "callNextLocked" : uncertain ? "callNextWaiting" : "callNextReady";
@@ -1033,7 +1034,7 @@ function confirmOperation({title, description, details = [], confirmLabel}) {
 
 function ensureCurrentViewLoaded() {
   const target = document.querySelector(".view.active")?.id;
-  if (state.callStatusData?.voiceCalls?.length && ["sms", "euicc"].includes(target)) return;
+  if ((state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) && ["sms", "euicc"].includes(target)) return;
   if (state.failedViews.has(target)) return;
   if (!state.started || state.busy || state.connecting || state.autoLoadedViews.has(target)) return;
   state.autoLoadedViews.add(target);
@@ -1551,7 +1552,7 @@ async function waitForModuleAudioDevices(checkCurrent) {
 async function startAudioBridge() {
   if (state.audioBridgeStarting || state.audioBridge) return Boolean(state.audioBridge);
   const call = state.callStatusData?.voiceCalls?.[0] || null;
-  if (!call || !["active", "held"].includes(call.state)) {
+  if (!call || call.statusPending || !["active", "held"].includes(call.state)) {
     append(t("audioBridge"), t("audioNeedsCall"));
     return false;
   }
@@ -1701,7 +1702,7 @@ async function connectAutomaticCallAudio(call) {
 async function inspectEndedCall() {
   const epoch = state.cardEpoch;
   const generation = state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
-  const current = () => epoch === state.cardEpoch && generation === state.callEndReadGeneration && !state.callStatusData?.voiceCalls?.length;
+  const current = () => epoch === state.cardEpoch && generation === state.callEndReadGeneration && !state.callStatusData?.callStateUncertain && !state.callStatusData?.voiceCalls?.length;
   try {
     const data = await fetchJson("/api/call-end-reason?port=" + encodeURIComponent(portInput.value.trim()), 60000);
     if (!current()) return;
@@ -1718,8 +1719,9 @@ function syncCallButtons() {
   const call = state.callStatusData?.voiceCalls?.[0] || null;
   const unavailable = !state.callActionsEnabled || state.callActionInFlight || !state.atPort || state.cardReady === false;
   const locked = unavailable || state.busy;
-  const incoming = call && ["incoming", "waiting"].includes(call.state);
-  const connected = call && ["active", "held"].includes(call.state);
+  const pending = state.callStatusData?.callStateUncertain;
+  const incoming = state.callStatusData?.activity === 3 || (!pending && call && ["incoming", "waiting"].includes(call.state));
+  const connected = !pending && call && ["active", "held"].includes(call.state);
   const answer = document.querySelector("#answerCallBtn");
   const hangup = document.querySelector("#hangupCallBtn");
   const dial = document.querySelector("#dialCallBtn");
@@ -1742,7 +1744,7 @@ function syncCallButtons() {
     state.voiceRuntimeStatus?.runtime?.local?.downloaded === true,
   );
   if (answer) answer.disabled = unavailable || !incoming;
-  if (hangup) hangup.disabled = unavailable || !call;
+  if (hangup) hangup.disabled = unavailable || (!call && !pending);
   if (dial) dial.disabled = locked || state.postDialRunning || state.callStatusReadError || state.callStatusData?.ok !== true || Boolean(call) || !parseDialInput(document.querySelector("#callNumberInput").value);
   if (dtmf) dtmf.disabled = locked || state.postDialRunning || !connected;
   if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
@@ -1786,7 +1788,7 @@ async function runPendingPostDial(call) {
         continue;
       }
       const active = state.callStatusData?.voiceCalls?.[0];
-      if (!active || !["active", "held"].includes(active.state)) throw new Error("Call is no longer connected.");
+      if (!active || active.statusPending || !["active", "held"].includes(active.state)) throw new Error("Call is not confirmed connected.");
       const controller = new AbortController();
       state.postDialAbortController = controller;
       const timer = setTimeout(() => controller.abort(), 15000);
@@ -1826,37 +1828,41 @@ async function runPendingPostDial(call) {
 function renderCallStatus(data) {
   if (data?.ok === false) {state.callStatusReadError = true; syncCallButtons(); return;}
   data = { ...data, callerIdEnabled: data?.callerIdEnabled ?? state.callStatusData?.callerIdEnabled ?? state.callCapabilityData?.callerIdEnabled ?? null };
-  state.callStatusReadError = false;
+  const receivedCall = data?.voiceCalls?.find(call => !call.statusPending && call.state !== "disconnected") || null;
+  // Missing CPAS is unknown, not idle. Keep the last call clearly marked as pending.
+  const pending = !receivedCall && data?.activity !== 0 && Boolean(
+    [3, 4].includes(data?.activity) || state.lastVoiceCall || state.audioBridge || state.audioBridgeStarting || data?.voiceRouteActive || state.automaticCallAudio,
+  );
+  const call = receivedCall || (pending && state.lastVoiceCall ? { ...state.lastVoiceCall, statusPending: true } : null);
+  data = { ...data, voiceCalls: receivedCall ? data.voiceCalls : call ? [call] : [], callStateUncertain: pending };
+  state.callStatusReadError = pending;
   state.callStatusData = data;
-  const call = Array.isArray(data?.voiceCalls) ? data.voiceCalls[0] || null : null;
-  // CPAS activity: 3 = ringing, 4 = call in progress. When AT+CLCC briefly returns an
-  // empty list mid-call, trust CPAS and keep the call alive instead of falsely hanging up.
-  const callStillActive = data?.activity === 3 || data?.activity === 4;
-  const endedCall = !call && !callStillActive && Boolean(state.lastVoiceCall);
-  if (call) {
+  const endedCall = !call && !pending && Boolean(state.lastVoiceCall);
+  if (receivedCall) {
     rememberCall(call);
     state.lastVoiceCall = { ...call };
-  } else if (state.lastVoiceCall && !callStillActive) {
+  } else if (endedCall) {
     rememberCall({ ...state.lastVoiceCall, state: "disconnected", stateCode: 6 });
     state.lastVoiceCall = null;
     state.automaticCallAudio = null;
     inspectEndedCall();
   }
   // Only tear down the audio bridge when confident the call actually ended.
-  if (!call && !callStillActive && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
+  if (!call && !pending && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
   if (!call && state.pendingPostDial && (endedCall || Date.now() - state.pendingPostDial.createdAt > 90000)) cancelPendingPostDial();
-  if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
+  if (pending) setCallFeedback(t("callStatePending"), "working");
+  else if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
   else if (state.pendingPostDial) setCallFeedback(t("postDialWaiting"), "working");
   else if (call) setCallFeedback(callStateText(call), ["active", "incoming", "waiting"].includes(call.state) ? "success" : "working");
   else if (endedCall) setCallFeedback(t("hangupAccepted"), "neutral");
-  if (call) runPendingPostDial(call);
+  if (receivedCall) runPendingPostDial(receivedCall);
 
   const stage = document.querySelector("#callStatus");
-  stage.dataset.state = call?.state || "idle";
-  document.querySelector("#callStateLabel").textContent = call ? callStateText(call) : t("callIdle");
-  document.querySelector("#callDirectionLabel").textContent = call ? (call.direction === "incoming" ? t("incomingCall") : t("outgoingCall")) : t("noActiveCall");
+  stage.dataset.state = pending ? "pending" : call?.state || "idle";
+  document.querySelector("#callStateLabel").textContent = pending ? t("callChecking") : call ? callStateText(call) : t("callIdle");
+  document.querySelector("#callDirectionLabel").textContent = call ? (call.direction === "incoming" ? t("incomingCall") : t("outgoingCall")) : pending ? t("notChecked") : t("noActiveCall");
   document.querySelector("#callNumber").textContent = call?.number || (call ? t("numberUnavailable") : "--");
-  document.querySelector("#callMeta").textContent = call ? `${t("callId", { id: call.id })} · ${callStateText(call)}` : t("waitingForCall");
+  document.querySelector("#callMeta").textContent = pending ? t("callStatePending") : call ? `${t("callId", { id: call.id })} · ${callStateText(call)}` : t("waitingForCall");
   document.querySelector("#callerIdState").textContent = data?.callerIdEnabled === true ? t("callerIdOn") : data?.callerIdEnabled === false ? t("callerIdOff") : t("notChecked");
   if (call?.state === "incoming" || call?.state === "waiting") {
     statusPill.textContent = t("callIncoming");
@@ -1866,7 +1872,7 @@ function renderCallStatus(data) {
     renderConnectionState();
   }
   syncCallButtons();
-  if (call) connectAutomaticCallAudio(call);
+  if (receivedCall) connectAutomaticCallAudio(receivedCall);
 }
 
 function renderCallCapabilities(data) {
@@ -1898,10 +1904,10 @@ function renderCallCapabilities(data) {
 }
 
 async function refreshCallStatusQuietly(force = false) {
-  const liveOrPending = Boolean(state.callActionInFlight || state.automaticCallAudio || state.callStatusData?.voiceCalls?.length);
+  const liveOrPending = Boolean(state.callActionInFlight || state.automaticCallAudio || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length);
   // A hidden desktop window must still connect and release audio for its own call.
   if (state.callRefreshInFlight || (document.hidden && !force && !liveOrPending) || (!force && !liveOrPending && (!state.callMonitoring || state.busy))) return;
-  const cadence = state.automaticCallAudio || state.callStatusData?.voiceCalls?.length ? 1000 : 3500;
+  const cadence = state.automaticCallAudio || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length ? 1000 : 3500;
   if (!force && Date.now() - (state.lastCallReadStarted || 0) < cadence) return;
   state.lastCallReadStarted = Date.now();
   state.callRefreshInFlight = true;
@@ -2088,7 +2094,7 @@ function applyHealth(data) {
 
 async function callApi(action, {manageBusy = true} = {}) {
   if (manageBusy && (state.busy || state.confirming)) return false;
-  if (state.callStatusData?.voiceCalls?.length && !["health", "network-traffic", "call-status", "call-capabilities"].includes(action)) {
+  if ((state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) && !["health", "network-traffic", "call-status", "call-capabilities"].includes(action)) {
     showFeedback(t("finishCallFirst"), "neutral"); return false;
   }
   const view = action === "euicc-inventory" || action.startsWith("lpac-") ? "euicc" : action === "sms-list" ? "sms" : action === "network-traffic" ? "network" : document.querySelector(".view.active")?.id;
@@ -2134,7 +2140,7 @@ async function callApi(action, {manageBusy = true} = {}) {
 }
 
 async function rescueScan() {
-  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
+  if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
   const actions = ["health", "ports", "device-check", "find-at", "windows-network", "stock-module-probe"];
   setBusy(true, "starting");
   append(t("rescueScan"), t("rescueDescription"));
@@ -2156,7 +2162,7 @@ async function rescueScan() {
   }
 }
 async function autoScan() {
-  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
+  if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
   const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "euicc-inventory", "sms-list"];
   setBusy(true, "starting");
   try {
@@ -2232,7 +2238,7 @@ async function quickStart() {
 }
 
 async function monitorCard() {
-  if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.voiceCalls?.length) return;
+  if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   state.cardMonitorBusy = true;
   try {
     const ports = (await requestAction("ports")).text.trim();
@@ -2288,7 +2294,7 @@ async function sendAt() {
 
 function profileWriteTarget() {
   if (state.busy || state.callActionInFlight || state.confirming) return null;
-  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "error"); return null;}
+  if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "error"); return null;}
   if (!state.activeAid || !/^89[0-9]{30}$/.test(state.activeEid)) {showFeedback(t("selectEidFirst"), "error"); return null;}
   return {aid: state.activeAid, expectedEid: state.activeEid, epoch: state.cardEpoch};
 }
@@ -2539,7 +2545,7 @@ async function refreshTrafficQuietly() {
   renderTrafficSyncState();
 }
 async function refreshModuleStatusQuietly() {
-  if (state.busy || state.overviewRefreshInFlight || state.callActionInFlight || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
+  if (state.busy || state.overviewRefreshInFlight || state.callActionInFlight || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   const epoch = state.cardEpoch, port = state.atPort;
   state.overviewRefreshInFlight = true;
   try {

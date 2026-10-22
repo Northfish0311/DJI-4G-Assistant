@@ -1,0 +1,19 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const vm = require("node:vm");
+const read = file => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
+
+test("translations load before the app and provide matching English/Chinese keys", () => {
+  const html = read("web/public/index.html");
+  const i18n = html.indexOf('<script src="/i18n.js"');
+  const app = html.indexOf('<script src="/app.js"');
+  assert.ok(i18n >= 0 && app > i18n);
+  const copy = vm.runInNewContext(read("web/public/i18n.js") + ";copy");
+  assert.deepEqual(Object.keys(copy.zh).sort(), Object.keys(copy.en).sort());
+  for (const match of html.matchAll(/data-i18n(?:-placeholder|-aria)?="([^"]+)"/g)) {
+    assert.equal(typeof copy.zh[match[1]], "string", match[1]);
+    assert.equal(typeof copy.en[match[1]], "string", match[1]);
+  }
+});

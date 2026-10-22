@@ -1,6 +1,7 @@
 // i18n strings (extracted from app.js). Keep in sync with app.js `t()`.
 const copy = {
   en: {
+    callStatePending: "Confirming call status. Existing audio is preserved; you can still hang up.",
     trafficWaiting: "Measuring speed...", trafficCountersUnavailable: "This adapter is not reporting usable traffic counters.", trafficActive: "Live USB adapter statistics", trafficScope: "USB adapter traffic only, including local traffic. Not your plan balance.",
     conversations: "Conversations", newMessage: "New message", searchMessages: "Search number or message", noMatchingThreads: "No matching conversations", conversationMessage: "1 message", conversationMessages: "{count} messages", newMessageHint: "Enter a recipient and write your first message below.", discardSmsDraft: "Discard the current draft and change conversation?",
     commonTasks: "Everyday tasks", moreProfile: "More options & card details", moreTools: "More", deviceDetails: "Device details", backToConversations: "Back to conversations", networkDetails: "Connection details",
@@ -62,6 +63,7 @@ const copy = {
     deleteProfile: "Delete", deleteIrreversible: "Deleting an eSIM profile cannot be undone.", confirmDeleteProfile: "Delete this profile permanently? Type DELETE to continue.", otpCode: "Verification code", copyCode: "Copy code", copied: "Copied",
   },
   zh: {
+    callStatePending: "正在确认通话状态，暂时保留声音连接；仍可点击挂断。",
     trafficWaiting: "正在采样速度…", trafficCountersUnavailable: "此网卡暂未返回有效流量计数。", trafficActive: "正在统计 USB 网卡流量", trafficScope: "仅统计电脑经过此 USB 网卡的流量，含局域网通信；不代表套餐剩余流量。",
     conversations: "会话", newMessage: "新建短信", searchMessages: "搜索号码或短信内容", noMatchingThreads: "没有匹配的会话", conversationMessage: "1 条短信", conversationMessages: "{count} 条短信", newMessageHint: "在下方填写收件人，开始新的对话。", discardSmsDraft: "切换会话会放弃当前草稿，是否继续？",
     commonTasks: "常用操作", moreProfile: "更多操作与卡号", moreTools: "更多", deviceDetails: "设备详情",
