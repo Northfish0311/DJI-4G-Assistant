@@ -3,8 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { readAppSource } = require("./helpers/app-source");
 
-const source = fs.readFileSync(path.join(__dirname, "../web/public/app.js"), "utf8");
+const source = readAppSource();
 
 function harness() {
   const elements = new Map();
@@ -29,7 +30,7 @@ function harness() {
     clearTimeout: id => timers.delete(id),
   });
   vm.runInContext([
-    require("./helpers/browser-state.cjs"),
+    source.slice(source.indexOf("const copy ="), source.indexOf("function applyLanguage()")),
     source.slice(source.indexOf("function append("), source.indexOf("function actionTitle(")),
     source.slice(source.indexOf("function textFromResult("), source.indexOf("function registrationLabel(")),
     source.slice(source.indexOf("async function sendAt("), source.indexOf("async function runProfileAction(")),
