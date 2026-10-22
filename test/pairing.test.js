@@ -78,7 +78,7 @@ test("pairing API requires authentication and returns a scannable deep link", as
       assert.match(page.headers.get("content-type"), /text\/html/);
       assert.match(await page.text(), /id="tokenInput"/);
     }
-    for (const asset of ["/app.js", "/styles.css", "/vendor/lucide.js"]) {
+    for (const asset of ["/core.js", "/euicc.js", "/sms.js", "/calls.js", "/audio.js", "/call-flow.js", "/api.js", "/automation.js", "/profile-actions.js", "/init.js", "/i18n.js", "/styles.css", "/vendor/lucide.js"]) {
       const response = await fetch(`http://127.0.0.1:${port}${asset}`);
       assert.equal(response.status, 200, asset);
       assert.ok((await response.text()).length > 100, asset);
