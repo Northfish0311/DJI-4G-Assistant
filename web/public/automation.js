@@ -1,5 +1,5 @@
 async function rescueScan() {
-  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
+  if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
   const actions = ["health", "ports", "device-check", "find-at", "windows-network", "stock-module-probe"];
   setBusy(true, "starting");
   append(t("rescueScan"), t("rescueDescription"));
@@ -21,7 +21,7 @@ async function rescueScan() {
   }
 }
 async function autoScan() {
-  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
+  if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
   const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "euicc-inventory", "sms-list"];
   setBusy(true, "starting");
   try {
@@ -97,7 +97,7 @@ async function quickStart() {
 }
 
 async function monitorCard() {
-  if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.voiceCalls?.length) return;
+  if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   state.cardMonitorBusy = true;
   try {
     const ports = (await requestAction("ports")).text.trim();
