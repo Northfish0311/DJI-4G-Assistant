@@ -15,8 +15,10 @@ const pairingQr = document.querySelector("#pairingQr");
 const pairingQrPlaceholder = document.querySelector("#pairingQrPlaceholder");
 const pairingUrl = document.querySelector("#pairingUrl");
 const pairingStatus = document.querySelector("#pairingStatus");
+const retryPairingBtn = document.querySelector("#retryPairingBtn");
 const copyPairingBtn = document.querySelector("#copyPairingBtn");
 let pairingDeepLink = "";
+let pairingRequest = null;
 const carrierValue = document.querySelector("#carrierValue");
 const radioValue = document.querySelector("#radioValue");
 const connectionBadge = document.querySelector("#connectionBadge");
@@ -166,6 +168,8 @@ Object.assign(copy.en, {"replyTo":"Reply to {number}","writeMessage":"Write a me
 Object.assign(copy.zh, {"replyTo":"回复给 {number}","writeMessage":"输入短信内容…","replyMessage":"输入回复内容…","chooseEidCompact":"查看卡片空间","compactProfiles":"{count} 个套餐 · {active} 个已启用","callNextReady":"在拨号盘输入或粘贴号码。有来电时，这里会显示接听按钮。","callNextLocked":"当前可以查看通话状态。拨号和接听需要先在本地服务中开放电话控制。","callNextDisconnected":"用 USB 连接模块，再扫描查找设备。","callNextWaiting":"正在等待下一次自动状态检查。","callFocusDialer":"输入号码","callRetryStatus":"重新检查","voiceSummaryUnknown":"首次通话前，检查声音是否就绪","voiceSummaryReady":"声音已就绪 · 接通后可启动","voiceSummaryRuntime":"下一步：下载已校验的语音文件","voiceSummaryUsb":"下一步：设置模块声音接口","voiceSummaryPrepare":"可准备声音 · 接通后也可自动完成","voiceSummaryUnsupported":"当前模块不支持自动声音设置","voiceSummaryRemote":"声音由连接模块的 Windows 电脑处理"});
 Object.assign(copy.en, {trafficNotSynced: "Not refreshed", trafficRefreshing: "Refreshing", trafficUpdated: "Updated {time}", trafficRefreshFailed: "Refresh failed · Last sample kept"});
 Object.assign(copy.zh, {trafficNotSynced: "尚未刷新", trafficRefreshing: "正在刷新", trafficUpdated: "更新于 {time}", trafficRefreshFailed: "刷新失败 · 保留上次采样"});
+Object.assign(copy.en, {localConsoleUrl: "This computer only: {url}", noLanConsoleUrl: "Local address: {url} · No shared LAN", pairingUnavailable: "Pairing unavailable", pairingRetry: "Refresh pairing code", pairingLocalOnly: "This service accepts connections only on this PC. Open the Windows desktop app to pair your phone or tablet.", pairingNoLan: "No suitable LAN connection. Connect this PC and your phone to the same trusted Wi-Fi or wired LAN, then refresh. The USB modem's internet connection alone cannot pair your phone."});
+Object.assign(copy.zh, {localConsoleUrl: "仅本机访问：{url}", noLanConsoleUrl: "本机地址：{url} · 暂无共享局域网", pairingUnavailable: "暂时无法配对", pairingRetry: "刷新配对码", pairingLocalOnly: "当前服务只允许这台电脑访问。请打开 Windows 桌面版，再连接手机或平板。", pairingNoLan: "没有找到可供手机连接的局域网。请让电脑和手机接入同一可信 Wi-Fi 或有线局域网，再点击刷新。仅通过 USB 模块上网不能让手机连接到电脑。"});
 Object.assign(copy.en, {
   atCommand: "AT command", atReady: "Ready", atSending: "Waiting for {command}...", atSucceeded: "{command} completed", atFailed: "{command} failed. See the response below.",
   logFollow: "Follow latest", logLatest: "Jump to latest", copyLog: "Copy log", logEmpty: "No logs yet", logCount: "{count} entries", logLimited: "{count} recent entries · Older logs cleared", logPending: "{count} new entries", logPaused: "Reading history", logLive: "Following latest", logCopied: "Copied. Check for personal data before sharing.", logCopyFailed: "Copy unavailable. Select log text and copy manually.", logTruncated: "[Entry shortened]",
@@ -218,7 +222,7 @@ function applyLanguage() {
   document.querySelector("#closePairingBtn").setAttribute("aria-label", t("close"));
   document.querySelector("#closePairingBtn").title = t("close");
   renderConnectionState();
-  hostLine.textContent = state.primaryUrl ? t("ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
+  hostLine.textContent = state.primaryUrl ? t(state.accessMode === "local" ? "localConsoleUrl" : state.pairingAvailable === false ? "noLanConsoleUrl" : "ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
   updateProfileHint();
   renderSummary();
   if (state.inventoryLoaded) renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
@@ -2189,7 +2193,7 @@ async function fetchJson(path, timeoutMs = 90000) {
   finally { clearTimeout(timer); }
 }
 
-async function requestAction(action) {
+async function requestAction(action, {refreshDetails = false} = {}) {
   const epoch = state.cardEpoch, portName = portInput.value.trim(), selectedAid = state.activeAid, selectedEid = state.activeEid;
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
@@ -2197,7 +2201,7 @@ async function requestAction(action) {
   const cardScoped = !["health", "ports", "device-check", "windows-network", "network-traffic", "stock-module-probe"].includes(action);
   const stale = () => cardScoped && (epoch !== state.cardEpoch || (action !== "find-at" && portName !== portInput.value.trim()) || (action.startsWith("lpac-") && (selectedAid !== state.activeAid || selectedEid !== state.activeEid)));
   let data;
-  try { data = await fetchJson(paths[action], action === "euicc-inventory" ? 600000 : 90000); }
+  try { data = await fetchJson(paths[action] + (action === "network-traffic" && refreshDetails ? "?details=1" : ""), action === "euicc-inventory" ? 600000 : 90000); }
   catch (error) { if (stale()) error.code = "STALE_RESPONSE"; throw error; }
   if (stale()) {
     throw Object.assign(new Error("Discarded a response for a previous card or EID."), {code: "STALE_RESPONSE"});
@@ -2218,6 +2222,8 @@ async function requestAction(action) {
 }
 
 function applyHealth(data) {
+  state.accessMode = data.accessMode || "lan";
+  state.pairingAvailable = data.pairingAvailable;
   state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.smsDeleteEnabled = Boolean(data.smsDeleteEnabled); state.callActionsEnabled = Boolean(data.callActionsEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.voiceRuntimeEnabled = Boolean(data.voiceRuntimeEnabled); state.primaryUrl = data.primaryUrl || "";
   document.querySelector("#tokenRow").style.display = state.authRequired ? "grid" : "none"; updateProfileHint(); applyLanguage();
 }
@@ -2236,7 +2242,7 @@ async function callApi(action, {manageBusy = true} = {}) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action);
+    const { data, text } = await requestAction(action, {refreshDetails: action === "network-traffic"});
     append(actionTitle(action), text);
     updateSummary(text);
     if (action === "module-status" || action === "module-temperature") updateTemperature(data);
@@ -2690,19 +2696,30 @@ async function refreshModuleStatusQuietly() {
   } finally { state.overviewRefreshInFlight = false; }
 }
 async function openPairingDialog() {
+  if (pairingDialog.dataset.state === "loading") return;
+  pairingDialog.dataset.state = "loading";
+  const badge = pairingDialog.querySelector(".pairing-status span[data-i18n]");
+  badge.dataset.i18n = "pairingLoading";
+  badge.textContent = t("pairingLoading");
   pairingDeepLink = "";
   pairingQr.hidden = true;
   pairingQr.removeAttribute("src");
   pairingQrPlaceholder.hidden = false;
+  pairingQrPlaceholder.textContent = t("pairingLoading");
   pairingUrl.textContent = "--";
   pairingStatus.textContent = t("pairingLoading");
   copyPairingBtn.disabled = true;
+  retryPairingBtn.disabled = true;
   if (!pairingDialog.open) pairingDialog.showModal();
   pairIosBtn.disabled = true;
+  const controller = new AbortController();
+  pairingRequest = controller;
+  const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetch("/api/pairing", { headers: apiHeaders() });
+    const response = await fetch("/api/pairing", { headers: apiHeaders(), signal: controller.signal });
     const data = await response.json();
-    if (!response.ok || !data.ok) throw new Error(data.error || "Pairing request failed.");
+    if (pairingRequest !== controller || !pairingDialog.open) return;
+    if (!response.ok || !data.ok) throw new Error(data.code === "LOCAL_ONLY" ? t("pairingLocalOnly") : data.code === "NO_LAN_ADDRESS" ? t("pairingNoLan") : data.error || "Pairing request failed.");
     pairingDeepLink = data.deepLink;
     pairingQr.src = data.qrDataUrl;
     pairingQr.hidden = false;
@@ -2710,11 +2727,24 @@ async function openPairingDialog() {
     pairingUrl.textContent = data.url;
     pairingStatus.textContent = t("pairingReady");
     copyPairingBtn.disabled = false;
+    pairingDialog.dataset.state = "ready";
+    badge.dataset.i18n = "sameNetwork";
+    badge.textContent = t("sameNetwork");
   } catch (error) {
-    pairingStatus.textContent = t("pairingFailed", { error: error.message });
+    if (pairingRequest !== controller || !pairingDialog.open) return;
+    pairingDialog.dataset.state = "error";
+    badge.dataset.i18n = "pairingUnavailable";
+    badge.textContent = t("pairingUnavailable");
+    pairingQrPlaceholder.textContent = t("pairingUnavailable");
+    pairingStatus.textContent = t("pairingFailed", { error: error.name === "AbortError" ? t("timedOut") : error.message });
     append(t("pairIos"), error.message);
   } finally {
-    pairIosBtn.disabled = state.busy;
+    clearTimeout(timer);
+    if (pairingRequest === controller) {
+      pairingRequest = null;
+      retryPairingBtn.disabled = false;
+      pairIosBtn.disabled = state.busy;
+    }
   }
 }
 
@@ -2853,10 +2883,18 @@ document.querySelector("#autoScanBtn").addEventListener("click", autoScan);
 pairIosBtn.addEventListener("click", openPairingDialog);
 copyPairingBtn.addEventListener("click", copyPairingLink);
 pairingDialog.addEventListener("close", () => {
+  pairingRequest?.abort();
+  pairingRequest = null;
+  pairingDialog.dataset.state = "idle";
+  copyPairingBtn.disabled = true;
+  retryPairingBtn.disabled = false;
+  pairIosBtn.disabled = state.busy;
+  pairingQr.hidden = true;
   pairingDeepLink = "";
   pairingQr.removeAttribute("src");
   pairingUrl.textContent = "--";
 });
+retryPairingBtn.addEventListener("click", openPairingDialog);
 document.querySelector("#rescueScanBtn").addEventListener("click", rescueScan);
 document.querySelector("#sendAtBtn").addEventListener("click", sendAt);
 document.querySelector("#downloadProfileBtn").addEventListener("click", downloadProfile);

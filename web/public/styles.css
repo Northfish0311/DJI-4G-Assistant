@@ -3119,6 +3119,19 @@ button.danger-text:not(:disabled):hover {
   margin-top: 12px;
 }
 
+.pairing-dialog:not([data-state="ready"]) .pairing-status-dot { background: var(--muted); box-shadow: none; }
+.pairing-dialog:not([data-state="ready"]) .pairing-status { color: var(--muted); }
+.pairing-dialog[data-state="error"] .pairing-status-dot { background: #bc6a12; }
+.pairing-dialog[data-state="error"] .pairing-status { color: #97500d; }
+.pairing-dialog[data-state="error"] .pairing-content { grid-template-columns: minmax(0, 1fr); }
+.pairing-dialog[data-state="error"] .pairing-qr-frame,
+.pairing-dialog[data-state="error"] .pairing-address { display: none; }
+.pairing-dialog[data-state="error"] .pairing-message { color: #97500d; }
+.pairing-dialog[data-state="error"] .pairing-copy > h3,
+.pairing-dialog[data-state="error"] .pairing-copy > p[data-i18n="pairingDescription"] { display: none; }
+#retryPairingBtn { flex: 0 0 36px; width: 36px; height: 36px; }
+#retryPairingBtn svg { width: 16px; height: 16px; }
+
 .pairing-security {
   padding: 13px 18px;
   border-top: 1px solid var(--line);
@@ -3159,7 +3172,7 @@ button.danger-text:not(:disabled):hover {
 
   .pairing-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 36px 1fr auto;
   }
 }
 

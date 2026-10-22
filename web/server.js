@@ -10,6 +10,8 @@ const originalUsb = require("./original-usb");
 const { buildPairingDeepLink } = require("./pairing");
 const { parseVoiceNetwork } = require("./voice-network");
 const { createSerialQueue } = require("./serial-queue");
+const { createNetworkSampler } = require("./network-sampler");
+const { consoleAccess } = require("./console-addresses");
 const {
   VoiceRuntimeManager,
   parseUsbComposition,
@@ -30,7 +32,7 @@ const serialQueue = createSerialQueue();
 let driverInstallRunning = false;
 const voiceRuntime = new VoiceRuntimeManager(dataRoot);
 let voiceQueue = Promise.resolve();
-let networkTrafficQuery = null;
+let networkSampler = null;
 let bonjour = null;
 let bonjourService = null;
 
@@ -83,8 +85,12 @@ function localIps() {
 }
 
 function primaryConsoleUrl() {
-  const ips = localIps();
-  return ips.length ? `http://${ips[0]}:${port}` : `http://127.0.0.1:${port}`;
+  return consoleAddresses().primaryUrl;
+}
+
+function consoleAddresses() {
+  const address = server.address();
+  return consoleAccess(address?.address || host, address?.port || port, os.networkInterfaces());
 }
 
 function pairingServiceName() {
@@ -101,7 +107,7 @@ function startBonjour() {
     name: pairingServiceName(),
     type: "dji4g",
     protocol: "tcp",
-    port,
+    port: server.address()?.port || port,
     disableIPv6: true,
     txt: { path: "/", version: "1", product: "DJI4GAssistant", url: primaryConsoleUrl() },
   });
@@ -1026,7 +1032,7 @@ function normalizeNetworkTrafficResult(result) {
       const driverSentinel = (received === 4294967297 && sent === 0) || (sent === 4294967297 && received === 0);
       item.statisticsReliable = item.statisticsReliable !== false && validCounter(received) && validCounter(sent) && !driverSentinel;
       item.statisticsSource = item.statisticsReliable ? (usePerformance ? "windows-performance" : "adapter") : "unavailable";
-      item.sampledAt = Date.now();
+      item.sampledAt = Number.isSafeInteger(item.sampledAt) && item.sampledAt > 0 && item.sampledAt <= Date.now() ? item.sampledAt : Date.now();
       if (!item.statisticsReliable) {
         item.receivedBytes = 0;
         item.sentBytes = 0;
@@ -1127,8 +1133,7 @@ async function handleApi(req, res, url) {
       name: "DJI 4G Assistant for Windows",
       time: new Date().toISOString(),
       host: os.hostname(),
-      urls: localIps().map((ip) => `http://${ip}:${port}`),
-      primaryUrl: primaryConsoleUrl(),
+      ...consoleAddresses(),
       authRequired: Boolean(consoleToken),
       dangerousAtEnabled: process.env.ALLOW_DANGEROUS_AT === "1",
       profileActionsEnabled: process.env.ALLOW_PROFILE_ACTIONS === "1",
@@ -1158,15 +1163,18 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/pairing") {
+    const access = consoleAddresses();
+    if (!access.pairingAvailable) {
+      sendJson(res, 409, { ok: false, code: access.pairingReason, error: access.pairingReason === "LOCAL_ONLY"
+        ? "This service is available only on this Windows computer. Open the desktop app for LAN pairing."
+        : "No suitable LAN address is available. Connect Windows and the phone or tablet to the same trusted Wi-Fi or wired LAN." });
+      return;
+    }
     if (!consoleToken) {
       sendJson(res, 409, { ok: false, error: "Pairing requires CONSOLE_TOKEN. The Windows desktop app configures it automatically." });
       return;
     }
-    const baseUrl = primaryConsoleUrl();
-    if (/\/\/127\.0\.0\.1(?::|\/)/.test(baseUrl)) {
-      sendJson(res, 409, { ok: false, error: "No reachable LAN address is available. Connect Windows and the iPhone or iPad to the same trusted network." });
-      return;
-    }
+    const baseUrl = access.primaryUrl;
     const deepLink = buildPairingDeepLink(baseUrl, consoleToken);
     const qrDataUrl = await QRCode.toDataURL(deepLink, {
       errorCorrectionLevel: "M",
@@ -1784,11 +1792,13 @@ $adapters = @(Get-NetAdapter -IncludeHidden -ErrorAction SilentlyContinue | Wher
   $_.InterfaceDescription -match 'Quectel|Mobile Broadband|WWAN|Cellular|Remote NDIS|USB Ethernet'
 })
 $performance = @(Get-CimInstance Win32_PerfRawData_Tcpip_NetworkInterface -ErrorAction SilentlyContinue)
+$performanceSampledAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
 if (-not $targetPresent) {
   $adapters = @($adapters | Where-Object { $_.InterfaceDescription -ne 'Quectel ECM Adapter' })
 }
 foreach ($adapter in $adapters) {
   $stats = Get-NetAdapterStatistics -Name $adapter.Name -ErrorAction SilentlyContinue
+  $statsSampledAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
   $receivedRaw = if ($stats) { [uint64]$stats.ReceivedBytes } else { [uint64]0 }
   $sentRaw = if ($stats) { [uint64]$stats.SentBytes } else { [uint64]0 }
   $statisticsReliable = [bool]($stats -and $receivedRaw -lt [uint64]1PB -and $sentRaw -lt [uint64]1PB)
@@ -1812,6 +1822,7 @@ foreach ($adapter in $adapters) {
   $ipInterface = Get-NetIPInterface -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
   $items += [pscustomobject]@{
     name = $adapter.Name
+    interfaceId = [string]$adapter.InterfaceGuid
     description = $adapter.InterfaceDescription
     interfaceIndex = $adapter.ifIndex
     status = [string]$adapter.Status
@@ -1821,6 +1832,7 @@ foreach ($adapter in $adapters) {
     sentBytes = $sentBytes
     statisticsReliable = $statisticsReliable
     performanceCounters = $performanceCounters
+    sampledAt = if ($performanceCounters) { $performanceSampledAt } else { $statsSampledAt }
     ipv4 = [string]$ipAddress.IPAddress
     gateway = [string]$defaultRoute.NextHop
     dhcp = [string]($ipInterface.Dhcp)
@@ -1857,12 +1869,11 @@ if ($targetPresent -and $items.Count -eq 0) {
 }
 $items | ConvertTo-Json -Depth 4 -Compress
 `;
-    if (!networkTrafficQuery) {
-      networkTrafficQuery = runPowerShell(["-Command", ps])
-        .then(normalizeNetworkTrafficResult)
-        .finally(() => { networkTrafficQuery = null; });
-    }
-    const result = await networkTrafficQuery;
+    if (!networkSampler) networkSampler = createNetworkSampler({
+      readFull: () => runPowerShell(["-Command", ps]),
+      readFast: () => runPowerShell(["-File", script("network-counters.ps1")], 15000),
+    });
+    const result = normalizeNetworkTrafficResult(await networkSampler.sample({refreshDetails: url.searchParams.get("details") === "1"}));
     sendJson(res, 200, result);
     return;
   }
@@ -1891,6 +1902,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, result.ok && detail?.ok ? 200 : 502, response);
     } finally {
       driverInstallRunning = false;
+      networkSampler?.invalidate();
     }
     return;
   }
@@ -2163,12 +2175,13 @@ function startServer() {
     server.listen(port, host, () => {
       server.off("error", onError);
       startBonjour();
-      console.log(`DJI 4G Assistant running on http://127.0.0.1:${port}`);
+      const access = consoleAddresses();
+      console.log(`DJI 4G Assistant running on ${access.localUrl}`);
       console.log("");
-      if (host !== "127.0.0.1") {
+      if (access.pairingAvailable) {
         console.log("Open this in any browser on this Windows PC, or from a trusted device on the same LAN:");
         console.log(primaryConsoleUrl());
-        for (const ip of localIps()) console.log(`LAN: http://${ip}:${port}`);
+        for (const url of access.urls) console.log(`LAN: ${url}`);
       }
       resolve(server);
     });

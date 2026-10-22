@@ -64,8 +64,10 @@ test("network polling never stacks slow Windows adapter reads", () => {
   assert.match(refresh, /state\.trafficRefreshInFlight = true/);
   assert.match(refresh, /finally \{ state\.trafficRefreshInFlight = false; \}/);
   const server = read("web/server.js");
-  assert.match(server, /let networkTrafficQuery = null/);
-  assert.match(server, /if \(!networkTrafficQuery\)/);
+  assert.match(server, /let networkSampler = null/);
+  assert.match(server, /if \(!networkSampler\) networkSampler = createNetworkSampler/);
+  assert.match(server, /await networkSampler\.sample\(/);
+  assert.match(server, /script\("network-counters\.ps1"\)/);
   assert.match(server, /pnputil \/enum-devices \/connected \/class Net/);
   assert.doesNotMatch(server, /\$targetDevice = Get-PnpDevice/);
   assert.ok(server.includes("-match 'USB\\\\\\\\VID_2C7C"));

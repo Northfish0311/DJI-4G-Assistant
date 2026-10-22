@@ -68,6 +68,7 @@ test("pairing API requires authentication and returns a scannable deep link", as
   process.env.HOST = "127.0.0.1";
   process.env.CONSOLE_TOKEN = "test_console_token_abcdefghijklmnopqrstuvwxyz";
   const { server, startServer } = require("../web/server");
+  const originalAddress = server.address;
 
   try {
     await startServer();
@@ -91,6 +92,12 @@ test("pairing API requires authentication and returns a scannable deep link", as
     });
     assert.equal(wrongToken.status, 401);
     assert.ok(!(await wrongToken.text()).includes(process.env.CONSOLE_TOKEN));
+
+    const localOnly = await fetch(`http://127.0.0.1:${port}/api/pairing`, {headers: {"x-console-token": process.env.CONSOLE_TOKEN}});
+    assert.equal(localOnly.status, 409);
+    assert.equal((await localOnly.json()).code, "LOCAL_ONLY");
+    // Simulate a LAN listener for address-selection checks; keep the real test server private.
+    server.address = () => ({address: "0.0.0.0", port});
 
     const response = await fetch(`http://127.0.0.1:${port}/api/pairing`, {
       headers: { "x-console-token": process.env.CONSOLE_TOKEN },
@@ -122,6 +129,7 @@ test("pairing API requires authentication and returns a scannable deep link", as
     assert.equal(retry.status, 200);
     assert.equal((await retry.json()).url, `http://192.168.50.21:${port}`);
   } finally {
+    server.address = originalAddress;
     await new Promise((resolve) => server.close(resolve));
     os.networkInterfaces = originalInterfaces;
     for (const [key, value] of Object.entries(originalEnvironment)) {
