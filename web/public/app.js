@@ -2026,17 +2026,21 @@ function renderCallStatus(data) {
   state.callStatusReadError = false;
   state.callStatusData = data;
   const call = Array.isArray(data?.voiceCalls) ? data.voiceCalls[0] || null : null;
-  const endedCall = !call && Boolean(state.lastVoiceCall);
+  // CPAS activity: 3 = ringing, 4 = call in progress. When AT+CLCC briefly returns an
+  // empty list mid-call, trust CPAS and keep the call alive instead of falsely hanging up.
+  const callStillActive = data?.activity === 3 || data?.activity === 4;
+  const endedCall = !call && !callStillActive && Boolean(state.lastVoiceCall);
   if (call) {
     rememberCall(call);
     state.lastVoiceCall = { ...call };
-  } else if (state.lastVoiceCall) {
+  } else if (state.lastVoiceCall && !callStillActive) {
     rememberCall({ ...state.lastVoiceCall, state: "disconnected", stateCode: 6 });
     state.lastVoiceCall = null;
     state.automaticCallAudio = null;
     inspectEndedCall();
   }
-  if (!call && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
+  // Only tear down the audio bridge when confident the call actually ended.
+  if (!call && !callStillActive && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
   if (!call && state.pendingPostDial && (endedCall || Date.now() - state.pendingPostDial.createdAt > 90000)) cancelPendingPostDial();
   if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
   else if (state.pendingPostDial) setCallFeedback(t("postDialWaiting"), "working");
