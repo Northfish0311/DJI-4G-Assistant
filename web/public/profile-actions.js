@@ -1,6 +1,6 @@
 function profileWriteTarget() {
   if (state.busy || state.callActionInFlight || state.confirming) return null;
-  if (state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "error"); return null;}
+  if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "error"); return null;}
   if (!state.activeAid || !/^89[0-9]{30}$/.test(state.activeEid)) {showFeedback(t("selectEidFirst"), "error"); return null;}
   return {aid: state.activeAid, expectedEid: state.activeEid, epoch: state.cardEpoch};
 }
@@ -251,7 +251,7 @@ async function refreshTrafficQuietly() {
   renderTrafficSyncState();
 }
 async function refreshModuleStatusQuietly() {
-  if (state.busy || state.overviewRefreshInFlight || state.callActionInFlight || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.voiceCalls?.length) return;
+  if (state.busy || state.overviewRefreshInFlight || state.callActionInFlight || !state.atPort || document.hidden || !document.querySelector('.nav-btn[data-target="overview"]')?.classList.contains("active") || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   const epoch = state.cardEpoch, port = state.atPort;
   state.overviewRefreshInFlight = true;
   try {
