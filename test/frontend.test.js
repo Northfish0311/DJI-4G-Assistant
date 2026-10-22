@@ -3,11 +3,12 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { readAppSource } = require("./helpers/app-source");
 
 const read = (relative) => fs.readFileSync(path.join(__dirname, "..", relative), "utf8");
 
 test("uses the native mobile layout for Android and iOS only", () => {
-  const bootstrap = read("web/public/app.js").split('const output =')[0];
+  const bootstrap = readAppSource().split('const output =')[0];
   for (const platform of ["android", "ios", "unknown", ""]) {
     const classes = [];
     vm.runInNewContext(bootstrap, {
@@ -58,7 +59,7 @@ test("desktop smoke test waits for a fully usable pairing code", () => {
 });
 
 test("network polling never stacks slow Windows adapter reads", () => {
-  const source = read("web/public/app.js");
+  const source = readAppSource();
   const refresh = source.split("async function refreshTrafficQuietly()")[1].split("async function refreshModuleStatusQuietly")[0];
   assert.match(refresh, /state\.trafficRefreshInFlight/);
   assert.match(refresh, /state\.trafficRefreshInFlight = true/);
@@ -77,7 +78,7 @@ test("network polling never stacks slow Windows adapter reads", () => {
 
 test("system guidance is fully translated instead of mixing English into Chinese", () => {
   const html = read("web/public/index.html");
-  const app = read("web/public/i18n.js");
+  const app = readAppSource();
   for (const key of ["githubPageDetail", "localConsoleDetail", "hardwareScopeDetail"]) {
     assert.match(html, new RegExp(`data-i18n="${key}"`));
     assert.ok(app.split(`${key}:`).length >= 3, `${key} must exist in English and Chinese`);
@@ -115,7 +116,7 @@ test("Android recovery keeps controls synchronized and detaches the console befo
 });
 
 test("native clients remove stale browser tokens without persisting fresh credentials", () => {
-  const source = read("web/public/app.js");
+  const source = readAppSource();
   const bootstrap = source.split("const output =")[0];
   const start = source.indexOf('const launchToken =');
   const end = source.indexOf('languageBtn.addEventListener', start);
@@ -148,7 +149,7 @@ test("native clients remove stale browser tokens without persisting fresh creden
 
 test("loads the eSIM inventory using the actual navigation target", () => {
   const html = read("web/public/index.html");
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   assert.ok(html.includes('data-target="euicc"'));
   assert.ok(html.includes('id="euicc"'));
   assert.ok(app.includes('if (target === "euicc") callApi("euicc-inventory")'));
@@ -156,7 +157,7 @@ test("loads the eSIM inventory using the actual navigation target", () => {
 });
 
 test("allows Start Audio to auto-prepare a downloaded runtime", () => {
-  const source = read("web/public/app.js");
+  const source = readAppSource();
   assert.match(source, /standardUsbAudio \|\| !state\.voiceRuntimeStatus\?\.runtime\?\.local\?\.downloaded/);
   assert.match(source, /state\.voiceRuntimeStatus\?\.runtime\?\.local\?\.downloaded === true/);
   assert.doesNotMatch(source, /standardUsbAudio \|\| !state\.voiceRuntimeStatus\?\.runtime\?\.prepared/);
@@ -248,7 +249,7 @@ test("contains the SMS capacity and three-step voice setup surfaces", () => {
 
 test("shows module temperature without polling during calls or write operations", () => {
   const html = read("web/public/index.html");
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const server = read("web/server.js");
   assert.match(html, /id="temperatureValue"/);
   assert.match(server, /AT\+QTEMP/);
@@ -259,7 +260,7 @@ test("shows module temperature without polling during calls or write operations"
 });
 
 test("verifies a live ICCID and IMSI after enabling an eSIM profile", () => {
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const server = read("web/server.js");
   assert.match(server, /verifyProfileActivation/);
   assert.match(server, /\["AT\+QCCID", "AT\+CIMI"\]/);
@@ -270,7 +271,7 @@ test("verifies a live ICCID and IMSI after enabling an eSIM profile", () => {
 });
 
 test("sends post-dial extension keys only after an outgoing call connects", () => {
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   assert.match(app, /function parseDialInput/);
   assert.match(app, /call\?\.direction !== "outgoing"/);
   assert.match(app, /!\["active", "held"\]\.includes\(call\.state\)/);
@@ -281,7 +282,7 @@ test("sends post-dial extension keys only after an outgoing call connects", () =
 
 test("lets Windows users choose call microphone and speaker independently", () => {
   const html = read("web/public/index.html");
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   assert.match(html, /id="callMicrophoneSelect"/);
   assert.match(html, /id="callSpeakerSelect"/);
   assert.match(html, /id="refreshAudioDevicesBtn"/);
@@ -311,14 +312,14 @@ test("ignores Bluetooth COM ports during modem discovery", () => {
 
 test("includes a bilingual responsive mobile pairing surface", () => {
   const html = read("web/public/index.html");
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const css = read("web/public/styles.css");
   assert.match(html, /id="pairIosBtn"/);
   assert.match(html, /id="pairingDialog"/);
   assert.match(html, /id="pairingQr"/);
   assert.match(app, /fetch\("\/api\/pairing"/);
-  assert.match(read("web/public/i18n.js"), /连接手机 \/ 平板/);
-  assert.doesNotMatch(read("web/public/i18n.js"), /连接 iPhone \/ iPad/);
+  assert.match(app, /连接手机 \/ 平板/);
+  assert.doesNotMatch(app, /连接 iPhone \/ iPad/);
   assert.match(app, /launchToken && !nativeCompanion/);
   assert.match(app, /nativePlatform === "ios" \|\| nativePlatform === "android"/);
   assert.match(app, /if \(nativeCompanion\) localStorage.removeItem\("consoleToken"\)/);
