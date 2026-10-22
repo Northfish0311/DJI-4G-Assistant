@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { readAppSource } = require("./helpers/app-source");
 const read = file => fs.readFileSync(path.join(__dirname, "..", file), "utf8");
 
 test("native navigation supplements, rather than removes, every desktop destination", () => {
@@ -21,7 +22,7 @@ test("native navigation supplements, rather than removes, every desktop destinat
 });
 
 test("viewing any of three EID spaces only selects the matching inventory and never writes", () => {
-  const source = read("web/public/app.js");
+  const source = readAppSource();
   const selector = source.slice(source.indexOf("function selectEuicc(eid)"), source.indexOf("async function renameEuicc"));
   const eids = [0, 1, 2].map(n => ({ eid: "89" + String(n).padStart(30, "0"), aid: "aid-" + n }));
   const state = { busy: false, euiccInventory: eids, activeEid: eids[0].eid, activeAid: eids[0].aid, euiccCandidatesChecked: 3 };
@@ -55,7 +56,7 @@ test("viewing any of three EID spaces only selects the matching inventory and ne
 });
 
 test("mobile profile selection keeps escaped labels and original write confirmations", () => {
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const inventory = app.slice(app.indexOf("function renderEuiccInventory"), app.indexOf("function renderChip"));
   assert.match(inventory, /aria-pressed="\$\{selected\}"/);
   assert.match(inventory, /escapeHtml\(label\)/);
@@ -67,7 +68,7 @@ test("mobile profile selection keeps escaped labels and original write confirmat
 });
 
 test("native SMS navigation preserves separate reply and new-message drafts without writes", () => {
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const draftFunctions = app.slice(app.indexOf("function smsDraftKey()"), app.indexOf("function setSmsFeedback("));
   const navigation = app.slice(app.indexOf("function selectSmsConversation("), app.indexOf("async function sendSmsMessage("));
   const state = {smsDrafts: new Map(), smsActiveSender: null, smsNewDraft: false, smsText: "", smsConversationOpen: false};
@@ -110,7 +111,7 @@ test("native SMS navigation preserves separate reply and new-message drafts with
 });
 
 test("native SMS returns to the list on a card change and keeps navigation available while busy", () => {
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const clear = app.slice(app.indexOf("function clearCardView()"), app.indexOf("function setBusy("));
   assert.match(clear, /state\.smsDrafts\.clear\(\)/);
   assert.match(clear, /setNativeSmsPane\(false\)/);
@@ -123,7 +124,7 @@ test("native SMS returns to the list on a card change and keeps navigation avail
 });
 
 test("companion mode cannot mistake loopback preview for a Windows audio host", () => {
-  const app = read("web/public/app.js");
+  const app = readAppSource();
   const expression = app.match(/const localAudioBridgeHost = (.+);/)[1];
   for (const hostname of ["localhost", "127.0.0.1", "192.0.2.20"]) {
     assert.equal(vm.runInNewContext(expression, {nativeCompanion: true, location: {hostname}}), false);
