@@ -1,7 +1,7 @@
 async function inspectEndedCall() {
   const epoch = state.cardEpoch;
   const generation = state.callEndReadGeneration = (state.callEndReadGeneration || 0) + 1;
-  const current = () => epoch === state.cardEpoch && generation === state.callEndReadGeneration && !state.callStatusData?.voiceCalls?.length;
+  const current = () => epoch === state.cardEpoch && generation === state.callEndReadGeneration && !state.callStatusData?.callStateUncertain && !state.callStatusData?.voiceCalls?.length;
   try {
     const data = await fetchJson("/api/call-end-reason?port=" + encodeURIComponent(portInput.value.trim()), 60000);
     if (!current()) return;
@@ -18,8 +18,9 @@ function syncCallButtons() {
   const call = state.callStatusData?.voiceCalls?.[0] || null;
   const unavailable = !state.callActionsEnabled || state.callActionInFlight || !state.atPort || state.cardReady === false;
   const locked = unavailable || state.busy;
-  const incoming = call && ["incoming", "waiting"].includes(call.state);
-  const connected = call && ["active", "held"].includes(call.state);
+  const pending = state.callStatusData?.callStateUncertain;
+  const incoming = state.callStatusData?.activity === 3 || (!pending && call && ["incoming", "waiting"].includes(call.state));
+  const connected = !pending && call && ["active", "held"].includes(call.state);
   const answer = document.querySelector("#answerCallBtn");
   const hangup = document.querySelector("#hangupCallBtn");
   const dial = document.querySelector("#dialCallBtn");
@@ -42,7 +43,7 @@ function syncCallButtons() {
     state.voiceRuntimeStatus?.runtime?.local?.downloaded === true,
   );
   if (answer) answer.disabled = unavailable || !incoming;
-  if (hangup) hangup.disabled = unavailable || !call;
+  if (hangup) hangup.disabled = unavailable || (!call && !pending);
   if (dial) dial.disabled = locked || state.postDialRunning || state.callStatusReadError || state.callStatusData?.ok !== true || Boolean(call) || !parseDialInput(document.querySelector("#callNumberInput").value);
   if (dtmf) dtmf.disabled = locked || state.postDialRunning || !connected;
   if (callerId) callerId.disabled = locked || state.callStatusData?.callerIdEnabled === true;
@@ -86,7 +87,7 @@ async function runPendingPostDial(call) {
         continue;
       }
       const active = state.callStatusData?.voiceCalls?.[0];
-      if (!active || !["active", "held"].includes(active.state)) throw new Error("Call is no longer connected.");
+      if (!active || active.statusPending || !["active", "held"].includes(active.state)) throw new Error("Call is not confirmed connected.");
       const controller = new AbortController();
       state.postDialAbortController = controller;
       const timer = setTimeout(() => controller.abort(), 15000);
@@ -126,41 +127,41 @@ async function runPendingPostDial(call) {
 function renderCallStatus(data) {
   if (data?.ok === false) {state.callStatusReadError = true; syncCallButtons(); return;}
   data = { ...data, callerIdEnabled: data?.callerIdEnabled ?? state.callStatusData?.callerIdEnabled ?? state.callCapabilityData?.callerIdEnabled ?? null };
-  state.callStatusReadError = false;
+  const receivedCall = data?.voiceCalls?.find(call => !call.statusPending && call.state !== "disconnected") || null;
+  // Missing CPAS is unknown, not idle. Keep the last call clearly marked as pending.
+  const pending = !receivedCall && data?.activity !== 0 && Boolean(
+    [3, 4].includes(data?.activity) || state.lastVoiceCall || state.audioBridge || state.audioBridgeStarting || data?.voiceRouteActive || state.automaticCallAudio,
+  );
+  const call = receivedCall || (pending && state.lastVoiceCall ? { ...state.lastVoiceCall, statusPending: true } : null);
+  data = { ...data, voiceCalls: receivedCall ? data.voiceCalls : call ? [call] : [], callStateUncertain: pending };
+  state.callStatusReadError = pending;
   state.callStatusData = data;
-  const call = Array.isArray(data?.voiceCalls) ? data.voiceCalls[0] || null : null;
-  // A single empty AT+CLCC read mid-call is usually a lost serial response, not a hangup.
-  // CPAS activity (3 = ringing, 4 = call in progress) is authoritative when the server
-  // included it, otherwise require a second consecutive empty read before ending the call.
-  // Fast polling keeps sending only AT+CLCC, so no extra serial traffic is introduced.
-  const callStillActiveByCpas = data?.activity === 3 || data?.activity === 4;
-  state.emptyCallReads = call || callStillActiveByCpas ? 0 : (state.emptyCallReads || 0) + 1;
-  const callStillActive = callStillActiveByCpas || (!call && state.emptyCallReads < 2);
-  const endedCall = !call && !callStillActive && Boolean(state.lastVoiceCall);
-  if (call) {
+  const endedCall = !call && !pending && Boolean(state.lastVoiceCall);
+  if (receivedCall) {
     rememberCall(call);
     state.lastVoiceCall = { ...call };
-  } else if (state.lastVoiceCall && !callStillActive) {
+  } else if (endedCall) {
     rememberCall({ ...state.lastVoiceCall, state: "disconnected", stateCode: 6 });
     state.lastVoiceCall = null;
     state.automaticCallAudio = null;
     inspectEndedCall();
   }
   // Only tear down the audio bridge when confident the call actually ended.
-  if (!call && !callStillActive && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
+  if (!call && !pending && (state.audioBridge || state.audioBridgeStarting)) stopAudioBridge();
   if (!call && state.pendingPostDial && (endedCall || Date.now() - state.pendingPostDial.createdAt > 90000)) cancelPendingPostDial();
-  if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
+  if (pending) setCallFeedback(t("callStatePending"), "working");
+  else if (state.postDialRunning) setCallFeedback(t("postDialSending"), "working");
   else if (state.pendingPostDial) setCallFeedback(t("postDialWaiting"), "working");
   else if (call) setCallFeedback(callStateText(call), ["active", "incoming", "waiting"].includes(call.state) ? "success" : "working");
   else if (endedCall) setCallFeedback(t("hangupAccepted"), "neutral");
-  if (call) runPendingPostDial(call);
+  if (receivedCall) runPendingPostDial(receivedCall);
 
   const stage = document.querySelector("#callStatus");
-  stage.dataset.state = call?.state || "idle";
-  document.querySelector("#callStateLabel").textContent = call ? callStateText(call) : t("callIdle");
-  document.querySelector("#callDirectionLabel").textContent = call ? (call.direction === "incoming" ? t("incomingCall") : t("outgoingCall")) : t("noActiveCall");
+  stage.dataset.state = pending ? "pending" : call?.state || "idle";
+  document.querySelector("#callStateLabel").textContent = pending ? t("callChecking") : call ? callStateText(call) : t("callIdle");
+  document.querySelector("#callDirectionLabel").textContent = call ? (call.direction === "incoming" ? t("incomingCall") : t("outgoingCall")) : pending ? t("notChecked") : t("noActiveCall");
   document.querySelector("#callNumber").textContent = call?.number || (call ? t("numberUnavailable") : "--");
-  document.querySelector("#callMeta").textContent = call ? `${t("callId", { id: call.id })} · ${callStateText(call)}` : t("waitingForCall");
+  document.querySelector("#callMeta").textContent = pending ? t("callStatePending") : call ? `${t("callId", { id: call.id })} · ${callStateText(call)}` : t("waitingForCall");
   document.querySelector("#callerIdState").textContent = data?.callerIdEnabled === true ? t("callerIdOn") : data?.callerIdEnabled === false ? t("callerIdOff") : t("notChecked");
   if (call?.state === "incoming" || call?.state === "waiting") {
     statusPill.textContent = t("callIncoming");
@@ -170,7 +171,7 @@ function renderCallStatus(data) {
     renderConnectionState();
   }
   syncCallButtons();
-  if (call) connectAutomaticCallAudio(call);
+  if (receivedCall) connectAutomaticCallAudio(receivedCall);
 }
 
 function renderCallCapabilities(data) {
@@ -202,10 +203,10 @@ function renderCallCapabilities(data) {
 }
 
 async function refreshCallStatusQuietly(force = false) {
-  const liveOrPending = Boolean(state.callActionInFlight || state.automaticCallAudio || state.callStatusData?.voiceCalls?.length);
+  const liveOrPending = Boolean(state.callActionInFlight || state.automaticCallAudio || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length);
   // A hidden desktop window must still connect and release audio for its own call.
   if (state.callRefreshInFlight || (document.hidden && !force && !liveOrPending) || (!force && !liveOrPending && (!state.callMonitoring || state.busy))) return;
-  const cadence = state.automaticCallAudio || state.callStatusData?.voiceCalls?.length ? 1000 : 3500;
+  const cadence = state.automaticCallAudio || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length ? 1000 : 3500;
   if (!force && Date.now() - (state.lastCallReadStarted || 0) < cadence) return;
   state.lastCallReadStarted = Date.now();
   state.callRefreshInFlight = true;
