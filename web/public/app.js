@@ -190,6 +190,8 @@ Object.assign(copy.en, {automaticCallAudio: "Connect audio automatically"});
 Object.assign(copy.zh, {automaticCallAudio: "自动接入声音"});
 Object.assign(copy.en, {searchProfiles: "Search name, provider or ICCID", clearSearch: "Clear search", profileStatusFilter: "Profile status", allProfiles: "All profiles", profileFilterCount: "{visible} / {total} profiles", noMatchingProfiles: "No profiles match these filters.", newSmsMessages: "{count} new messages"});
 Object.assign(copy.zh, {searchProfiles: "搜索名称、运营商或 ICCID", clearSearch: "清除搜索", profileStatusFilter: "套餐状态", allProfiles: "全部套餐", profileFilterCount: "显示 {visible} / {total} 个套餐", noMatchingProfiles: "没有符合当前筛选条件的套餐。", newSmsMessages: "{count} 条新短信"});
+Object.assign(copy.en, {smsThreadCount: "{total} conversations", smsSearchCount: "{visible} / {total} conversations"});
+Object.assign(copy.zh, {smsThreadCount: "共 {total} 个会话", smsSearchCount: "找到 {visible} / {total} 个会话"});
 const state = {
   profileFilters: new Map(), profileDrafts: new Map(), profileDetailsOpen: new Set(), smsPendingKeys: new Set(),
   automaticCallAudioEnabled: localStorage.getItem("callAutomaticAudio") !== "0", callCapabilityRefresh: null,
@@ -296,7 +298,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   renderConnectionState();
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
-    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, #smsNewMessagesBtn, #clearProfileSearchBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
+    if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, #smsNewMessagesBtn, #clearProfileSearchBtn, #clearSmsSearchBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
     if (button.closest(".log-actions, #calls, #pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
       : button.dataset.profileDownload ? isBusy || !state.profileDownloadEnabled
@@ -819,6 +821,37 @@ function decodeSmsBody(value) {
   return /[\p{L}\p{N}\p{P}\p{Z}\r\n]/u.test(decoded) ? decoded : body;
 }
 
+function parseSmsMessages(text) {
+  // Only the final OK terminates the response; an OK inside a message is content.
+  const response = String(text || "").replace(/\r\n?/g, "\n").replace(/(?:^|\n)[\t ]*OK[\t ]*\n*$/, "");
+  const headers = [...response.matchAll(/^\+CMGL:[\t ]*(\d+[\t ]*,[\t ]*"(?:REC (?:READ|UNREAD)|STO (?:SENT|UNSENT))"[\t ]*,[^\n]*)(?:\n|$)/gm)];
+  return headers.map((header, index) => ["", header[1], response.slice(header.index + header[0].length, headers[index + 1]?.index ?? response.length)]);
+}
+
+function smsSearchPattern(query) {
+  const value = String(query || "").trim();
+  return value ? new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "giu") : null;
+}
+
+function highlightSmsText(value, query) {
+  const text = String(value || ""), pattern = smsSearchPattern(query);
+  if (!pattern) return escapeHtml(text);
+  let html = "", offset = 0;
+  for (const match of text.matchAll(pattern)) {
+    html += escapeHtml(text.slice(offset, match.index)) + `<mark>${escapeHtml(match[0])}</mark>`;
+    offset = match.index + match[0].length;
+  }
+  return html + escapeHtml(text.slice(offset));
+}
+
+function smsSearchPreview(value, query) {
+  const text = String(value || "").replace(/\s+/g, " ").trim();
+  const match = smsSearchPattern(query)?.exec(text);
+  const start = match ? Math.max(0, match.index - 8) : 0;
+  const end = Math.max(start + 120, (match?.index || 0) + (match?.[0].length || 0));
+  return (start ? "…" : "") + text.slice(start, end) + (end < text.length ? "…" : "");
+}
+
 function extractVerificationCode(body) {
   const patterns = [
     /(?:验证码|校验码|动态码|验证代码|verification\s*code|security\s*code|one[-\s]?time\s*(?:password|code)|otp|passcode|login\s*code|code)\D{0,12}([0-9]{4,8})/i,
@@ -962,7 +995,7 @@ function noteTrafficReadFailure() {
   renderTrafficSyncState();
 }
 function smsStatus(status) {
-  const normalized = status.toUpperCase();
+  const normalized = String(status || "").toUpperCase();
   if (normalized.includes("UNREAD")) return { label: t("smsUnread"), className: "unread" };
   if (normalized.includes("UNSENT")) return { label: t("smsUnsent"), className: "unsent" };
   if (normalized.includes("SENT")) return { label: t("smsSent"), className: "sent" };
@@ -1195,7 +1228,7 @@ function renderSms(text, data = {}) {
   const anchorOffset = anchor ? anchor.getBoundingClientRect().top - listTop : 0;
   state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
   renderSmsStorage(state.smsStorage);
-  const matches = [...text.matchAll(/\+CMGL:\s*([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n\+CMGL:|\r?\nOK|$)/g)];
+  const matches = parseSmsMessages(text);
   const storedSent = matches.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "sent").map(m => normalizePhone(parseAtCsv(m[1])[2]) + "\n" + decodeSmsBody(m[2]));
   for (const sent of state.smsSentThisSession) {
     const key = sent.number + "\n" + sent.message, index = storedSent.indexOf(key);
@@ -1215,14 +1248,22 @@ function renderSms(text, data = {}) {
     else {state.smsActiveSender = groups.keys().next().value ?? null; document.querySelector("#smsNumberInput").value = state.smsActiveSender ?? "";}
   }
   const threads = document.querySelector("#smsThreads");
-  const filtered = [...groups].filter(([sender, messages]) => (sender + " " + messages.map(m => decodeSmsBody(m[2])).join(" ") + " " + (state.smsDrafts.get(sender)?.message || "")).toLowerCase().includes(state.smsQuery.trim().toLowerCase()));
+  const query = state.smsQuery.trim(), pattern = smsSearchPattern(query);
+  const containsQuery = value => !pattern || String(value).search(pattern) >= 0;
+  const filtered = [...groups].filter(([sender, messages]) => containsQuery(sender) || messages.some(m => containsQuery(decodeSmsBody(m[2]))) || containsQuery(state.smsDrafts.get(sender)?.message || ""));
+  const searchCount = document.querySelector("#smsSearchCount");
+  searchCount.hidden = !state.smsLastRead && !text && !groups.size;
+  searchCount.textContent = t(query ? "smsSearchCount" : "smsThreadCount", {visible: filtered.length, total: groups.size});
+  document.querySelector("#clearSmsSearchBtn").hidden = !state.smsQuery;
+  document.querySelector("#clearSmsSearchBtn").title = t("clearSearch");
   threads.className = "sms-threads" + (filtered.length ? "" : " empty");
   const threadHtml = filtered.map(([sender, messages]) => {
     const unread = messages.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "unread").length;
     const draft = state.smsDrafts.get(sender)?.message;
-    const preview = messages.length ? decodeSmsBody(messages.at(-1)[2]) : t("draftKept");
-    return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${escapeHtml(sender || t("unknown"))}</strong><small>${escapeHtml(preview)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
-  }).join("") || escapeHtml(state.smsQuery ? t("noMatchingThreads") : t(state.smsLastRead ? "smsNoConversations" : "noSms"));
+    const matching = query && messages.find(m => containsQuery(decodeSmsBody(m[2])));
+    const preview = matching ? decodeSmsBody(matching[2]) : query && draft && containsQuery(draft) ? draft : messages.length ? decodeSmsBody(messages.at(-1)[2]) : t("draftKept");
+    return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${highlightSmsText(sender || t("unknown"), query)}</strong><small>${highlightSmsText(smsSearchPreview(preview, query), query)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
+  }).join("") || escapeHtml(query ? t("noMatchingThreads") : t(state.smsLastRead ? "smsNoConversations" : "noSms"));
   if (threads.dataset.markup !== threadHtml) {
     const threadTop = threads.scrollTop, focusSender = document.activeElement?.dataset.smsThread;
     threads.innerHTML = threadHtml; threads.dataset.markup = threadHtml;
@@ -1241,7 +1282,7 @@ function renderSms(text, data = {}) {
   const markup = visible.map(match => {
     const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]), status = smsStatus(rawStatus || "READ"), body = decodeSmsBody(match[2]), code = extractVerificationCode(body);
     const key = JSON.stringify([index, sender, receivedAt, body]);
-    return `<article data-sms-key="${escapeHtml(key)}" class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}"><div class="sms-card-head"><div class="sms-contact"><strong>${escapeHtml(sender || t("unknown"))}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}<p class="sms-body">${escapeHtml(body)}</p>${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}<div class="sms-card-foot"><span>${escapeHtml(match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index}))}</span>${match.local ? "" : `<button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index)}" ${state.smsDeleteEnabled ? "" : "disabled"}>${t("deleteSms")}</button>`}</div></article>`;
+    return `<article data-sms-key="${escapeHtml(key)}" class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}"><div class="sms-card-head"><div class="sms-contact"><strong>${highlightSmsText(sender || t("unknown"), query)}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}<p class="sms-body">${highlightSmsText(body, query)}</p>${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}<div class="sms-card-foot"><span>${escapeHtml(match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index}))}</span>${match.local ? "" : `<button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index)}" ${state.smsDeleteEnabled ? "" : "disabled"}>${t("deleteSms")}</button>`}</div></article>`;
   }).join("") || escapeHtml(state.smsNewDraft || state.smsDrafts.get(state.smsActiveSender)?.message ? t("newMessageHint") : state.smsLastRead || text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"));
   if (list.dataset.markup !== markup) {
     list.innerHTML = markup; list.dataset.markup = markup;
@@ -1281,7 +1322,17 @@ function selectSmsConversation(sender) {
   setNativeSmsPane(true);
   if (nativeCompanion) resetViewScroll();
   const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
+  scrollToSmsSearchMatch();
   document.querySelector(sender === null ? "#smsNumberInput" : nativeCompanion ? "#smsConversationTitle" : "#smsMessageInput").focus({preventScroll: nativeCompanion});
+}
+
+function scrollToSmsSearchMatch() {
+  if (!state.smsQuery?.trim()) return;
+  const list = document.querySelector("#smsList"), match = list.querySelector(".sms-body mark");
+  if (!match) return;
+  const matchTop = match.getBoundingClientRect().top, cardTop = match.closest(".sms-card").getBoundingClientRect().top;
+  const top = matchTop - cardTop < list.clientHeight - 48 ? cardTop : matchTop;
+  list.scrollTop += top - list.getBoundingClientRect().top - 16;
 }
 
 function setNativeSmsPane(open) {
@@ -2909,7 +2960,15 @@ document.querySelector("#callNextBtn").addEventListener("click", () => {
 });
 document.querySelector("#sendSmsBtn").addEventListener("click", sendSmsMessage);
 document.querySelector("#newSmsBtn").addEventListener("click", () => selectSmsConversation(null));
-document.querySelector("#smsSearchInput").addEventListener("input", event => { state.smsQuery = event.target.value; renderSms(state.smsText); });
+document.querySelector("#smsSearchInput").addEventListener("input", event => { state.smsQuery = event.target.value; renderSms(state.smsText); scrollToSmsSearchMatch(); });
+document.querySelector("#clearSmsSearchBtn").addEventListener("click", () => {
+  state.smsQuery = "";
+  const input = document.querySelector("#smsSearchInput"); input.value = "";
+  renderSms(state.smsText); input.focus({preventScroll: true});
+});
+document.querySelector("#smsSearchInput").addEventListener("keydown", event => {
+  if (event.key === "Escape" && state.smsQuery) {event.preventDefault(); document.querySelector("#clearSmsSearchBtn").click();}
+});
 document.querySelector("#smsNumberInput").addEventListener("input", () => {
   if (!state.smsNewDraft && state.smsActiveSender) state.smsDrafts.set(state.smsActiveSender, {number:state.smsActiveSender, message:document.querySelector("#smsMessageInput").value});
   state.smsNewDraft = true; state.smsActiveSender = null; saveSmsDraft(); renderSms(state.smsText);

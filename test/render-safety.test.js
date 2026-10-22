@@ -69,6 +69,21 @@ test(`${surface}: SMS previews and message bodies escape external markup`, () =>
   escaped(ui.html("#smsList"));
 });
 
+test(`${surface}: SMS bodies keep OK lines and incomplete header-like text`, () => {
+  const ui = harness(nativeCompanion);
+  const body = "First line\nOK\nOKAY, keep reading\n+CMGL: not a message header\nLast line";
+  ui.context.renderSms(`+CMGL: 1,"REC READ","10086","","26/10/22"\r\n${body}\r\nOK\r\n`);
+  assert.ok(ui.html("#smsList").includes(body));
+});
+
+test(`${surface}: SMS search previews the matching message rather than the newest one`, () => {
+  const ui = harness(nativeCompanion);
+  ui.state.smsQuery = "invoice";
+  ui.context.renderSms('+CMGL: 1,"REC READ","10086"\nInvoice available\n+CMGL: 2,"REC READ","10086"\nUnrelated newest message\nOK');
+  assert.match(ui.html("#smsThreads"), /<mark>Invoice<\/mark> available/);
+  assert.match(ui.html("#smsList"), /<mark>Invoice<\/mark> available/);
+});
+
 test(`${surface}: call numbers and direction attributes escape external markup`, () => {
   const ui = harness(nativeCompanion);
   ui.state.callHistory = [{ observedAt: "2026-09-28T00:00:00Z", number: payload, direction: payload, state: "disconnected" }];

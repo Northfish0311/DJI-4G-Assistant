@@ -1,6 +1,6 @@
 # iPhone / iPad 远程管理（实验性）
 
-当前更新为 [v1.0.2 未签名测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)。**未签名 IPA 不能直接安装，也不是 TestFlight 邀请。** 建议先把 Windows 助手更新到 1.7.4；已安装旧 iOS 远程 App 的用户，重新连接即可看到新版管理页面。客户端本身的重载确认和错误恢复修复，需要更新 iOS App。
+**旧 v1.0.2 未签名测试包已移除，Releases 现在只保留最新 Windows 版。** 普通用户可用 Safari 打开 Windows 助手“系统”页显示的局域网地址；电脑和手机需连接同一可信 Wi-Fi，按提示输入控制密码。下文为历史实验客户端与源码开发说明，不代表目前有 IPA 下载或 TestFlight 邀请。未签名 IPA 不能直接安装。
 
 **后续主要安装方式：TestFlight。** 目前正在准备发布条件，尚无邀请链接。开放后用户通过 Apple 官方 TestFlight 接受邀请并安装，不用自己给 IPA 签名。见 [TestFlight 安装与发布](TestFlight发布说明.md)。下文侧载步骤仅保留给开发测试者。
 
@@ -51,14 +51,14 @@ Apple 要求 iPhone/iPad App 必须经过有效代码签名。仓库没有保存
 | **DJI-4G-Assistant-iOS-Simulator.zip** | 只给 Mac 上的 iOS Simulator 测试，不能安装到真实 iPhone/iPad |
 | **DJI-4G-Assistant-iOS-SHA256SUMS.txt** | 校验上面两个文件是否完整 |
 
-普通开发测试者从 [v1.0.2 发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)的 **Assets** 下载。GitHub Actions 的绿色 **Build iOS companion** 任务也保留同一构建的 Artifact；日常源码构建不自动发布，必须显式触发发布流程。
+旧发布页和安装包不再提供下载。开发者需自行构建源码；GitHub Actions 的产物有保留期限，不保证历史构建仍可获取。日常源码构建不自动发布。
 
 ## 开发测试：安装远程客户端
 
 以下仅为实验性远程客户端的签名测试步骤；完成安装后仍需 Windows 主机。可使用 [Sideloadly 官方网站](https://sideloadly.io/)提供的 Windows 工具，用自己的 Apple ID 给未签名 IPA 签名：
 
-1. 打开 [iOS v1.0.2 发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)。
-2. 展开 **Assets**，下载 **DJI-4G-Assistant-iOS-Unsigned.ipa**，不要选 Simulator.zip 或 Source code。
+1. 开发者先自行构建实验客户端；普通用户使用 Safari 远程管理即可，无需安装 App。
+2. 确认拿到的是自己构建的真机 IPA，不是 Simulator.zip 或 Source code。旧版未签名 IPA 已从 Releases 移除。
 3. 从 [Sideloadly 官网](https://sideloadly.io/)下载安装工具，不要使用网盘或第三方修改版。
 4. 用 USB 线连接 iPhone/iPad，在设备上选择“信任此电脑”。
 5. 把 **DJI-4G-Assistant-iOS-Unsigned.ipa** 拖进 Sideloadly，选择自己的设备和 Apple ID 后开始安装。

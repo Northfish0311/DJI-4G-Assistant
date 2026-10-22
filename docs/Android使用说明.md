@@ -1,6 +1,6 @@
 # 安卓远程管理版
 
-当前为 **0.2.0 远程测试版**。[直接下载 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)或打开[发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)。已经通过云端编译、单元测试、静态检查和模拟器测试；真实手机扫码、连接 Windows 和模块操作仍需测试，不是正式稳定版。
+**旧 0.2.0 测试包已移除，Releases 现在只保留最新 Windows 版。** 普通用户无需安装 APK：让手机和 Windows 连接同一可信 Wi-Fi，在手机浏览器打开电脑助手“系统”页的局域网地址，并按提示输入控制密码。下文保留历史测试记录及源码开发步骤，不代表目前有移动端安装包可下载。真实手机扫码、连接 Windows 和模块操作未全面验证。
 
 ## 它做什么
 
@@ -26,7 +26,7 @@
 
 ## 0.2.0 更新了什么
 
-请安装本页链接中的 **0.2.0** APK，旧 0.1.0 安装包不会自动获得这些改进：
+以下为 **0.2.0** 的历史变化；旧 0.1.0 安装包不会自动获得这些改进：
 
 - **多台电脑：** 新电脑不会覆盖旧记录；在“更多操作”里选择“更换电脑”，可回到配对页选择已保存的电脑或添加新电脑。“忘记这台电脑”只删除选中的配对。
 - **局域网搜索：** 点击“搜索局域网电脑”，等待约 6 秒。选择电脑后仍需输入它提供的配对密码；搜索到电脑不等于获得授权。未发现时可直接扫码；目前不提供 IPv6 地址配对。
@@ -43,13 +43,13 @@
 - 手机普通字体、1.3 倍大字体、手动连接展开/收起和空地址提示已检查；平板配对页截图已生成并检查。
 - 本地 102 项项目回归检查通过。
 
-普通用户直接从[0.2.0 发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)下载 APK，无需寻找 Actions 的 Artifacts。开发者也可下载成功构建中的 `DJI-4G-Remote-Android-test`，解压后查看 `download/BUILD-SOURCE.txt`，核对源码提交和构建地址。
+历史 APK 不再提供下载。开发者可按文末步骤自行构建；Actions 构建产物有保留期限，不保证旧包仍可获取。
 
 **尚未完成真机验证：** 安卓手机相机扫码、真实局域网发现和 Windows 配对、实际断网恢复，以及经 Windows 操作模块的短信/eSIM/电话。模拟器使用虚构地址和本地测试服务，不接触真实模块，不能据此宣称所有手机或硬件功能都已通过。
 
-## 安装和使用
+## 源码测试包的安装和使用
 
-1. [直接下载 0.2.0 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)。也可打开[安卓测试版发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)，展开 Assets，选择 `DJI-4G-Remote-Android-0.2.0-test.apk`，不要下载 Source code。
+1. 开发者按文末步骤构建自己的调试签名 APK。普通用户建议使用手机浏览器，不需要执行以下安装步骤。
 2. 将 APK 传到安卓手机，打开安装。系统如要求，只给本次使用的浏览器或文件管理器允许“安装未知应用”，装完可关闭该权限；不要求关闭系统安全扫描。
 3. 打开 Windows 助手，模块留在电脑上。两台设备连接同一可信局域网。
 4. 安卓 App 点击“扫描配对码”，扫描 Windows 顶部“连接手机 / 平板”里的二维码。也可填写电脑的局域网地址和配对密码。
@@ -57,11 +57,11 @@
 
 当前最低 Android 7.0（API 24），需要可用且及时更新的 Android System WebView。不是所有老设备和定制系统都已经验证。建议在受安全更新支持的系统上测试。
 
-## 下载文件怎么选
+## 历史测试包的文件说明
 
 | 文件 | 用途 |
 | --- | --- |
-| `DJI-4G-Remote-Android-0.2.0-test.apk` | 安卓安装包，手机用户下载这个 |
+| `DJI-4G-Remote-Android-0.2.0-test.apk` | 旧安卓测试包，已从 Releases 移除 |
 | `SHA256SUMS.txt` | 安装包完整性校验，不用安装 |
 | `BUILD-SOURCE.txt` | 源码提交和构建地址，用来确认包来自哪次更新 |
 | `phone.png` / `tablet-layout.png` | 配对页的模拟器截图，不是安装包 |

@@ -264,7 +264,10 @@
           <div class="sms-workspace">
             <aside class="panel sms-threads-panel">
               <div class="panel-head"><h2 data-i18n="conversations">Conversations</h2><button id="newSmsBtn" class="secondary" data-i18n="newMessage">New</button></div>
-              <div class="sms-search"><input id="smsSearchInput" type="search" data-i18n-placeholder="searchMessages" placeholder="Search messages" aria-label="Search messages"></div>
+              <div class="sms-search">
+                <label class="sms-search-field"><i data-lucide="search" aria-hidden="true"></i><input id="smsSearchInput" type="search" maxlength="160" autocomplete="off" data-i18n-placeholder="searchMessages" placeholder="Search messages" aria-label="Search messages"><button id="clearSmsSearchBtn" class="secondary" data-i18n-aria="clearSearch" aria-label="Clear search" hidden><i data-lucide="x" aria-hidden="true"></i></button></label>
+                <p id="smsSearchCount" class="sms-search-count" role="status" hidden></p>
+              </div>
               <div id="smsThreads" class="sms-threads empty"></div>
             </aside>
             <div class="sms-conversation">
