@@ -30,7 +30,7 @@ function harness() {
     clearTimeout: id => timers.delete(id),
   });
   vm.runInContext([
-    source.slice(source.indexOf("const copy ="), source.indexOf("function applyLanguage()")),
+    require("./helpers/browser-state.cjs"),
     source.slice(source.indexOf("function append("), source.indexOf("function actionTitle(")),
     source.slice(source.indexOf("function textFromResult("), source.indexOf("function registrationLabel(")),
     source.slice(source.indexOf("async function sendAt("), source.indexOf("async function runProfileAction(")),
