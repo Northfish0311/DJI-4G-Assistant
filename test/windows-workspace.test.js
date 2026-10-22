@@ -3,8 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { readAppSource } = require("./helpers/app-source");
 
-const source = fs.readFileSync(path.join(__dirname, "../web/public/app.js"), "utf8");
+const source = readAppSource();
 
 function trafficHarness() {
   const elements = new Map();
@@ -20,7 +21,7 @@ function trafficHarness() {
     requestAction: async () => ({data: {ok: true, stdout: "[]"}}),
   });
   vm.runInContext([
-    require("./helpers/browser-state.cjs"),
+    source.slice(source.indexOf("const copy ="), source.indexOf("function applyLanguage()")),
     source.slice(source.indexOf("function formatBytes("), source.indexOf("function smsStatus(")),
     source.slice(source.indexOf("async function refreshTrafficQuietly()"), source.indexOf("async function refreshModuleStatusQuietly()")),
   ].join("\n"), context);
