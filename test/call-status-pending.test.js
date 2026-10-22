@@ -3,7 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const source = fs.readFileSync(path.join(__dirname, "../web/public/app.js"), "utf8");
+const { readAppSource } = require("./helpers/app-source");
+const source = readAppSource();
 const fragment = (start, end) => source.slice(source.indexOf(start), source.indexOf(end));
 
 function fixture() {
