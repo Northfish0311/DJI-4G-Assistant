@@ -20,7 +20,7 @@ async function smoke() {
     assert.equal(health.ok, true);
     assert.equal(health.authRequired, true);
     for (const [key, value] of Object.entries(health)) if (key.endsWith("Enabled")) assert.equal(value, false);
-    for (const route of ["/", "/i18n.js", "/app.js", "/desktop-refresh.css", "/vendor/lucide.js"]) {
+    for (const route of ["/", "/core.js", "/euicc.js", "/sms.js", "/calls.js", "/audio.js", "/call-flow.js", "/api.js", "/automation.js", "/profile-actions.js", "/init.js", "/i18n.js", "/desktop-refresh.css", "/vendor/lucide.js"]) {
       const response = await fetch(base + route);assert.equal(response.status, 200, route);
       assert.ok((await response.text()).length > 100, route);
     }
