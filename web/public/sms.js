@@ -308,7 +308,7 @@ function renderSmsRefreshState() {
 }
 
 async function refreshSmsQuietly() {
-  if (!state.started || state.busy || state.smsRefreshing || state.smsSending || !state.atPort || state.cardReady === false || state.confirming || document.hidden || state.callActionInFlight || state.callStatusData?.voiceCalls?.length) return;
+  if (!state.started || state.busy || state.smsRefreshing || state.smsSending || !state.atPort || state.cardReady === false || state.confirming || document.hidden || state.callActionInFlight || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   const epoch = state.cardEpoch;
   state.smsRefreshing = true;
   renderSmsRefreshState();
@@ -333,21 +333,22 @@ function renderCallGuidance() {
   const hasDevice = Boolean(state.atPort) && state.cardReady !== false;
   let key = !hasDevice ? "callConnectFirst" : !state.callActionsEnabled ? "callControlsLocked" : !state.callStatusData ? "callChecking" : call ? "callInProgressHint" : "callReadyFeedback";
   if (hasDevice && state.callStatusReadError) key = "callReadFailed";
+  if (hasDevice && state.callStatusData?.callStateUncertain) key = "callStatePending";
   const availability = document.querySelector("#callAvailability");
   availability.textContent = t(key);
   availability.hidden = nativeCompanion && key === "callReadyFeedback";
-  if (!call) document.querySelector("#callStateLabel").textContent = t(!hasDevice ? "cardNotConnected" : !state.callActionsEnabled ? "callReadOnly" : !state.callStatusData ? "callChecking" : "callIdle");
-  if (!call && state.callStatusReadError) document.querySelector("#callStateLabel").textContent = t("callStatusUncertain");
-  document.querySelector(".call-inline-control").hidden = !call || !["active", "held"].includes(call.state);
-  document.querySelector(".call-primary-actions").hidden = !call;
+  if (!call) document.querySelector("#callStateLabel").textContent = t(!hasDevice ? "cardNotConnected" : !state.callActionsEnabled ? "callReadOnly" : !state.callStatusData || state.callStatusData.callStateUncertain ? "callChecking" : "callIdle");
+  if (!call && state.callStatusReadError && !state.callStatusData?.callStateUncertain) document.querySelector("#callStateLabel").textContent = t("callStatusUncertain");
+  document.querySelector(".call-inline-control").hidden = state.callStatusData?.callStateUncertain || !call || !["active", "held"].includes(call.state);
+  document.querySelector(".call-primary-actions").hidden = !call && !state.callStatusData?.callStateUncertain;
   document.querySelector(".call-audio-actions").hidden = !call && !state.audioBridge;
   renderCallNextStep(call, hasDevice);
 }
 
 
 function renderCallNextStep(call, hasDevice) {
-  document.querySelector(".call-identity").hidden = !call;
-  document.querySelector("#callNextStep").hidden = Boolean(call);
+  document.querySelector(".call-identity").hidden = !call && !state.callStatusData?.callStateUncertain;
+  document.querySelector("#callNextStep").hidden = Boolean(call) || Boolean(state.callStatusData?.callStateUncertain);
   const button = document.querySelector("#callNextBtn");
   const uncertain = state.callStatusReadError || state.callStatusData?.ok !== true;
   const key = !hasDevice ? "callNextDisconnected" : !state.callActionsEnabled ? "callNextLocked" : uncertain ? "callNextWaiting" : "callNextReady";
@@ -387,7 +388,7 @@ function confirmOperation({title, description, details = [], confirmLabel}) {
 
 function ensureCurrentViewLoaded() {
   const target = document.querySelector(".view.active")?.id;
-  if (state.callStatusData?.voiceCalls?.length && ["sms", "euicc"].includes(target)) return;
+  if ((state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) && ["sms", "euicc"].includes(target)) return;
   if (state.failedViews.has(target)) return;
   if (!state.started || state.busy || state.connecting || state.autoLoadedViews.has(target)) return;
   state.autoLoadedViews.add(target);
