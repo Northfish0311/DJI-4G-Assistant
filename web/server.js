@@ -1310,11 +1310,12 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/call-status") {
     const portName = portArg(url);
     const brief = url.searchParams?.get("brief") === "1";
-    const result = await enqueueAt(portName, brief ? ["AT+CLCC"] : ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
+    const result = await enqueueAt(portName, brief ? ["AT+CLCC", "AT+CPAS"] : ["AT+CLCC", "AT+CPAS", "AT+CLIP?"], 30000);
     const snapshot = parseCallStatusResult(result);
     const activityMatch = String(result.stdout || "").match(/\+CPAS:\s*(\d+)/i);
     const clipMatch = String(result.stdout || "").match(/\+CLIP:\s*(\d+)/i);
-    if (voiceRuntime.routeActive && snapshot.ok && !hasVoiceSession(snapshot)) {
+    const callStillActive = activityMatch ? [3, 4].includes(Number(activityMatch[1])) : false;
+    if (voiceRuntime.routeActive && snapshot.ok && !hasVoiceSession(snapshot) && !callStillActive) {
       enqueueVoice(async () => {
         if (!voiceRuntime.routeActive) return;
         // A new call may have arrived while another voice operation held the queue.
