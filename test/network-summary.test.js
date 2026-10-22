@@ -29,7 +29,7 @@ function summaryHarness() {
     fetchJson: async () => ({ ok: true, stdout: "+CEREG: 0,1" }),
   });
   vm.runInContext([
-    source.slice(source.indexOf("const copy ="), source.indexOf("function applyLanguage()")),
+    require("./helpers/browser-state.cjs"),
     source.slice(source.indexOf("function registrationLabel("), source.indexOf("function escapeHtml(")),
     source.slice(source.indexOf("function parseAtCsv("), source.indexOf("function decodeSmsBody(")),
     source.slice(source.indexOf("function formatBytes("), source.indexOf("function smsStatus(")),
