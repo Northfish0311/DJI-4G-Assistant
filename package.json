@@ -1,13 +1,13 @@
 {
   "name": "dji-4g-assistant",
-  "version": "1.7.17",
+  "version": "1.8.0",
   "private": false,
   "description": "Windows desktop assistant for DJI Cellular Dongle and compatible Quectel USB LTE modules, with eSIM, SMS, guarded call control, network diagnostics, and guided setup.",
   "main": "desktop/main.js",
   "scripts": {
     "start": "node web/server.js",
     "desktop": "electron .",
-    "check": "node --check web/server.js && node --check web/network-sampler.js && node --check web/console-addresses.js && node --check web/serial-queue.js && node --check web/pairing.js && node --check web/original-usb.js && node --check web/adb-usb.js && node --check web/voice-runtime.js && node --check web/voice-network.js && node --check web/public/i18n.js && node --check web/public/app.js && node --check web/public/desktop-ui.js && node --check desktop/main.js && node --check scripts/verify-windows-package.cjs",
+    "check": "node --check web/server.js && node --check web/network-sampler.js && node --check web/console-addresses.js && node --check web/serial-queue.js && node --check web/pairing.js && node --check web/original-usb.js && node --check web/adb-usb.js && node --check web/voice-runtime.js && node --check web/voice-network.js && node --check web/public/core.js && node --check web/public/euicc.js && node --check web/public/sms.js && node --check web/public/calls.js && node --check web/public/audio.js && node --check web/public/call-flow.js && node --check web/public/api.js && node --check web/public/automation.js && node --check web/public/profile-actions.js && node --check web/public/init.js && node --check web/public/i18n.js && node --check web/public/desktop-ui.js && node --check desktop/main.js && node --check scripts/verify-windows-package.cjs",
     "build:portable": "npm run check && electron-builder --win portable --publish never",
     "build:installer": "npm run check && electron-builder --win nsis --publish never",
     "build": "npm run check && electron-builder --win portable nsis --publish never",
