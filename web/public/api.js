@@ -47,7 +47,7 @@ function applyHealth(data) {
 
 async function callApi(action, {manageBusy = true} = {}) {
   if (manageBusy && (state.busy || state.confirming)) return false;
-  if (state.callStatusData?.voiceCalls?.length && !["health", "network-traffic", "call-status", "call-capabilities"].includes(action)) {
+  if ((state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) && !["health", "network-traffic", "call-status", "call-capabilities"].includes(action)) {
     showFeedback(t("finishCallFirst"), "neutral"); return false;
   }
   const view = action === "euicc-inventory" || action.startsWith("lpac-") ? "euicc" : action === "sms-list" ? "sms" : action === "network-traffic" ? "network" : document.querySelector(".view.active")?.id;
