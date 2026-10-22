@@ -78,7 +78,7 @@ test("network polling never stacks slow Windows adapter reads", () => {
 
 test("system guidance is fully translated instead of mixing English into Chinese", () => {
   const html = read("web/public/index.html");
-  const app = readAppSource();
+  const app = read("web/public/i18n.js");
   for (const key of ["githubPageDetail", "localConsoleDetail", "hardwareScopeDetail"]) {
     assert.match(html, new RegExp(`data-i18n="${key}"`));
     assert.ok(app.split(`${key}:`).length >= 3, `${key} must exist in English and Chinese`);
@@ -318,8 +318,8 @@ test("includes a bilingual responsive mobile pairing surface", () => {
   assert.match(html, /id="pairingDialog"/);
   assert.match(html, /id="pairingQr"/);
   assert.match(app, /fetch\("\/api\/pairing"/);
-  assert.match(app, /连接手机 \/ 平板/);
-  assert.doesNotMatch(app, /连接 iPhone \/ iPad/);
+  assert.match(read("web/public/i18n.js"), /连接手机 \/ 平板/);
+  assert.doesNotMatch(read("web/public/i18n.js"), /连接 iPhone \/ iPad/);
   assert.match(app, /launchToken && !nativeCompanion/);
   assert.match(app, /nativePlatform === "ios" \|\| nativePlatform === "android"/);
   assert.match(app, /if \(nativeCompanion\) localStorage.removeItem\("consoleToken"\)/);
