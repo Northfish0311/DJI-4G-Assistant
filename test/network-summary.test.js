@@ -3,8 +3,9 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { readAppSource } = require("./helpers/app-source");
 
-const source = fs.readFileSync(path.join(__dirname, "../web/public/app.js"), "utf8");
+const source = readAppSource();
 
 function summaryHarness() {
   const elements = new Map();
@@ -28,7 +29,7 @@ function summaryHarness() {
     fetchJson: async () => ({ ok: true, stdout: "+CEREG: 0,1" }),
   });
   vm.runInContext([
-    require("./helpers/browser-state.cjs"),
+    source.slice(source.indexOf("const copy ="), source.indexOf("function applyLanguage()")),
     source.slice(source.indexOf("function registrationLabel("), source.indexOf("function escapeHtml(")),
     source.slice(source.indexOf("function parseAtCsv("), source.indexOf("function decodeSmsBody(")),
     source.slice(source.indexOf("function formatBytes("), source.indexOf("function smsStatus(")),
