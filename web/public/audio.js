@@ -127,7 +127,7 @@ async function waitForModuleAudioDevices(checkCurrent) {
 async function startAudioBridge() {
   if (state.audioBridgeStarting || state.audioBridge) return Boolean(state.audioBridge);
   const call = state.callStatusData?.voiceCalls?.[0] || null;
-  if (!call || !["active", "held"].includes(call.state)) {
+  if (!call || call.statusPending || !["active", "held"].includes(call.state)) {
     append(t("audioBridge"), t("audioNeedsCall"));
     return false;
   }
