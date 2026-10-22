@@ -21,7 +21,7 @@ function trafficHarness() {
     requestAction: async () => ({data: {ok: true, stdout: "[]"}}),
   });
   vm.runInContext([
-    source.slice(source.indexOf("const copy ="), source.indexOf("function applyLanguage()")),
+    require("./helpers/browser-state.cjs"),
     source.slice(source.indexOf("function formatBytes("), source.indexOf("function smsStatus(")),
     source.slice(source.indexOf("async function refreshTrafficQuietly()"), source.indexOf("async function refreshModuleStatusQuietly()")),
   ].join("\n"), context);
