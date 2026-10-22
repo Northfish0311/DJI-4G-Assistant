@@ -3,7 +3,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const source = fs.readFileSync(path.join(__dirname, "../web/public/app.js"), "utf8");
+const { readAppSource } = require("./helpers/app-source");
+const source = readAppSource();
 const payload = `"><img src=x onerror="window.injected=1"><script>window.injected=1</script>&'`;
 
 function harness(nativeCompanion = false) {
@@ -20,7 +21,7 @@ function harness(nativeCompanion = false) {
   });
   const fragment = (start, end) => source.slice(source.indexOf(start), source.indexOf(end));
   vm.runInContext([
-    require("./helpers/browser-state.cjs"),
+    fragment("const copy =", "function applyLanguage()"),
     fragment("function escapeHtml(", "function formatBytes("),
     fragment("function smsStatus(", "function parseSmsStorageText("),
     fragment("function normalizePhone(", "function parseDialInput("),
