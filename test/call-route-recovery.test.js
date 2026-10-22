@@ -5,6 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const { parseCallStatusResult, hasVoiceSession, extractAtResponse, atAccepted } = require("../web/server");
 const { VoiceRuntimeManager, RUNTIME_KERNEL, RUNTIME_FILES, routeLaunchCommand } = require("../web/voice-runtime");
+const { readAppSource } = require("./helpers/app-source");
 const serverSource = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
 const statusHandler = serverSource.slice(serverSource.indexOf('  if (url.pathname === "/api/call-status")'), serverSource.indexOf('  if (url.pathname === "/api/call-end-reason")'));
 const call = '+CLCC: 1,0,0,0,0,"10086",129\nOK\n';
@@ -58,9 +59,9 @@ test("a transport failure or modem ERROR never closes an existing voice route", 
   }
 });
 
-test("fast call polling includes CPAS confirmation but skips CLIP", async () => {
+test("fast call polling reads only CLCC without repeating CPAS and CLIP", async () => {
   const outcome = await runStatus({ ok: true, stdout: call }, undefined, true);
-  assert.deepEqual(Array.from(outcome.commands[0]), ["AT+CLCC", "AT+CPAS"]);
+  assert.deepEqual(Array.from(outcome.commands[0]), ["AT+CLCC"]);
   assert.equal(outcome.reply.ok, true);
   assert.equal(outcome.stops, 0);
 });
@@ -88,28 +89,13 @@ test("live audio validates firmware and call state without a slow Windows PnP in
 });
 
 test("queued route cleanup rechecks call state and does not close a newly arrived call", async () => {
-  const idle = { ok: true, stdout: framed("OK\n").replace("+CPAS: 4", "+CPAS: 0") };
+  const idle = { ok: true, stdout: "OK\n" };
   for (const next of [{ ok: true, stdout: call }, { ok: false, stdout: "" }, { ok: true, stdout: "+CLCC: 1,1,4,0,0\nOK\n" }]) {
     assert.equal((await runStatus(idle, next)).stops, 0);
   }
   const ended = await runStatus(idle);
   assert.equal(ended.stops, 1);
-  assert.deepEqual(Array.from(ended.commands[1]), ["AT+CLCC", "AT+CPAS"]);
-});
-
-test("missing, failed, busy and active CPAS never confirm an empty CLCC as idle", async () => {
-  const idle = { ok: true, stdout: framed("OK\n").replace("+CPAS: 4", "+CPAS: 0") };
-  for (const response of ["ERROR\n", "OK\n", "+CPAS: 0\nERROR\n", "+CPAS: 0\n", "+CPAS: 10\nOK\n", ...[1, 2, 3, 4, 5].map(value => `+CPAS: ${value}\nOK\n`)]) {
-    const ambiguous = { ok: true, stdout: framed("OK\n").replace("+CPAS: 4\nOK\n", response) };
-    const first = await runStatus(ambiguous);
-    assert.equal(first.queued, 0, response);
-    assert.equal(first.stops, 0, response);
-    const rechecked = await runStatus(idle, ambiguous);
-    assert.equal(rechecked.queued, 1, response);
-    assert.equal(rechecked.stops, 0, response);
-  }
-  assert.equal((await runStatus({ok: true, stdout: "OK\n"})).stops, 0);
-  assert.equal(parseCallStatusResult(idle).activity, 0);
+  assert.deepEqual(Array.from(ended.commands[1]), ["AT+CLCC"]);
 });
 
 test("a dialing, incoming or unrecognized live voice state cannot trigger cleanup", async () => {
@@ -148,7 +134,7 @@ test("voice status rechecks actual temporary devices after a reboot and clears s
 });
 
 test("missing, unreadable and unsupported modules cannot expose USB voice writes", () => {
-  const source = fs.readFileSync(path.join(__dirname, "../web/public/app.js"), "utf8");
+  const source = readAppSource();
   const render = source.slice(source.indexOf("function setVoiceStep("), source.indexOf("async function refreshVoiceSetup()"));
   const elements = new Map();
   const state = { voiceRuntimeEnabled: true, voiceSetupBusy: false, atPort: "", callCapabilityData: { ok: false } };
