@@ -10,7 +10,9 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**提速测试版 1.8.1-preview.2：** [下载免安装测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.1-preview.2)，选择 `DJI-4G-Assistant-Portable-1.8.1-preview.2-x64.exe`。先退出旧版，再双击运行，不需要安装 Node.js。启动 AT 查询从 17 条减少到 10 条，短信内容未变化时跳过重复解析；新短信、搜索、草稿和卡片变化仍会正常更新。完整扫描和 EID 探测范围不变。270 项自动测试、浏览器截图和包内启动检查通过；本轮没有修改驱动或模块配置，真实模块读取速度和通话尚未复测。测试版不替换下面的正式版入口，不要同时运行两个版本。详情见[性能优化说明](docs/PERFORMANCE-NOTES.md)。
+**正式版 1.8.1：** [打开下载页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.1)，普通用户下载 `DJI-4G-Assistant-Setup-1.8.1-x64.exe` 并安装；不想安装可选 `Portable`。先退出旧版，不需要安装 Node.js。启动 AT 查询从 17 条减少到 10 条，短信不变时跳过重复解析；完整扫描和 EID 探测范围不变。270 项自动测试及浏览器检查通过，已完成真实模块的自动发现、SIM/LTE 状态和多 EID 套餐读取验证。**通话声音仍是实验功能，本轮没有验证电话、短信送达或套餐写入。** 详情见[性能优化说明](docs/PERFORMANCE-NOTES.md)。
+
+**驱动不是每台电脑都会自动装好。** 能上网不代表能读短信或管理 eSIM；这些管理功能还需要可用的 AT 串口。助手安装包不会自动修复缺失或被改成 WinUSB 的串口驱动，遇到这种情况先看[Windows 驱动说明](docs/Windows驱动说明.md)，不要反复修改模块或套餐。
 
 | 设备 | 下载与使用 |
 | --- | --- |
@@ -28,6 +30,8 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 4. 把 SIM/eSIM 卡装进模块，再把模块插到 Windows 电脑。
 5. 双击桌面上的 **DJI 4G Assistant** 图标。
 6. 等待程序自动发现 AT 口并读取设备状态；只有需要重新检查时才点击右上角“自动扫描”。
+
+如果提示找不到 AT 串口，即使模块能上网，也先按[驱动说明](docs/Windows驱动说明.md)检查 Windows 设备管理器。
 
 Releases 页面中的文件用途如下：
 
