@@ -10,13 +10,13 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**Windows v1.7.17：** 修复 v1.7.16 的 42 项回归测试失败，并补齐通话状态保护：状态暂时读不到时保留声音连接和挂断入口，后台释放声音前再次确认通话列表与 CPAS 均为空闲。补充中英文加载与安装包语言文件检查。先退出旧版，再安装新版。详情见[中文更新说明](docs/RELEASE-v1.7.17.md)。本轮未拨打真实电话，不代表所有卡的通话或声音问题已经解决。
+**提速测试版 1.8.1-preview.1：** [下载免安装测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.1-preview.1)，选择 `DJI-4G-Assistant-Portable-1.8.1-preview.1-x64.exe`。先退出旧版，再双击运行，不需要安装 Node.js。启动不再等待完整套餐扫描；打开 eSIM 或网络页时再读取对应内容，刷新短信不再重复扫描已识别的串口。测试版不替换下面的正式版入口，不要同时运行两个版本。详情见[性能优化说明](docs/PERFORMANCE-NOTES.md)。自动化检查通过，但本轮真实短信、eSIM 读取和通话复测尚未完成，不代表通话或声音问题已经解决。
 
 | 设备 | 下载与使用 |
 | --- | --- |
 | Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |
-| 安卓手机/平板 | [下载安卓 0.2.0 测试版 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)，也可打开[安卓发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/android-remote-v0.2.0)。见[安卓中文说明](docs/Android使用说明.md) |
-| iPhone/iPad | 可用 Safari 访问电脑助手；另有 [iOS 1.0.2 未签名远程测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)。IPA 需有效签名后安装，TestFlight 尚未开放邀请 |
+| 安卓手机/平板 | 用浏览器打开 Windows 助手显示的局域网地址。旧 APK 发布页已不可用；原生客户端资料见[安卓中文说明](docs/Android使用说明.md) |
+| iPhone/iPad | 用 Safari 打开 Windows 助手显示的局域网地址。旧 IPA 发布页已不可用；TestFlight 尚未开放邀请 |
 
 **手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
 

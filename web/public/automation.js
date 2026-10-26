@@ -70,22 +70,18 @@ async function quickStart() {
       showFeedback(t("cardNotConnected"));
       return;
     }
-    for (const action of ["module-status", "network-traffic", "euicc-inventory"]) {
-      const { data, text } = await requestAction(action);
-      append(actionTitle(action), text);
-      updateSummary(text);
-      if (action === "module-status") updateTemperature(data);
-      if (action === "network-traffic") renderTraffic(data.stdout || "");
-      if (action === "euicc-inventory") {
-        renderEuiccInventory(data);
-        if (data.ok) state.autoLoadedViews.add("euicc");
-        showFeedback(data.ok ? t("inventoryReadStatus", {
-          loaded: data.eids.filter((item) => Array.isArray(item.profiles)).length, count: data.eids.length,
-        }) : t("cardReadyNoEuicc"), data.ok ? "success" : "neutral");
-      }
-    }
+    // Network details and eSIM discovery are loaded on demand by their views.
+    const { data, text } = await requestAction("module-status");
+    append(actionTitle("module-status"), text);
+    updateSummary(text);
+    updateTemperature(data);
     const card = await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
-    if (card.ok) { state.cardSignature = card.signature; state.cardReady = card.ready; }
+    if (card.ok) {
+      state.cardSignature = card.signature; state.cardReady = card.ready;
+      showFeedback(card.ready ? t("deviceConnected", {port: state.atPort}) : t("cardRemoved"), card.ready ? "success" : "neutral");
+    } else {
+      throw new Error(card.error || t("readUnavailable"));
+    }
   } catch (error) {
     showFeedback(t("actionFailed", { action: t("autoScan") }), "error");
     append(t("autoScan"), error.message);

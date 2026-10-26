@@ -103,3 +103,25 @@ test("an explicit no-port result removes a previously detected port", async () =
   assert.equal(ui.state.atPort, "");
   assert.equal(ui.context.portInput.value, "");
 });
+
+test("manual SMS refresh reuses the detected port without running discovery again", async () => {
+  const ui = harness();
+  ui.context.fetch = async url => {ui.requests.push(url); return {ok: true, json: async () => ({ok: true, stdout: "OK"})};};
+  assert.equal(await ui.context.callApi("sms-list"), true);
+  assert.deepEqual(ui.requests, ["/api/sms-list?port=COM5"]);
+});
+
+test("SMS refresh still discovers a port after it has been cleared on unplug", async () => {
+  const ui = harness();ui.state.atPort = "";ui.context.portInput.value = "";
+  ui.context.fetch = async url => {ui.requests.push(url); return {ok: true, json: async () => url === "/api/find-at" ? {ok: true, port: "COM6"} : {ok: true, stdout: "OK"}};};
+  assert.equal(await ui.context.callApi("sms-list"), true);
+  assert.deepEqual(ui.requests, ["/api/find-at", "/api/sms-list?port=COM6"]);
+});
+
+test("a failed read on a known port never silently switches to another modem", async () => {
+  const ui = harness();
+  assert.equal(await ui.context.callApi("sms-list"), false);
+  assert.deepEqual(ui.requests, ["/api/sms-list?port=COM5"]);
+  assert.equal(ui.state.smsReadError, true);
+  assert.equal(ui.state.busy, false);
+});

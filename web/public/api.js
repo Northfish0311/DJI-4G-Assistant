@@ -54,7 +54,7 @@ async function callApi(action, {manageBusy = true} = {}) {
   if (action === "sms-list") {state.smsRefreshing = true; renderSmsRefreshState();}
   if (manageBusy) setBusy(true, action === "health" ? "checking" : "running");
   try {
-    if (action === "sms-list" || (action === "euicc-inventory" && !state.atPort)) {
+    if (["sms-list", "euicc-inventory"].includes(action) && !state.atPort) {
       const found = await requestAction("find-at");
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);

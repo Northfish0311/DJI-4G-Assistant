@@ -102,3 +102,54 @@ test("overlapping browser polls share one read and recover after rejection", asy
   await c;
   assert.equal(reads, 2);
 });
+
+test("manual refreshes reuse a full discovery already running", async () => {
+  let finish, reads = 0;
+  const sampler = createNetworkSampler({readFull: () => {reads++; return new Promise(resolve => {finish = resolve;});}, readFast: async () => result([fast])});
+  const a = sampler.sample();
+  const b = sampler.sample({refreshDetails: true});
+  const c = sampler.sample({refreshDetails: true});
+  assert.equal(a, b); assert.equal(b, c);
+  finish(result([item]));
+  await Promise.all([a, b, c]);
+  assert.equal(reads, 1);
+});
+
+test("many manual refreshes behind a quick sample schedule only one full read", async () => {
+  let finish, reads = 0;
+  const sampler = createNetworkSampler({readFull: async () => {reads++; return result([item]);}, readFast: () => new Promise(resolve => {finish = resolve;})});
+  await sampler.sample();
+  const background = sampler.sample();
+  const manual = Array.from({length: 5}, () => sampler.sample({refreshDetails: true}));
+  assert.ok(manual.every(promise => promise === manual[0]));
+  finish(result([fast]));
+  await Promise.all([background, ...manual]);
+  assert.equal(reads, 2);
+});
+
+test("a manual refresh queued behind a rejected quick sample can still recover", async () => {
+  let reject, reads = 0;
+  const sampler = createNetworkSampler({readFull: async () => {reads++; return result([item]);}, readFast: () => new Promise((resolve, fail) => {reject = fail;})});
+  await sampler.sample();
+  const background = sampler.sample();
+  const failed = assert.rejects(background, /offline/);
+  const manual = sampler.sample({refreshDetails: true});
+  reject(new Error("offline"));
+  await failed;
+  assert.equal((await manual).ok, true);
+  assert.equal(reads, 2);
+});
+
+test("manual refresh after invalidation never reuses pre-change full discovery", async () => {
+  let finish, reads = 0;
+  const sampler = createNetworkSampler({readFull: () => {reads++; return new Promise(resolve => {finish = resolve;});}, readFast: async () => result([fast])});
+  const old = sampler.sample();
+  sampler.invalidate();
+  const fresh = sampler.sample({refreshDetails: true});
+  finish(result([item]));
+  await old;
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(reads, 2);
+  finish(result([{...item, ipv4: "10.0.0.2"}]));
+  assert.equal(JSON.parse((await fresh).stdout)[0].ipv4, "10.0.0.2");
+});

@@ -31,8 +31,10 @@ function mergeFastSample(details, sample) {
 
 function createNetworkSampler({readFull, readFast, now = Date.now, refreshMs = 60000}) {
   let details = null, checkedAt = 0, pending = null, generation = 0;
+  let fullGeneration = -1, queuedRefresh = null;
   async function full() {
     const startedGeneration = generation;
+    fullGeneration = startedGeneration;
     const result = await readFull();
     if (generation === startedGeneration) {
       details = readItems(result) ? result : null;
@@ -43,11 +45,20 @@ function createNetworkSampler({readFull, readFast, now = Date.now, refreshMs = 6
   return {
     sample({refreshDetails = false} = {}) {
       if (refreshDetails) {
-        if (pending) return pending.then(() => this.sample({refreshDetails: true}));
+        if (pending) {
+          if (fullGeneration === generation) return pending;
+          // Several refresh clicks behind a fast sample need one full read, not one each.
+          if (!queuedRefresh) {
+            const refresh = () => this.sample({refreshDetails: true});
+            queuedRefresh = pending.then(refresh, refresh).finally(() => { queuedRefresh = null; });
+          }
+          return queuedRefresh;
+        }
         generation++;
         details = null;
       }
       if (pending) return pending;
+      fullGeneration = -1;
       pending = (async () => {
         if (!details || now() - checkedAt >= refreshMs) return full();
         const fast = await readFast();

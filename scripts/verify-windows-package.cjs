@@ -9,6 +9,8 @@ async function smoke() {
   const app = path.join(resources, "app.asar");
   const expected = process.env.PACKAGE_EXPECTED_VERSION;
   assert.equal(require(path.join(app, "package.json")).version, expected);
+  const usb = require(path.join(app, "node_modules", "usb"));
+  assert.equal(typeof usb.getDeviceList, "function", "The packaged USB native addon must load without external dependencies");
   const exe = path.join(resources, "tools", "lpac", "lpac.exe");
   assert.ok(fs.statSync(exe).size > 0, "The package must include lpac.exe");
   assert.equal(fs.readFileSync(exe).subarray(0, 2).toString("ascii"), "MZ", "Bundled lpac must be a Windows executable");
@@ -25,7 +27,7 @@ async function smoke() {
       assert.ok((await response.text()).length > 100, route);
     }
     assert.equal((await fetch(`${base}/api/euicc-inventory`)).status, 401);
-    console.log(`Packaged v${expected}: startup, static assets, auth and bundled lpac presence passed; no modem operations.`);
+    console.log(`Packaged v${expected}: startup, static assets, auth, USB addon and bundled lpac presence passed; no modem operations.`);
   } finally {
     if (server.listening) await new Promise(resolve => {server.close(resolve);server.closeAllConnections();});
   }
@@ -37,7 +39,7 @@ if (process.argv.includes("--child")) {
   const root = path.resolve(__dirname, "..");
   const unpacked = path.join(root, "dist", "win-unpacked");
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "dji-package-smoke-"));
-  const env = {...process.env, ELECTRON_RUN_AS_NODE: "1", HOST: "127.0.0.1", PORT: "0", CONSOLE_TOKEN: "package-smoke-only", ROAMDOCK_RESOURCE_ROOT: path.join(unpacked, "resources"), ROAMDOCK_DATA_ROOT: temporary, PACKAGE_EXPECTED_VERSION: require(path.join(root, "package.json")).version};
+  const env = {...process.env, NODE_PATH: "", ELECTRON_RUN_AS_NODE: "1", HOST: "127.0.0.1", PORT: "0", CONSOLE_TOKEN: "package-smoke-only", ROAMDOCK_RESOURCE_ROOT: path.join(unpacked, "resources"), ROAMDOCK_DATA_ROOT: temporary, PACKAGE_EXPECTED_VERSION: require(path.join(root, "package.json")).version};
   for (const key of Object.keys(env)) if (key.startsWith("ALLOW_")) delete env[key];
   try {
     const result = spawnSync(path.join(unpacked, "DJI 4G Assistant.exe"), [__filename, "--child"], {env, encoding: "utf8", timeout: 60000, windowsHide: true});
