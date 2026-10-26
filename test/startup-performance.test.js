@@ -7,17 +7,19 @@ const vm = require("node:vm");
 const automation = fs.readFileSync(path.join(__dirname, "../web/public/automation.js"), "utf8");
 const sms = fs.readFileSync(path.join(__dirname, "../web/public/sms.js"), "utf8");
 
-function startup() {
+function startup({legacy = false} = {}) {
   const state = {busy: false, connecting: false, atPort: "", cardEpoch: 0, autoLoadedViews: new Set(), failedViews: new Set()};
   const actions = [], feedback = [], rendered = [];
   const view = {id: "overview"};
+  const card = {ok: true, ready: true, signature: "test-card"};
   const context = vm.createContext({
     state, document: {querySelector: () => view},
-    requestAction: async action => {
+    requestAction: async (action, options) => {
       actions.push(action);
       if (action === "find-at") state.atPort = "COM5";
       if (["euicc-inventory", "network-traffic"].includes(action)) throw new Error("Expensive startup read");
-      return {data: {ok: true}, text: action};
+      if (action === "module-status") assert.equal(options.startup, true);
+      return {data: {ok: true, ...(action === "module-status" && !legacy ? {card} : {})}, text: action};
     },
     fetchJson: async url => {actions.push(url); return {ok: true, ready: true, signature: "test-card"};},
     setBusy: busy => {state.busy = busy;},
@@ -28,13 +30,13 @@ function startup() {
   });
   vm.runInContext(automation.slice(automation.indexOf("async function quickStart()"), automation.indexOf("async function monitorCard()")), context);
   vm.runInContext(sms.slice(sms.indexOf("function ensureCurrentViewLoaded()"), sms.indexOf("function renderSmsNewMessages()")), context);
-  return {state, actions, feedback, rendered, view, context};
+  return {state, actions, feedback, rendered, view, context, card};
 }
 
 test("startup unlocks after basic identification without waiting for eSIM or adapter discovery", async () => {
   const ui = startup();
   await ui.context.quickStart();
-  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status", "/api/card-status?port=COM5"]);
+  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status"]);
   assert.equal(ui.state.busy, false);
   assert.equal(ui.state.connecting, false);
   assert.equal(ui.state.cardSignature, "test-card");
@@ -71,7 +73,7 @@ test("deep-linked eSIM view still loads after startup and waits for the busy gua
 
 test("missing SIM is not presented as a successful connection", async () => {
   const ui = startup();
-  ui.context.fetchJson = async () => ({ok: true, ready: false, signature: null});
+  Object.assign(ui.card, {ready: false, signature: null});
   await ui.context.quickStart();
   assert.equal(ui.state.cardReady, false);
   assert.equal(ui.feedback.at(-1)[0], "cardRemoved");
@@ -80,7 +82,7 @@ test("missing SIM is not presented as a successful connection", async () => {
 
 test("failed card status does not report success or leave startup locked", async () => {
   const ui = startup();
-  ui.context.fetchJson = async () => ({ok: false, error: "offline"});
+  Object.assign(ui.card, {ok: false, error: "offline"});
   await ui.context.quickStart();
   assert.equal(ui.feedback.at(-1)[1], "error");
   assert.equal(ui.state.busy, false);
@@ -98,4 +100,12 @@ test("failed eSIM discovery stays retryable rather than looping or blocking othe
   ui.view.id = "sms";
   ui.context.ensureCurrentViewLoaded();
   assert.deepEqual(ui.rendered, ["sms-list"]);
+});
+
+test("an older server without combined SIM status keeps the separate read fallback", async () => {
+  const ui = startup({legacy: true});
+  await ui.context.quickStart();
+  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status", "/api/card-status?port=COM5"]);
+  assert.equal(ui.state.cardReady, true);
+  assert.equal(ui.state.cardSignature, "test-card");
 });

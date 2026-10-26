@@ -290,11 +290,13 @@ function updateSmsComposer() {
 
 function renderSmsRefreshState() {
   const button = document.querySelector("#smsPollingBtn");
-  button.textContent = t(state.smsPolling ? "pauseSmsRefresh" : "resumeSmsRefresh");
+  const label = t(state.smsPolling ? "pauseSmsRefresh" : "resumeSmsRefresh");
+  button.title = label;
+  button.setAttribute("aria-label", label);
   button.setAttribute("aria-pressed", String(state.smsPolling));
-  {
-    button.title = button.textContent;
-    button.setAttribute("aria-label", button.textContent);
+  const iconState = `${nativeCompanion}:${Boolean(state.smsPolling)}`;
+  if (button.dataset.iconState !== iconState || !button.firstElementChild) {
+    button.dataset.iconState = iconState;
     button.classList.add(nativeCompanion ? "native-icon-button" : "desktop-icon-button");
     const icon = document.createElement("i");
     icon.dataset.lucide = state.smsPolling ? "pause" : "play";
@@ -407,6 +409,18 @@ function renderSmsNewMessages() {
 
 function renderSms(text, data = {}) {
   state.smsText = text;
+  state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
+  renderSmsStorage(state.smsStorage);
+  const renderKey = () => JSON.stringify([
+    text, state.cardEpoch, state.language, state.smsQuery, state.smsActiveSender, state.smsNewDraft,
+    Boolean(state.smsLastRead), state.smsDeleteEnabled, state.smsSentThisSession, [...state.smsDrafts],
+    document.querySelector("#smsMessageInput").value,
+  ]);
+  // A successful poll can update freshness without reparsing or measuring unchanged messages.
+  if (state.smsRenderKey === renderKey()) {
+    updateSmsComposer(); renderSmsRefreshState(); renderSmsNewMessages();
+    return;
+  }
   const list = document.querySelector("#smsList");
   const wasAtBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 24;
   const previousTop = list.scrollTop;
@@ -415,8 +429,6 @@ function renderSms(text, data = {}) {
   const listTop = list.getBoundingClientRect().top;
   const anchor = previousCards.find(card => card.getBoundingClientRect().bottom > listTop);
   const anchorOffset = anchor ? anchor.getBoundingClientRect().top - listTop : 0;
-  state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
-  renderSmsStorage(state.smsStorage);
   const matches = parseSmsMessages(text);
   const storedSent = matches.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "sent").map(m => normalizePhone(parseAtCsv(m[1])[2]) + "\n" + decodeSmsBody(m[2]));
   for (const sent of state.smsSentThisSession) {
@@ -499,6 +511,7 @@ function renderSms(text, data = {}) {
     } else {list.scrollTop = list.scrollHeight; state.smsPendingKeys.clear();}
   }
   updateSmsComposer(); renderSmsRefreshState(); renderSmsNewMessages();
+  state.smsRenderKey = renderKey();
 }
 
 function selectSmsConversation(sender) {

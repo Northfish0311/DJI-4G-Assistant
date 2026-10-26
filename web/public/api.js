@@ -10,7 +10,7 @@ async function fetchJson(path, timeoutMs = 90000) {
   finally { clearTimeout(timer); }
 }
 
-async function requestAction(action, {refreshDetails = false} = {}) {
+async function requestAction(action, {refreshDetails = false, startup = false} = {}) {
   const epoch = state.cardEpoch, portName = portInput.value.trim(), selectedAid = state.activeAid, selectedEid = state.activeEid;
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
@@ -18,7 +18,8 @@ async function requestAction(action, {refreshDetails = false} = {}) {
   const cardScoped = !["health", "ports", "device-check", "windows-network", "network-traffic", "stock-module-probe"].includes(action);
   const stale = () => cardScoped && (epoch !== state.cardEpoch || (action !== "find-at" && portName !== portInput.value.trim()) || (action.startsWith("lpac-") && (selectedAid !== state.activeAid || selectedEid !== state.activeEid)));
   let data;
-  try { data = await fetchJson(paths[action] + (action === "network-traffic" && refreshDetails ? "?details=1" : ""), action === "euicc-inventory" ? 600000 : 90000); }
+  const query = action === "module-status" && startup ? "&startup=1" : action === "network-traffic" && refreshDetails ? "?details=1" : "";
+  try { data = await fetchJson(paths[action] + query, action === "euicc-inventory" ? 600000 : 90000); }
   catch (error) { if (stale()) error.code = "STALE_RESPONSE"; throw error; }
   if (stale()) {
     throw Object.assign(new Error("Discarded a response for a previous card or EID."), {code: "STALE_RESPONSE"});

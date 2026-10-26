@@ -10,7 +10,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**提速测试版 1.8.1-preview.1：** [下载免安装测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.1-preview.1)，选择 `DJI-4G-Assistant-Portable-1.8.1-preview.1-x64.exe`。先退出旧版，再双击运行，不需要安装 Node.js。启动不再等待完整套餐扫描；打开 eSIM 或网络页时再读取对应内容，刷新短信不再重复扫描已识别的串口。测试版不替换下面的正式版入口，不要同时运行两个版本。详情见[性能优化说明](docs/PERFORMANCE-NOTES.md)。自动化检查通过，但本轮真实短信、eSIM 读取和通话复测尚未完成，不代表通话或声音问题已经解决。
+**提速测试版 1.8.1-preview.2：** [下载免安装测试版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.1-preview.2)，选择 `DJI-4G-Assistant-Portable-1.8.1-preview.2-x64.exe`。先退出旧版，再双击运行，不需要安装 Node.js。启动 AT 查询从 17 条减少到 10 条，短信内容未变化时跳过重复解析；新短信、搜索、草稿和卡片变化仍会正常更新。完整扫描和 EID 探测范围不变。270 项自动测试、浏览器截图和包内启动检查通过；本轮没有修改驱动或模块配置，真实模块读取速度和通话尚未复测。测试版不替换下面的正式版入口，不要同时运行两个版本。详情见[性能优化说明](docs/PERFORMANCE-NOTES.md)。
 
 | 设备 | 下载与使用 |
 | --- | --- |

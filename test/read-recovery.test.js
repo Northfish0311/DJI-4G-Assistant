@@ -32,6 +32,14 @@ test("HTTP errors are rejected even if a proxy returns an ok:true body", async (
   await assert.rejects(ui.context.fetchJson("/api/health"), error => error.status === 503);
 });
 
+test("only startup requests opt into the combined module and SIM query", async () => {
+  const ui = harness();
+  ui.context.fetch = async url => {ui.requests.push(url); return {ok: true, json: async () => ({ok: true})};};
+  await ui.context.requestAction("module-status", {startup: true});
+  await ui.context.requestAction("module-status");
+  assert.deepEqual(ui.requests, ["/api/module-status?port=COM5&startup=1", "/api/module-status?port=COM5"]);
+});
+
 test("failed and malformed profile reads never replace the last valid list", async () => {
   for (const reply of [{ok: false, stderr: "Read failed"}, {ok: true, stdout: "incomplete reply"}]) {
     const ui = harness();ui.context.fetch = async () => ({ok: true, status: 200, json: async () => reply});

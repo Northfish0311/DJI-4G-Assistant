@@ -71,11 +71,11 @@ async function quickStart() {
       return;
     }
     // Network details and eSIM discovery are loaded on demand by their views.
-    const { data, text } = await requestAction("module-status");
+    const { data, text } = await requestAction("module-status", {startup: true});
     append(actionTitle("module-status"), text);
     updateSummary(text);
     updateTemperature(data);
-    const card = await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
+    const card = data.card ?? await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
     if (card.ok) {
       state.cardSignature = card.signature; state.cardReady = card.ready;
       showFeedback(card.ready ? t("deviceConnected", {port: state.atPort}) : t("cardRemoved"), card.ready ? "success" : "neutral");

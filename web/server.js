@@ -1276,8 +1276,13 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname === "/api/module-status") {
+    const startup = url.searchParams.get("startup") === "1";
     const brief = url.searchParams.get("brief") === "1";
-    const commands = brief ? ["AT+CPIN?", "AT+COPS?", "AT+CEREG?", "AT+CSQ", "AT+QTEMP", "AT+QNWINFO", "AT+CGPADDR=1"] : [
+    // Keep the initial summary and final SIM fingerprint in one serial session.
+    const commands = startup ? [
+      "ATI", "AT+COPS?", "AT+CEREG?", "AT+CSQ", "AT+QTEMP", "AT+QNWINFO",
+      "AT+CGPADDR=1", "AT+QCFG=\"usbnet\"", "AT+CPIN?", "AT+QCCID",
+    ] : brief ? ["AT+CPIN?", "AT+COPS?", "AT+CEREG?", "AT+CSQ", "AT+QTEMP", "AT+QNWINFO", "AT+CGPADDR=1"] : [
       "ATI",
       "AT+CPIN?",
       "AT+CIMI",
@@ -1294,8 +1299,8 @@ async function handleApi(req, res, url) {
       "AT+QCFG=\"usbnet\"",
       "AT+QNETDEVSTATUS?",
     ];
-    const result = await enqueueAt(portArg(url), commands, brief ? 30000 : 60000);
-    sendJson(res, 200, { ...result, temperature: parseModuleTemperature(result.stdout) });
+    const result = await enqueueAt(portArg(url), commands, brief && !startup ? 30000 : 60000);
+    sendJson(res, 200, { ...result, temperature: parseModuleTemperature(result.stdout), ...(startup ? {card: parseCardPresence(result)} : {}) });
     return;
   }
 
