@@ -935,10 +935,34 @@ function latestVoiceUsbBackup(identity, currentComposition) {
   return null;
 }
 
-async function voicePnpStatus() {
+// A full PnP enumeration costs ~500 ms and only changes when the module is replugged
+// or a USB mode is written. Cache it briefly, and let every writer invalidate it.
+const VOICE_PNP_CACHE_MS = 8000;
+let voicePnpCache = null;
+let voicePnpPending = null;
+
+function invalidateVoicePnp() {
+  voicePnpCache = null;
+  voicePnpPending = null;
+}
+
+async function voicePnpStatus({ maxAgeMs = VOICE_PNP_CACHE_MS } = {}) {
+  if (voicePnpCache && Date.now() - voicePnpCache.at < maxAgeMs) return voicePnpCache.value;
+  if (voicePnpPending) return voicePnpPending;
+  voicePnpPending = readVoicePnpStatus().then((value) => {
+    voicePnpCache = { at: Date.now(), value };
+    return value;
+  }).finally(() => { voicePnpPending = null; });
+  return voicePnpPending;
+}
+
+async function readVoicePnpStatus() {
   const command = [
     "$ErrorActionPreference = 'Stop'",
-    "$devices = @(Get-CimInstance Win32_PnPEntity -Filter \"Present = TRUE AND (PNPDeviceID LIKE 'USB\\\\VID_2C7C&PID_0125%' OR PNPDeviceID LIKE 'USB\\\\VID_2CA3&PID_4006%' OR PNPClass = 'AudioEndpoint')\" | Select-Object Status,Service,@{Name='Class';Expression={$_.PNPClass}},@{Name='FriendlyName';Expression={$_.Name}},@{Name='InstanceId';Expression={$_.PNPDeviceID}})",
+    // Get-WmiObject answers the same query in ~480 ms on hardware where the CIM
+    // provider needs ~9.4 s for the identical filter. This runs under `powershell`
+    // (5.1), where the older cmdlet is still supported.
+    "$devices = @(Get-WmiObject Win32_PnPEntity -Filter \"Present = TRUE AND (PNPDeviceID LIKE 'USB\\\\VID_2C7C&PID_0125%' OR PNPDeviceID LIKE 'USB\\\\VID_2CA3&PID_4006%' OR PNPClass = 'AudioEndpoint')\" | Select-Object Status,Service,@{Name='Class';Expression={$_.PNPClass}},@{Name='FriendlyName';Expression={$_.Name}},@{Name='InstanceId';Expression={$_.PNPDeviceID}})",
     "$adb = @($devices | Where-Object { $_.InstanceId -like 'USB\\VID_2C7C&PID_0125&MI_06*' -or $_.InstanceId -like 'USB\\VID_2CA3&PID_4006&MI_06*' })",
     "$services = @($adb | Select-Object -ExpandProperty Service)",
     "$audioUsb = @($devices | Where-Object { $_.Class -eq 'MEDIA' -and $_.Status -eq 'OK' -and $_.FriendlyName -match 'AC Interface|AS Interface' })",
@@ -1569,6 +1593,7 @@ async function handleApi(req, res, url) {
         return { status: 502, body: { ok: false, error: "USBCFG readback did not exactly match the protected target, so no reboot was sent.", write, readback, authorization, backup: voiceBackupSummary(saved) } };
       }
       const reboot = await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      invalidateVoicePnp();
       return { status: 200, body: { ok: true, authorization, backup: voiceBackupSummary(saved), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "ADB and UAC were enabled with the existing VID/PID and all unrelated flags preserved. Reconnect the module after it restarts." } };
     });
     sendJson(res, outcome.status, outcome.body);
@@ -1620,6 +1645,7 @@ async function handleApi(req, res, url) {
         return { status: 502, body: { ok: false, error: "Restore readback did not exactly match the backup, so no reboot was sent.", readback, protectiveBackup: voiceBackupSummary(protective) } };
       }
       const reboot = await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      invalidateVoicePnp();
       return { status: 200, body: { ok: true, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "The saved USB composition was restored. QADBKEY authorization is persistent and may remain authorized." } };
     });
     sendJson(res, outcome.status, outcome.body);
@@ -1942,6 +1968,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
     } finally {
       driverInstallRunning = false;
       networkSampler?.invalidate();
+      invalidateVoicePnp();
     }
     return;
   }
