@@ -20,6 +20,7 @@ function serverHarness() {
     runAtCommands: async () => ({ok: true, voiceCalls: []}),
     parseCallStatusResult: value => value, hasVoiceSession: value => value.voiceCalls.length > 0,
     parseLpacData: JSON.parse,
+    invalidateEuiccInventory() {},
     runLpacProcess: async (exe, port, args) => {
       operations.push(args);
       return {ok: true, stdout: JSON.stringify({eidValue: eid})};
@@ -40,6 +41,23 @@ test("a matching EID is checked in the same serial task before writing", async (
   assert.equal((await ui.write(eid)).ok, true);
   assert.deepEqual(Array.from(ui.operations[0]), ["chip", "info"]);
   assert.equal(ui.operations[1][1], "download");
+});
+
+test("every attempted write invalidates inventory before and after completion, including failure", async () => {
+  for (const outcome of ["success", "failed-result", "exception"]) {
+    const ui = serverHarness();
+    const events = [];
+    ui.context.invalidateEuiccInventory = () => events.push("invalidate");
+    ui.context.runLpacProcess = async (exe, port, args) => {
+      if (args[0] === "chip") return { ok: true, stdout: JSON.stringify({ eidValue: eid }) };
+      events.push("write");
+      if (outcome === "exception") throw new Error("reply lost");
+      return { ok: outcome === "success" };
+    };
+    if (outcome === "exception") await assert.rejects(ui.write(eid), /reply lost/);
+    else await ui.write(eid);
+    assert.deepEqual(events, ["invalidate", "write", "invalidate"]);
+  }
 });
 
 test("a card replaced while waiting is rejected before any write", async () => {

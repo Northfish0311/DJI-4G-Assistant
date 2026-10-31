@@ -12,6 +12,7 @@ const { parseVoiceNetwork } = require("./voice-network");
 const { createSerialQueue } = require("./serial-queue");
 const { createPowerShellHost } = require("./powershell-host");
 const { createNetworkSampler } = require("./network-sampler");
+const { createEuiccInventoryCache } = require("./euicc-inventory-cache");
 const { consoleAccess } = require("./console-addresses");
 const {
   VoiceRuntimeManager,
@@ -278,7 +279,13 @@ function runLpacWrite(lpac, portName, args, timeoutMs, aid, expectedEid) {
     const chip = result.ok ? parseLpacData(result.stdout) : null;
     if (!chip || !isEid(chip.eidValue)) throw new RequestError(409, "EID_UNAVAILABLE", "Could not verify the target eUICC. No write was performed.");
     if (chip.eidValue !== expectedEid) throw new RequestError(409, "EID_CHANGED", "The card changed. Refresh profiles and confirm again.");
-    return runLpacProcess(lpac, portName, args, timeoutMs, {aid});
+    invalidateEuiccInventory();
+    try {
+      return await runLpacProcess(lpac, portName, args, timeoutMs, {aid});
+    } finally {
+      // A lost reply does not prove that the card was unchanged.
+      invalidateEuiccInventory();
+    }
   });
 }
 
@@ -471,32 +478,30 @@ async function scanEuiccInventory(candidates, query, labels = {}) {
   };
 }
 
-// The eSIM page re-reads the inventory on every visit and after most actions. A scan
-// costs 1-4 s on real hardware, so keep the last answer briefly and drop it whenever a
-// profile write, label change or AID edit could have changed the card.
-const EUICC_INVENTORY_CACHE_MS = 20000;
-let euiccInventoryCache = null;
+const euiccInventoryCache = createEuiccInventoryCache({
+  readIdentity: async ({ portName }) => {
+    const card = parseCardPresence(await enqueueAt(portName, ["AT+CPIN?", "AT+QCCID"], 15000));
+    return card.ok && card.ready ? card.signature : null;
+  },
+  scan: ({ lpac, portName }) => scanEuiccInventory(inventoryCandidateAids(),
+    (aid, args, timeout) => runLpac(lpac, portName, args, timeout, { aid })),
+  remember: (context, result) => {
+    // Merge into the latest state so an overlapping label edit is never overwritten.
+    const state = readEuiccState();
+    for (const item of result.eids) {
+      state.aids[item.eid] = item.aid;
+      item.label = euiccLabel(state.labels[item.eid]) || "";
+    }
+    writeEuiccState(state);
+  },
+});
 
 function invalidateEuiccInventory() {
-  euiccInventoryCache = null;
+  euiccInventoryCache.invalidate();
 }
 
-async function discoverEuiccInventory(lpac, portName) {
-  const key = `${lpac}|${portName}`;
-  if (euiccInventoryCache && euiccInventoryCache.key === key
-    && Date.now() - euiccInventoryCache.at < EUICC_INVENTORY_CACHE_MS) {
-    return euiccInventoryCache.value;
-  }
-  const savedState = readEuiccState();
-  const result = await scanEuiccInventory(inventoryCandidateAids(savedState),
-    (aid, args, timeout) => runLpac(lpac, portName, args, timeout, { aid }), savedState.labels);
-  if (result.eids.length) {
-    // Keep explicit SE routes instead of replacing them with a default alias.
-    for (const item of result.eids) savedState.aids[item.eid] = item.aid;
-    writeEuiccState(savedState);
-    euiccInventoryCache = { key, at: Date.now(), value: result };
-  }
-  return result;
+function discoverEuiccInventory(lpac, portName, options) {
+  return euiccInventoryCache.read({ lpac, portName }, options);
 }
 
 function requestedAid(url, body = {}) {
@@ -1216,6 +1221,7 @@ async function readJsonBody(req) {
 }
 
 function handleRequestError(req, res, error) {
+  if (error?.code === "EUICC_INVENTORY_CHANGED") error = new RequestError(409, error.code, error.message);
   if (["SERIAL_QUEUE_TIMEOUT", "SERIAL_QUEUE_FULL", "POWERSHELL_CLEANUP_FAILED"].includes(error?.code)) error = new RequestError(503, error.code, error.message);
   const expected = error instanceof RequestError;
   if (!expected) console.error("API_ERROR", diagnosticCode(error));
@@ -1367,6 +1373,7 @@ async function handleApi(req, res, url) {
     const result = await enqueueSerial(() => runPowerShell(["-File", script("find-at-port.ps1")], 30000));
     const found = String(result.stdout || "").match(/AT_PORT=(COM\d+)/i);
     detectedAtPort = found ? found[1].toUpperCase() : "";
+    invalidateEuiccInventory();
     sendJson(res, 200, { ...result, port: detectedAtPort || null });
     return;
   }
@@ -2039,7 +2046,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       sendJson(res, 200, { ok: false, eids: [], count: 0, error: "lpac.exe not found" });
       return;
     }
-    const result = await discoverEuiccInventory(lpac, portArg(url));
+    const result = await discoverEuiccInventory(lpac, portArg(url), { force: url.searchParams.get("refresh") === "1" });
     sendJson(res, 200, result);
     return;
   }
@@ -2157,7 +2164,6 @@ $items | ConvertTo-Json -Depth 4 -Compress
     const args = action === "delete" ? ["profile", "delete", id] : ["profile", action, id, "1"];
     const result = await runLpacWrite(lpac, portArg(url), args, 90000, aid, body.expectedEid);
     const verification = action === "enable" && result.ok ? await verifyProfileActivation(portArg(url), id) : null;
-    if (result.ok) invalidateEuiccInventory();
     sendJson(res, result.ok ? 200 : 502, { ...result, verification });
     return;
   }
@@ -2215,7 +2221,6 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const result = await runLpacWrite(lpac, portArg(url), ["notification", "process", "-a", "-r"], 180000, aid, body.expectedEid);
-    if (result.ok) invalidateEuiccInventory();
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -2244,7 +2249,6 @@ $items | ConvertTo-Json -Depth 4 -Compress
       await runLpacWrite(lpac, portArg(url), ["profile", "download", "-a", code], 300000, aid, body.expectedEid),
       code,
     );
-    if (result.ok) invalidateEuiccInventory();
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }

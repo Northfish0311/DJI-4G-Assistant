@@ -18,7 +18,7 @@ async function requestAction(action, {refreshDetails = false, startup = false} =
   const cardScoped = !["health", "ports", "device-check", "windows-network", "network-traffic", "stock-module-probe"].includes(action);
   const stale = () => cardScoped && (epoch !== state.cardEpoch || (action !== "find-at" && portName !== portInput.value.trim()) || (action.startsWith("lpac-") && (selectedAid !== state.activeAid || selectedEid !== state.activeEid)));
   let data;
-  const query = action === "module-status" && startup ? "&startup=1" : action === "network-traffic" && refreshDetails ? "?details=1" : "";
+  const query = action === "module-status" && startup ? "&startup=1" : action === "network-traffic" && refreshDetails ? "?details=1" : action === "euicc-inventory" && refreshDetails ? "&refresh=1" : "";
   try { data = await fetchJson(paths[action] + query, action === "euicc-inventory" ? 600000 : 90000); }
   catch (error) { if (stale()) error.code = "STALE_RESPONSE"; throw error; }
   if (stale()) {
@@ -46,7 +46,7 @@ function applyHealth(data) {
   document.querySelector("#tokenRow").style.display = state.authRequired ? "grid" : "none"; updateProfileHint(); applyLanguage();
 }
 
-async function callApi(action, {manageBusy = true} = {}) {
+async function callApi(action, {manageBusy = true, refreshDetails = false} = {}) {
   if (manageBusy && (state.busy || state.confirming)) return false;
   if ((state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) && !["health", "network-traffic", "call-status", "call-capabilities"].includes(action)) {
     showFeedback(t("finishCallFirst"), "neutral"); return false;
@@ -60,7 +60,7 @@ async function callApi(action, {manageBusy = true} = {}) {
       append(actionTitle("find-at"), found.text);
       updateSummary(found.text);
     }
-    const { data, text } = await requestAction(action, {refreshDetails: action === "network-traffic"});
+    const { data, text } = await requestAction(action, {refreshDetails: refreshDetails || action === "network-traffic"});
     append(actionTitle(action), text);
     updateSummary(text);
     if (action === "module-status" || action === "module-temperature") updateTemperature(data);

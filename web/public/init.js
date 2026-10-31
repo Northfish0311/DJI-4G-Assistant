@@ -48,7 +48,7 @@ if (nativeCompanion) {
   railLanguage.hidden = false;
   railLanguage.addEventListener("click", () => languageBtn.click());
 }
-for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action));
+for (const button of document.querySelectorAll("button[data-action]")) button.addEventListener("click", () => callApi(button.dataset.action, {refreshDetails: true}));
 function selectView(target, updateHash = false) {
   const button = document.querySelector(`.nav-btn[data-target="${target}"]`);
   const view = document.querySelector(`#${target}`);
