@@ -189,7 +189,7 @@ function runPowerShell(args, timeoutMs = 45000) {
     let finished = false;
     const timer = setTimeout(() => {
       if (!finished) {
-        child.kill();
+        killProcessTree(child);
         finished = true;
         resolve({ ok: false, code: null, stdout, stderr: `${stderr}\nTimed out after ${timeoutMs}ms`.trim() });
       }
@@ -290,7 +290,7 @@ function runLpacProcess(lpac, portName, args, timeoutMs, options) {
     };
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill();
+      killProcessTree(child);
     }, timeoutMs);
 
     child.stdout.on("data", (chunk) => { stdout += chunk.toString("utf8"); });
@@ -303,6 +303,18 @@ function runLpacProcess(lpac, portName, args, timeoutMs, options) {
       stderr: timedOut ? `${stderr}\nTimed out after ${timeoutMs}ms`.trim() : stderr,
     }));
   });
+}
+
+function killProcessTree(child) {
+  if (!child) return;
+  // child.kill() stops powershell.exe but leaves that host's descendants — and their
+  // SerialPort handle — alive, so the next request can fail to open the COM port.
+  if (process.platform === "win32" && typeof child.pid === "number") {
+    const killer = spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" });
+    killer.on("error", () => { try { child.kill(); } catch {} });
+    return;
+  }
+  try { child.kill(); } catch {}
 }
 
 function euiccInventoryPath() {
@@ -974,13 +986,16 @@ try {
   foreach($cmd in $commands){
     $sp.DiscardInBuffer()
     $sp.WriteLine($cmd)
-    Start-Sleep -Milliseconds 450
+    # Read-driven: the module answers in 15-105 ms on the verified hardware, so poll
+    # instead of waiting a fixed 450 ms per command. The 5 s deadline still bounds a
+    # silent command, and the terminal OK/ERROR check still decides when to stop.
     $out=''
     $deadline=(Get-Date).AddSeconds(5)
     while((Get-Date) -lt $deadline){
-      $out += $sp.ReadExisting()
+      $chunk=$sp.ReadExisting()
+      if($chunk){ $out += $chunk }
       if($out -match "(\`r|\`n)(OK|ERROR)(\`r|\`n)") { break }
-      Start-Sleep -Milliseconds 120
+      Start-Sleep -Milliseconds 15
     }
     "----- $cmd -----"
     ($out -replace "\`r","")
@@ -1234,18 +1249,21 @@ async function handleApi(req, res, url) {
       return;
     }
     const portName = portArg(url);
-    const baseline = await enqueueAt(portName, ["AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 30000);
-    if (!baseline.ok || !isTargetUsbConfig(baseline.stdout)) {
-      sendJson(res, 409, { ok: false, error: "The AT port did not report target USB identity 2C7C:0125. Reconnect the converted module and run Find AT first.", baseline });
-      return;
-    }
-    const write = await enqueueAt(portName, ["AT+QCFG=\"usbnet\",1"], 30000);
-    if (!write.ok || !/(^|\r?\n)OK(\r?\n|$)/i.test(write.stdout)) {
-      sendJson(res, 502, { ok: false, error: "The module rejected usbnet=1. No reboot command was sent.", write });
-      return;
-    }
-    await enqueueAt(portName, ["AT+CFUN=1,1"], 15000);
-    sendJson(res, 200, { ok: true, baseline, write, message: "usbnet=1 was accepted and a modem restart was requested. Reconnect after the module finishes restarting." });
+    // One serial session: a status poll landing between the write and the reboot would
+    // otherwise observe (or disturb) a configuration that is still being applied.
+    const outcome = await enqueueSerial(async () => {
+      const baseline = await runAtCommands(portName, ["AT+QCFG=\"usbcfg\"", "AT+QCFG=\"usbnet\""], 30000);
+      if (!baseline.ok || !isTargetUsbConfig(baseline.stdout)) {
+        return { status: 409, body: { ok: false, error: "The AT port did not report target USB identity 2C7C:0125. Reconnect the converted module and run Find AT first.", baseline } };
+      }
+      const write = await runAtCommands(portName, ["AT+QCFG=\"usbnet\",1"], 30000);
+      if (!write.ok || !/(^|\r?\n)OK(\r?\n|$)/i.test(write.stdout)) {
+        return { status: 502, body: { ok: false, error: "The module rejected usbnet=1. No reboot command was sent.", write } };
+      }
+      await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      return { status: 200, body: { ok: true, baseline, write, message: "usbnet=1 was accepted and a modem restart was requested. Reconnect after the module finishes restarting." } };
+    });
+    sendJson(res, outcome.status, outcome.body);
     return;
   }
 
@@ -1483,61 +1501,59 @@ async function handleApi(req, res, url) {
       return;
     }
     const portName = portArg(url);
-    const baseline = await enqueueAt(portName, ["ATI", "AT+GMR", "AT+CGMM", "AT+CGSN", "AT+QCFG=\"usbcfg\""], 45000);
-    if (!baseline.ok) {
-      sendJson(res, 502, { ok: false, error: "Could not read the module identity and USB baseline.", baseline: redactModemIdentifiers(baseline) });
-      return;
-    }
-    let identity;
-    let current;
-    let target;
-    try {
-      identity = parseVoiceIdentity(baseline.stdout);
-      current = parseUsbComposition(baseline.stdout);
-      target = voiceUsbTarget(current);
-    } catch (error) {
-      sendJson(res, 409, { ok: false, error: error.message });
-      return;
-    }
-    if (sameUsbComposition(current, target)) {
-      sendJson(res, 200, { ok: true, alreadyEnabled: true, message: "ADB and UAC flags are already enabled. Bind WinUSB only to the ADB MI_06 interface if Windows still cannot open ADB.", imeiSuffix: identity.imei.slice(-4) });
-      return;
-    }
-
-    const saved = saveVoiceUsbBackup("before-voice-usb-enable", identity, current);
-    let authorization = { required: current.flags[5] === 0, accepted: current.flags[5] === 1 };
-    if (current.flags[5] === 0) {
-      const challengeResult = await enqueueAt(portName, ["AT+QADBKEY?"], 20000);
-      let challenge;
-      try { challenge = parseQadbChallenge(challengeResult.stdout); }
-      catch (error) {
-        sendJson(res, 502, { ok: false, error: error.message, backup: voiceBackupSummary(saved), note: "No USBCFG write or reboot was attempted." });
-        return;
+    // Identity, QADBKEY, the protected write, the readback and the reboot form one
+    // transaction: an interleaved status poll could read a half-applied composition.
+    const outcome = await enqueueSerial(async () => {
+      const baseline = await runAtCommands(portName, ["ATI", "AT+GMR", "AT+CGMM", "AT+CGSN", "AT+QCFG=\"usbcfg\""], 45000);
+      if (!baseline.ok) {
+        return { status: 502, body: { ok: false, error: "Could not read the module identity and USB baseline.", baseline: redactModemIdentifiers(baseline) } };
       }
-      const password = legacyQadbPassword(challenge);
-      const unlockedRaw = await enqueueAt(portName, ["AT+QADBKEY=\"" + password + "\""], 20000);
-      const unlocked = redactAtResult(unlockedRaw, [challenge, password]);
-      if (!atAccepted(unlockedRaw)) {
-        sendJson(res, 502, { ok: false, error: "The module rejected QADBKEY authorization.", authorization: unlocked, backup: voiceBackupSummary(saved), note: "No USBCFG write or reboot was attempted." });
-        return;
+      let identity;
+      let current;
+      let target;
+      try {
+        identity = parseVoiceIdentity(baseline.stdout);
+        current = parseUsbComposition(baseline.stdout);
+        target = voiceUsbTarget(current);
+      } catch (error) {
+        return { status: 409, body: { ok: false, error: error.message } };
       }
-      authorization = { required: true, accepted: true };
-    }
+      if (sameUsbComposition(current, target)) {
+        return { status: 200, body: { ok: true, alreadyEnabled: true, message: "ADB and UAC flags are already enabled. Bind WinUSB only to the ADB MI_06 interface if Windows still cannot open ADB.", imeiSuffix: identity.imei.slice(-4) } };
+      }
 
-    const write = await enqueueAt(portName, [usbCompositionCommand(target)], 30000);
-    if (!atAccepted(write)) {
-      sendJson(res, 502, { ok: false, error: "The module rejected the protected ADB/UAC USB composition.", write, authorization, backup: voiceBackupSummary(saved), note: "QADBKEY authorization may remain persistent even though USB flags were not changed." });
-      return;
-    }
-    const readback = await enqueueAt(portName, ["AT+QCFG=\"usbcfg\""], 20000);
-    let observed;
-    try { observed = parseUsbComposition(readback.stdout); } catch {}
-    if (!atAccepted(readback) || !sameUsbComposition(observed, target)) {
-      sendJson(res, 502, { ok: false, error: "USBCFG readback did not exactly match the protected target, so no reboot was sent.", write, readback, authorization, backup: voiceBackupSummary(saved) });
-      return;
-    }
-    const reboot = await enqueueAt(portName, ["AT+CFUN=1,1"], 15000);
-    sendJson(res, 200, { ok: true, authorization, backup: voiceBackupSummary(saved), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "ADB and UAC were enabled with the existing VID/PID and all unrelated flags preserved. Reconnect the module after it restarts." });
+      const saved = saveVoiceUsbBackup("before-voice-usb-enable", identity, current);
+      let authorization = { required: current.flags[5] === 0, accepted: current.flags[5] === 1 };
+      if (current.flags[5] === 0) {
+        const challengeResult = await runAtCommands(portName, ["AT+QADBKEY?"], 20000);
+        let challenge;
+        try { challenge = parseQadbChallenge(challengeResult.stdout); }
+        catch (error) {
+          return { status: 502, body: { ok: false, error: error.message, backup: voiceBackupSummary(saved), note: "No USBCFG write or reboot was attempted." } };
+        }
+        const password = legacyQadbPassword(challenge);
+        const unlockedRaw = await runAtCommands(portName, ["AT+QADBKEY=\"" + password + "\""], 20000);
+        const unlocked = redactAtResult(unlockedRaw, [challenge, password]);
+        if (!atAccepted(unlockedRaw)) {
+          return { status: 502, body: { ok: false, error: "The module rejected QADBKEY authorization.", authorization: unlocked, backup: voiceBackupSummary(saved), note: "No USBCFG write or reboot was attempted." } };
+        }
+        authorization = { required: true, accepted: true };
+      }
+
+      const write = await runAtCommands(portName, [usbCompositionCommand(target)], 30000);
+      if (!atAccepted(write)) {
+        return { status: 502, body: { ok: false, error: "The module rejected the protected ADB/UAC USB composition.", write, authorization, backup: voiceBackupSummary(saved), note: "QADBKEY authorization may remain persistent even though USB flags were not changed." } };
+      }
+      const readback = await runAtCommands(portName, ["AT+QCFG=\"usbcfg\""], 20000);
+      let observed;
+      try { observed = parseUsbComposition(readback.stdout); } catch {}
+      if (!atAccepted(readback) || !sameUsbComposition(observed, target)) {
+        return { status: 502, body: { ok: false, error: "USBCFG readback did not exactly match the protected target, so no reboot was sent.", write, readback, authorization, backup: voiceBackupSummary(saved) } };
+      }
+      const reboot = await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      return { status: 200, body: { ok: true, authorization, backup: voiceBackupSummary(saved), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "ADB and UAC were enabled with the existing VID/PID and all unrelated flags preserved. Reconnect the module after it restarts." } };
+    });
+    sendJson(res, outcome.status, outcome.body);
     return;
   }
 
@@ -1552,45 +1568,43 @@ async function handleApi(req, res, url) {
       return;
     }
     const portName = portArg(url);
-    const baseline = await enqueueAt(portName, ["ATI", "AT+GMR", "AT+CGMM", "AT+CGSN", "AT+CLCC", "AT+QCFG=\"usbcfg\""], 45000);
-    if (parseClcc(baseline.stdout).some((call) => call.isVoice && call.state !== "disconnected")) {
-      sendJson(res, 409, { ok: false, error: "End the current voice call before restoring USB settings." });
-      return;
-    }
-    let identity;
-    let current;
-    try {
-      identity = parseVoiceIdentity(baseline.stdout);
-      current = parseUsbComposition(baseline.stdout);
-    } catch (error) {
-      sendJson(res, 409, { ok: false, error: error.message });
-      return;
-    }
-    const matched = latestVoiceUsbBackup(identity, current);
-    if (!matched) {
-      sendJson(res, 404, { ok: false, error: "No local USB backup matches this module IMEI and VID/PID." });
-      return;
-    }
-    const target = { vendorId: Number(matched.backup.usb.vendorId), productId: Number(matched.backup.usb.productId), flags: matched.backup.usb.flags.map(Number) };
-    if (sameUsbComposition(current, target)) {
-      sendJson(res, 200, { ok: true, alreadyRestored: true, backup: voiceBackupSummary(matched) });
-      return;
-    }
-    const protective = saveVoiceUsbBackup("before-voice-usb-restore", identity, current);
-    const write = await enqueueAt(portName, [usbCompositionCommand(target)], 30000);
-    if (!atAccepted(write)) {
-      sendJson(res, 502, { ok: false, error: "The module rejected the saved USB composition.", write, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective) });
-      return;
-    }
-    const readback = await enqueueAt(portName, ["AT+QCFG=\"usbcfg\""], 20000);
-    let observed;
-    try { observed = parseUsbComposition(readback.stdout); } catch {}
-    if (!atAccepted(readback) || !sameUsbComposition(observed, target)) {
-      sendJson(res, 502, { ok: false, error: "Restore readback did not exactly match the backup, so no reboot was sent.", readback, protectiveBackup: voiceBackupSummary(protective) });
-      return;
-    }
-    const reboot = await enqueueAt(portName, ["AT+CFUN=1,1"], 15000);
-    sendJson(res, 200, { ok: true, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "The saved USB composition was restored. QADBKEY authorization is persistent and may remain authorized." });
+    // Baseline, the restore write, its readback and the reboot stay in one session.
+    const outcome = await enqueueSerial(async () => {
+      const baseline = await runAtCommands(portName, ["ATI", "AT+GMR", "AT+CGMM", "AT+CGSN", "AT+CLCC", "AT+QCFG=\"usbcfg\""], 45000);
+      if (parseClcc(baseline.stdout).some((call) => call.isVoice && call.state !== "disconnected")) {
+        return { status: 409, body: { ok: false, error: "End the current voice call before restoring USB settings." } };
+      }
+      let identity;
+      let current;
+      try {
+        identity = parseVoiceIdentity(baseline.stdout);
+        current = parseUsbComposition(baseline.stdout);
+      } catch (error) {
+        return { status: 409, body: { ok: false, error: error.message } };
+      }
+      const matched = latestVoiceUsbBackup(identity, current);
+      if (!matched) {
+        return { status: 404, body: { ok: false, error: "No local USB backup matches this module IMEI and VID/PID." } };
+      }
+      const target = { vendorId: Number(matched.backup.usb.vendorId), productId: Number(matched.backup.usb.productId), flags: matched.backup.usb.flags.map(Number) };
+      if (sameUsbComposition(current, target)) {
+        return { status: 200, body: { ok: true, alreadyRestored: true, backup: voiceBackupSummary(matched) } };
+      }
+      const protective = saveVoiceUsbBackup("before-voice-usb-restore", identity, current);
+      const write = await runAtCommands(portName, [usbCompositionCommand(target)], 30000);
+      if (!atAccepted(write)) {
+        return { status: 502, body: { ok: false, error: "The module rejected the saved USB composition.", write, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective) } };
+      }
+      const readback = await runAtCommands(portName, ["AT+QCFG=\"usbcfg\""], 20000);
+      let observed;
+      try { observed = parseUsbComposition(readback.stdout); } catch {}
+      if (!atAccepted(readback) || !sameUsbComposition(observed, target)) {
+        return { status: 502, body: { ok: false, error: "Restore readback did not exactly match the backup, so no reboot was sent.", readback, protectiveBackup: voiceBackupSummary(protective) } };
+      }
+      const reboot = await runAtCommands(portName, ["AT+CFUN=1,1"], 15000);
+      return { status: 200, body: { ok: true, backup: voiceBackupSummary(matched), protectiveBackup: voiceBackupSummary(protective), rebootRequested: true, rebootAccepted: atAccepted(reboot), message: "The saved USB composition was restored. QADBKEY authorization is persistent and may remain authorized." } };
+    });
+    sendJson(res, outcome.status, outcome.body);
     return;
   }
 
