@@ -184,6 +184,8 @@ function isAuthorized(req, url) {
 }
 
 function runPowerShell(args, timeoutMs = 45000) {
+  const blocked = typeof powerShellHosts !== "undefined" && powerShellHosts.find((host) => host.blockedReason());
+  if (blocked) return Promise.resolve({ ok: false, code: null, stdout: "", stderr: blocked.blockedReason() });
   const utf8 = "[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $OutputEncoding = [Console]::OutputEncoding;";
   const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
   const body = args[0] === "-File"
@@ -423,6 +425,8 @@ function mergeEuiccRecords(records, labels = {}) {
 async function scanEuiccInventory(candidates, query, labels = {}) {
   const records = [];
   const probes = [];
+  const seenEids = new Set();
+  const loadedEids = new Set();
   for (const aid of candidates) {
     const chipResult = await query(aid, ["chip", "info"], 30000);
     const chip = chipResult.ok ? parseLpacData(chipResult.stdout) : null;
@@ -430,17 +434,29 @@ async function scanEuiccInventory(candidates, query, labels = {}) {
       probes.push({ aid, status: "eid-unavailable" });
       continue;
     }
-    const profileResult = await query(aid, ["profile", "list"], 45000);
-    const profiles = profileResult.ok ? parseLpacData(profileResult.stdout) : null;
-    probes.push({ aid, status: Array.isArray(profiles) ? "loaded" : "profiles-unavailable" });
-    records.push({
+    const card = {
       eid: chip.eidValue,
       aid,
-      profiles: Array.isArray(profiles) ? profiles : null,
+      profiles: null,
       freeMemory: chip.EUICCInfo2?.extCardResource?.freeNonVolatileMemory,
       firmware: chip.EUICCInfo2?.euiccFirmwareVer,
       profileVersion: chip.EUICCInfo2?.profileVersion,
-    });
+    };
+    // ESTK and clone cards answer on several AIDs for the same EID. Re-reading a profile
+    // list that already succeeded costs a full APDU round trip for nothing; a second
+    // alias is still tried when the first read failed, because that route may work.
+    if (seenEids.has(chip.eidValue) && loadedEids.has(chip.eidValue)) {
+      probes.push({ aid, status: "duplicate-eid" });
+      records.push(card);
+      continue;
+    }
+    seenEids.add(chip.eidValue);
+    const profileResult = await query(aid, ["profile", "list"], 45000);
+    const profiles = profileResult.ok ? parseLpacData(profileResult.stdout) : null;
+    probes.push({ aid, status: Array.isArray(profiles) ? "loaded" : "profiles-unavailable" });
+    card.profiles = Array.isArray(profiles) ? profiles : null;
+    if (Array.isArray(profiles)) loadedEids.add(chip.eidValue);
+    records.push(card);
   }
   const eids = mergeEuiccRecords(records, labels);
   return {
@@ -455,7 +471,22 @@ async function scanEuiccInventory(candidates, query, labels = {}) {
   };
 }
 
+// The eSIM page re-reads the inventory on every visit and after most actions. A scan
+// costs 1-4 s on real hardware, so keep the last answer briefly and drop it whenever a
+// profile write, label change or AID edit could have changed the card.
+const EUICC_INVENTORY_CACHE_MS = 20000;
+let euiccInventoryCache = null;
+
+function invalidateEuiccInventory() {
+  euiccInventoryCache = null;
+}
+
 async function discoverEuiccInventory(lpac, portName) {
+  const key = `${lpac}|${portName}`;
+  if (euiccInventoryCache && euiccInventoryCache.key === key
+    && Date.now() - euiccInventoryCache.at < EUICC_INVENTORY_CACHE_MS) {
+    return euiccInventoryCache.value;
+  }
   const savedState = readEuiccState();
   const result = await scanEuiccInventory(inventoryCandidateAids(savedState),
     (aid, args, timeout) => runLpac(lpac, portName, args, timeout, { aid }), savedState.labels);
@@ -463,6 +494,7 @@ async function discoverEuiccInventory(lpac, portName) {
     // Keep explicit SE routes instead of replacing them with a default alias.
     for (const item of result.eids) savedState.aids[item.eid] = item.aid;
     writeEuiccState(savedState);
+    euiccInventoryCache = { key, at: Date.now(), value: result };
   }
   return result;
 }
@@ -524,7 +556,9 @@ function parseSimIdentity(text) {
   return { iccid, imsi, imsiReady: Boolean(imsi) };
 }
 
-async function verifyProfileActivation(portName, targetId, attempts = 4) {
+// Three short attempts: an ICCID that already changed is verified on the first read, and
+// a slower network attach reports "pending" instead of freezing the switch for 8 seconds.
+async function verifyProfileActivation(portName, targetId, attempts = 3) {
   const targetIccid = normalizeIccid(targetId);
   if (!targetIccid) return { status: "not-applicable", matched: null, imsiReady: null, attempts: 0 };
   let identity = { iccid: null, imsi: null, imsiReady: false };
@@ -533,7 +567,7 @@ async function verifyProfileActivation(portName, targetId, attempts = 4) {
     identity = parseSimIdentity(result.stdout);
     const matched = identity.iccid === targetIccid;
     if (matched && identity.imsiReady) return { status: "verified", matched: true, imsiReady: true, attempts: attempt };
-    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (attempt < attempts) await new Promise((resolve) => setTimeout(resolve, 1200));
   }
   const matched = identity.iccid === targetIccid;
   return { status: matched ? "network-pending" : "profile-pending", matched, imsiReady: identity.imsiReady, attempts };
@@ -940,8 +974,10 @@ function latestVoiceUsbBackup(identity, currentComposition) {
 const VOICE_PNP_CACHE_MS = 8000;
 let voicePnpCache = null;
 let voicePnpPending = null;
+let voicePnpGeneration = 0;
 
 function invalidateVoicePnp() {
+  voicePnpGeneration += 1;
   voicePnpCache = null;
   voicePnpPending = null;
 }
@@ -949,11 +985,13 @@ function invalidateVoicePnp() {
 async function voicePnpStatus({ maxAgeMs = VOICE_PNP_CACHE_MS } = {}) {
   if (voicePnpCache && Date.now() - voicePnpCache.at < maxAgeMs) return voicePnpCache.value;
   if (voicePnpPending) return voicePnpPending;
-  voicePnpPending = readVoicePnpStatus().then((value) => {
-    voicePnpCache = { at: Date.now(), value };
+  const generation = voicePnpGeneration;
+  const pending = readVoicePnpStatus().then((value) => {
+    if (generation === voicePnpGeneration) voicePnpCache = { at: Date.now(), value };
     return value;
-  }).finally(() => { voicePnpPending = null; });
-  return voicePnpPending;
+  }).finally(() => { if (voicePnpPending === pending) voicePnpPending = null; });
+  voicePnpPending = pending;
+  return pending;
 }
 
 async function readVoicePnpStatus() {
@@ -1049,7 +1087,11 @@ try {
 }
 
 function enqueueSerial(task, options) {
-  return serialQueue(task, options);
+  return serialQueue(() => {
+    const blocked = typeof powerShellHosts !== "undefined" && powerShellHosts.find((host) => host.blockedReason());
+    if (blocked) throw Object.assign(new Error(blocked.blockedReason()), { code: "POWERSHELL_CLEANUP_FAILED" });
+    return task();
+  }, options);
 }
 
 function enqueueAt(portName, commands, timeoutMs = 60000) {
@@ -1174,7 +1216,7 @@ async function readJsonBody(req) {
 }
 
 function handleRequestError(req, res, error) {
-  if (["SERIAL_QUEUE_TIMEOUT", "SERIAL_QUEUE_FULL"].includes(error?.code)) error = new RequestError(503, error.code, error.message);
+  if (["SERIAL_QUEUE_TIMEOUT", "SERIAL_QUEUE_FULL", "POWERSHELL_CLEANUP_FAILED"].includes(error?.code)) error = new RequestError(503, error.code, error.message);
   const expected = error instanceof RequestError;
   if (!expected) console.error("API_ERROR", diagnosticCode(error));
   if (res.destroyed || res.writableEnded) return;
@@ -2014,6 +2056,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
     if (label) state.labels[eid] = label;
     else delete state.labels[eid];
     writeEuiccState(state);
+    invalidateEuiccInventory();
     sendJson(res, 200, { ok: true, eid, label });
     return;
   }
@@ -2039,6 +2082,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
     const state = readEuiccState();
     state.aids[chip.eidValue] = aid;
     writeEuiccState(state);
+    invalidateEuiccInventory();
     sendJson(res, 200, { ok: true, eid: chip.eidValue, aid });
     return;
   }
@@ -2113,6 +2157,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
     const args = action === "delete" ? ["profile", "delete", id] : ["profile", action, id, "1"];
     const result = await runLpacWrite(lpac, portArg(url), args, 90000, aid, body.expectedEid);
     const verification = action === "enable" && result.ok ? await verifyProfileActivation(portArg(url), id) : null;
+    if (result.ok) invalidateEuiccInventory();
     sendJson(res, result.ok ? 200 : 502, { ...result, verification });
     return;
   }
@@ -2170,6 +2215,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       return;
     }
     const result = await runLpacWrite(lpac, portArg(url), ["notification", "process", "-a", "-r"], 180000, aid, body.expectedEid);
+    if (result.ok) invalidateEuiccInventory();
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -2198,6 +2244,7 @@ $items | ConvertTo-Json -Depth 4 -Compress
       await runLpacWrite(lpac, portArg(url), ["profile", "download", "-a", code], 300000, aid, body.expectedEid),
       code,
     );
+    if (result.ok) invalidateEuiccInventory();
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }

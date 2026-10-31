@@ -1,4 +1,4 @@
-# DJI 4G Assistant（大疆 4G 助手）
+﻿# DJI 4G Assistant（大疆 4G 助手）
 
 DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
@@ -10,7 +10,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**正式版 1.8.1：** [打开下载页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.1)，普通用户下载 `DJI-4G-Assistant-Setup-1.8.1-x64.exe` 并安装；不想安装可选 `Portable`。先退出旧版，不需要安装 Node.js。启动 AT 查询从 17 条减少到 10 条，短信不变时跳过重复解析；完整扫描和 EID 探测范围不变。270 项自动测试及浏览器检查通过，已完成真实模块的自动发现、SIM/LTE 状态和多 EID 套餐读取验证。**通话声音仍是实验功能，本轮没有验证电话、短信送达或套餐写入。** 详情见[性能优化说明](docs/PERFORMANCE-NOTES.md)。
+**正式版 1.8.4：** [打开下载页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，普通用户下载 `DJI-4G-Assistant-Setup-1.8.4-x64.exe` 并安装；不想安装可选 `Portable`。先退出旧版，不需要安装 Node.js。本版保留已有提速改动，修复后台通信中断、超时清理和设备状态缓存的边界问题。289 项自动测试通过，包含真实 Windows 子进程清理测试。**通话声音仍是实验功能，本轮没有验证电话、短信送达或套餐写入，也没有改动模块配置。** 详情见[1.8.4 中文更新说明](docs/RELEASE-v1.8.4.md)和[性能优化说明](docs/PERFORMANCE-NOTES.md)。
 
 **驱动不是每台电脑都会自动装好。** 能上网不代表能读短信或管理 eSIM；这些管理功能还需要可用的 AT 串口。助手安装包不会自动修复缺失或被改成 WinUSB 的串口驱动，遇到这种情况先看[Windows 驱动说明](docs/Windows驱动说明.md)，不要反复修改模块或套餐。
 

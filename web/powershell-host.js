@@ -50,11 +50,14 @@ const HOST_SCRIPT = [
   "}",
 ].join("\n");
 
-function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {}) {
+function createPowerShellHost({ command = "powershell", timeoutMs = 120000, cleanupTimeoutMs = 5000 } = {}) {
   const queue = [];
   let child = null;
   let active = null;
   let sequence = 0;
+  let retiring = null;
+  let disposed = false;
+  let cleanupError = "";
 
   const settle = (job, result) => {
     if (!job || job.settled) return;
@@ -63,22 +66,72 @@ function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {
     job.resolve(result);
   };
 
-  const endProcessTree = (proc) => {
-    if (!proc) return;
-    // A wedged job may have left a native child (and its COM handle) behind: end the
-    // whole tree, not just powershell.exe, or the next request cannot open the port.
-    if (process.platform === "win32" && typeof proc.pid === "number") {
-      const killer = spawn("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" });
-      killer.on("error", () => { try { proc.kill(); } catch {} });
-      return;
-    }
-    try { proc.kill(); } catch {}
+  const failure = (message, stdout = "") => ({ ok: false, code: null, stdout, stderr: message });
+
+  const endProcessTree = (proc) => new Promise((resolve) => {
+    if (!proc || typeof proc.pid !== "number") { resolve(true); return; }
+    let closed = proc.exitCode != null || proc.signalCode != null;
+    let treeStopped = process.platform !== "win32";
+    let finished = false;
+    let killer = null;
+    const finish = (ok) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      proc.off("close", onClose);
+      resolve(ok);
+    };
+    const check = () => { if (closed && treeStopped) finish(true); };
+    const onClose = () => { closed = true; check(); };
+    const fail = () => {
+      try { proc.kill(); } catch {}
+      finish(false);
+    };
+    const timer = setTimeout(() => {
+      try { killer?.kill(); } catch {}
+      fail();
+    }, cleanupTimeoutMs);
+    proc.once("close", onClose);
+    try {
+      if (process.platform === "win32") {
+        killer = spawn("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" });
+        killer.once("error", fail);
+        killer.once("close", (code) => {
+          if (finished) return;
+          // 128 is taskkill's "process not found": the host already exited by itself, which
+          // is a clean outcome. Treating it as failure would latch cleanupError and disable
+          // every later request until the assistant is restarted.
+          if (code !== 0 && code !== 128) { fail(); return; }
+          treeStopped = true;
+          check();
+        });
+      } else {
+        proc.kill();
+        check();
+      }
+    } catch { fail(); }
+  });
+
+  const failWaiting = (message) => {
+    for (const job of queue.splice(0)) settle(job, failure(message));
   };
 
-  const discardChild = () => {
-    const proc = child;
+  const retireChild = (proc, message) => {
+    if (child !== proc) return retiring || Promise.resolve();
+    const job = active;
+    clearTimeout(job?.timer);
     child = null;
-    endProcessTree(proc);
+    // Keep the caller (and its serial lock) waiting until the entire old tree is gone.
+    retiring = endProcessTree(proc).then((stopped) => {
+      if (!stopped) cleanupError = "A previous Windows command could not be stopped. Exit and reopen the assistant before retrying.";
+      if (active === job) active = null;
+      settle(job, failure(cleanupError || message, job?.stdout || ""));
+      if (cleanupError) failWaiting(cleanupError);
+    }).finally(() => {
+      retiring = null;
+      scheduleDrain();
+    });
+    return retiring;
   };
 
   const failActive = (message) => {
@@ -125,16 +178,22 @@ function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {
     });
     proc.stdout.setEncoding("utf8");
     proc.stderr.setEncoding("utf8");
-    proc.stdout.on("data", onStdout);
+    proc.stdout.on("data", (chunk) => { if (child === proc) onStdout(chunk); });
     // The host's own stderr carries CLIXML progress noise, never job output.
     proc.stderr.on("data", () => {});
+    const onPipeError = (error) => {
+      retireChild(proc, `PowerShell host pipe failed (${error.code || "IO_ERROR"}).`);
+    };
+    proc.stdin.on("error", onPipeError);
+    proc.stdout.on("error", onPipeError);
+    proc.stderr.on("error", onPipeError);
     proc.on("error", () => {
       if (child !== proc) return; // a superseded host failing must not fail the new job
       child = null;
       failActive("PowerShell host could not start.");
       scheduleDrain();
     });
-    proc.on("exit", () => {
+    proc.on("close", () => {
       if (child !== proc) return;
       child = null;
       failActive("PowerShell host exited before answering.");
@@ -145,26 +204,23 @@ function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {
   };
 
   function drain() {
-    if (active || !queue.length) return;
+    if (active || retiring || disposed || cleanupError || !queue.length) return;
     const job = queue.shift();
-    const proc = ensureChild();
     active = job;
+    let proc;
+    try { proc = ensureChild(); }
+    catch { failActive("PowerShell host could not start."); scheduleDrain(); return; }
     job.timer = setTimeout(() => {
-      // A wedged host must not poison later requests: drop it, fail this job, respawn.
       if (active === job) {
-        active = null;
-        discardChild();
-        settle(job, { ok: false, code: null, stdout: job.stdout, stderr: `Timed out after ${job.timeoutMs}ms` });
-        scheduleDrain();
+        retireChild(proc, `Timed out after ${job.timeoutMs}ms`);
       }
     }, job.timeoutMs);
     try {
-      proc.stdin.write(`${job.id}|${Buffer.from(job.command, "utf8").toString("base64")}\n`);
+      proc.stdin.write(`${job.id}|${Buffer.from(job.command, "utf8").toString("base64")}\n`, (error) => {
+        if (error && active === job) retireChild(proc, `PowerShell host is not writable (${error.code || "IO_ERROR"}).`);
+      });
     } catch (error) {
-      active = null;
-      discardChild();
-      settle(job, { ok: false, code: null, stdout: "", stderr: `PowerShell host is not writable (${error.code || error.message}).` });
-      scheduleDrain();
+      retireChild(proc, `PowerShell host is not writable (${error.code || "IO_ERROR"}).`);
     }
   }
 
@@ -174,6 +230,7 @@ function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {
 
   return {
     run(commandBody, jobTimeoutMs = timeoutMs) {
+      if (disposed || cleanupError) return Promise.resolve(failure(cleanupError || "PowerShell host was closed."));
       return new Promise((resolve) => {
         queue.push({
           id: String(++sequence),
@@ -189,10 +246,16 @@ function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {
       });
     },
     pending() {
-      return queue.length + (active ? 1 : 0);
+      return queue.length + (active || retiring ? 1 : 0);
+    },
+    blockedReason() {
+      return cleanupError;
     },
     dispose() {
-      discardChild();
+      disposed = true;
+      failWaiting("PowerShell host was closed.");
+      if (retiring) return retiring;
+      return child ? retireChild(child, "PowerShell host was closed.") : Promise.resolve();
     },
   };
 }

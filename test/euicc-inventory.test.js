@@ -30,7 +30,9 @@ test("reads both ESTK profile lists and deduplicates the default EID alias", asy
   assert.deepEqual(result.eids.map((item) => item.profileCount), [1, 2]);
   assert.deepEqual(result.eids[0].aids, [SE0, DEFAULT]);
   assert.equal(result.profilesComplete, true);
-  assert.equal(calls.filter((call) => call.args[0] === "profile").length, 3);
+  // The DEFAULT alias resolves to an EID whose profile list already loaded, so it is
+  // kept as an extra route without paying for a second APDU round trip.
+  assert.equal(calls.filter((call) => call.args[0] === "profile").length, 2);
 });
 
 test("does not report a failed profile read as an empty space", async () => {
