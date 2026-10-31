@@ -10,6 +10,7 @@ const originalUsb = require("./original-usb");
 const { buildPairingDeepLink } = require("./pairing");
 const { parseVoiceNetwork } = require("./voice-network");
 const { createSerialQueue } = require("./serial-queue");
+const { createPowerShellHost } = require("./powershell-host");
 const { createNetworkSampler } = require("./network-sampler");
 const { consoleAccess } = require("./console-addresses");
 const {
@@ -35,6 +36,16 @@ let voiceQueue = Promise.resolve();
 let networkSampler = null;
 let bonjour = null;
 let bonjourService = null;
+
+// Two resident PowerShell hosts: a long SMS or USSD job must not stall the
+// once-a-second call-status read. Each host is spawned lazily on first use.
+const powerShellHosts = [createPowerShellHost(), createPowerShellHost()];
+function pickPowerShellHost() {
+  return powerShellHosts.reduce((best, host) => (host.pending() < best.pending() ? host : best), powerShellHosts[0]);
+}
+process.on("exit", () => {
+  for (const host of powerShellHosts) host.dispose();
+});
 
 const DEFAULT_ISDR_AID = "A0000005591010FFFFFFFF8900000100";
 // ESTK multi-SE protocol identifiers, documented by estkme-group/openeuicc.
@@ -173,12 +184,19 @@ function isAuthorized(req, url) {
 }
 
 function runPowerShell(args, timeoutMs = 45000) {
+  const utf8 = "[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $OutputEncoding = [Console]::OutputEncoding;";
+  const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
+  const body = args[0] === "-File"
+    ? `${utf8}\n& ${quote(args[1])} ${args.slice(2).map(quote).join(" ")}`
+    : `${utf8}\n${args[1] || ""}`;
+  // The resident host removes the ~400 ms powershell.exe startup that dominated every
+  // AT read. DSH_PS_SPAWN=1 forces the old one-process-per-command path for debugging.
+  if (typeof powerShellHosts !== "undefined" && powerShellHosts.length
+    && (typeof process === "undefined" || process.env.DSH_PS_SPAWN !== "1")) {
+    return pickPowerShellHost().run(body, timeoutMs);
+  }
   return new Promise((resolve) => {
-    const utf8 = "[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); $OutputEncoding = [Console]::OutputEncoding;";
-    const quote = (value) => `'${String(value).replace(/'/g, "''")}'`;
-    const command = args[0] === "-File"
-      ? `${utf8}\n& ${quote(args[1])} ${args.slice(2).map(quote).join(" ")}\nexit $LASTEXITCODE`
-      : `${utf8}\n${args[1] || ""}`;
+    const command = args[0] === "-File" ? `${body}\nexit $LASTEXITCODE` : body;
     const child = spawn("powershell", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command], {
       cwd: root,
       windowsHide: true,
