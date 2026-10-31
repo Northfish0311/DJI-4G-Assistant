@@ -52,3 +52,41 @@ test("a timed-out job fails alone and the next job runs on a fresh host", window
     host.dispose();
   }
 });
+
+test("Write-Host output reaches the caller, so port scans can report AT_PORT", windowsOnly, async () => {
+  const host = createPowerShellHost();
+  try {
+    // find-at-port.ps1 reports everything with Write-Host; it must not bypass the frame.
+    const scan = await host.run([
+      "Write-Host '----- COM3 -----'",
+      "Write-Host 'AT response: OK'",
+      "Write-Host 'AT_PORT=COM3'",
+    ].join("; "), 20000);
+    assert.equal(scan.ok, true);
+    assert.match(scan.stdout, /AT_PORT=COM3/);
+    assert.match(scan.stdout, /AT response: OK/);
+  } finally {
+    host.dispose();
+  }
+});
+
+test("a failed exit code does not leak into the next job", windowsOnly, async () => {
+  const host = createPowerShellHost();
+  try {
+    const failing = await host.run("cmd /c exit 3", 20000);
+    assert.equal(failing.ok, false);
+    assert.equal(failing.code, 3);
+
+    // A plain PowerShell statement sets no exit code of its own; it must not inherit 3.
+    const plain = await host.run("Write-Output 'second job'", 20000);
+    assert.equal(plain.ok, true);
+    assert.equal(plain.code, 0);
+    assert.equal(plain.stdout.trim(), "second job");
+
+    const scripted = await host.run("& { Write-Output 'script ran' }", 20000);
+    assert.equal(scripted.ok, true);
+  } finally {
+    host.dispose();
+  }
+});
+

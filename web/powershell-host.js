@@ -27,9 +27,13 @@ const HOST_SCRIPT = [
   "  $outLines = New-Object System.Collections.ArrayList",
   "  $errLines = New-Object System.Collections.ArrayList",
   "  $exit = 0",
+  "  $global:LASTEXITCODE = 0",
   "  try {",
-  "    & ([scriptblock]::Create($code)) 2>&1 | ForEach-Object {",
+  // *>&1 also routes Write-Host through the pipeline: scripts such as find-at-port.ps1
+  // report AT_PORT=COMx with Write-Host, which would otherwise bypass the frame.
+  "    & ([scriptblock]::Create($code)) *>&1 | ForEach-Object {",
   "      if ($_ -is [System.Management.Automation.ErrorRecord]) { [void]$errLines.Add(($_ | Out-String)) }",
+  "      elseif ($_ -is [System.Management.Automation.InformationRecord]) { [void]$outLines.Add([string]$_.MessageData) }",
   "      else { [void]$outLines.Add([string]$_) }",
   "    }",
   "    if ($null -ne $LASTEXITCODE) { $exit = [int]$LASTEXITCODE }",
@@ -59,12 +63,22 @@ function createPowerShellHost({ command = "powershell", timeoutMs = 120000 } = {
     job.resolve(result);
   };
 
+  const endProcessTree = (proc) => {
+    if (!proc) return;
+    // A wedged job may have left a native child (and its COM handle) behind: end the
+    // whole tree, not just powershell.exe, or the next request cannot open the port.
+    if (process.platform === "win32" && typeof proc.pid === "number") {
+      const killer = spawn("taskkill", ["/pid", String(proc.pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" });
+      killer.on("error", () => { try { proc.kill(); } catch {} });
+      return;
+    }
+    try { proc.kill(); } catch {}
+  };
+
   const discardChild = () => {
     const proc = child;
     child = null;
-    if (proc) {
-      try { proc.kill(); } catch {}
-    }
+    endProcessTree(proc);
   };
 
   const failActive = (message) => {
