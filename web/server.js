@@ -1810,6 +1810,50 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (url.pathname === "/api/sms-purge" && req.method === "POST") {
+    if (process.env.ALLOW_SMS_DELETE !== "1") {
+      sendJson(res, 403, { ok: false, error: "SMS deletion is disabled on this local server." });
+      return;
+    }
+    const body = await readJsonBody(req);
+    const keep = Number(body.keep);
+    if (!Number.isInteger(keep) || keep < 1 || keep > 50 || String(body.confirm || "").toUpperCase() !== "PURGE") {
+      sendJson(res, 400, { ok: false, error: "Choose how many newest messages to keep (1-50) and confirm PURGE." });
+      return;
+    }
+    const portName = portArg(url);
+    const readIndices = async () => {
+      const listing = await enqueueAt(portName, ["AT+CMGF=1", 'AT+CMGL="ALL"'], 60000);
+      const response = extractAtResponse(listing, 'AT+CMGL="ALL"');
+      // A body line can contain the word OK; only the terminal response counts.
+      const complete = Boolean(listing.ok && /(?:^|\n)OK\s*$/i.test(response));
+      const indices = [...response.matchAll(/^\+CMGL:\s*(\d+)\s*,/gm)]
+        .map((match) => Number(match[1]))
+        .filter((value) => Number.isInteger(value) && value >= 1 && value <= 255);
+      return { complete, indices: [...new Set(indices)].sort((a, b) => a - b) };
+    };
+    const before = await readIndices();
+    if (!before.complete) {
+      // Deleting from an incomplete listing could remove the wrong messages.
+      sendJson(res, 502, { ok: false, error: "The module did not return a complete SMS list. Nothing was deleted." });
+      return;
+    }
+    const remove = before.indices.slice(0, Math.max(0, before.indices.length - keep));
+    if (!remove.length) {
+      sendJson(res, 200, { ok: true, purged: 0, kept: before.indices.length, total: before.indices.length });
+      return;
+    }
+    const purge = await enqueueAt(portName, ["AT+CMGF=1", ...remove.map((value) => "AT+CMGD=" + value)], 30000 + remove.length * 2000);
+    const after = await readIndices();
+    // Report what the module actually holds now instead of counting OK replies.
+    const kept = after.complete ? after.indices.length : null;
+    const purged = kept === null ? null : before.indices.length - kept;
+    const ok = Boolean(purge.ok) && after.complete;
+    sendJson(res, ok ? 200 : 502, { ok, purged, kept, total: before.indices.length, requested: remove.length,
+      ...(ok ? {} : { error: after.complete ? "The module rejected part of the purge." : "The purge ran but the module did not return a readable list afterwards." }) });
+    return;
+  }
+
   if (url.pathname === "/api/sms-send" && req.method === "POST") {
     if (process.env.ALLOW_SMS_SEND !== "1") {
       sendJson(res, 403, { ok: false, error: "SMS sending is disabled. Start the dedicated local SMS launcher first." });

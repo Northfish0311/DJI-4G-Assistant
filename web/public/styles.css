@@ -2689,6 +2689,19 @@ button.active-monitor {
   color: var(--ink);
   font-size: 13px;
   line-height: 1.5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.sms-storage-banner > span {
+  flex: 1 1 220px;
+}
+
+.sms-storage-banner > button {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .sms-storage-banner[hidden] {

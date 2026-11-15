@@ -211,11 +211,47 @@ function renderSmsStorage(storage) {
   }
   banner.hidden = false;
   banner.className = "sms-storage-banner " + (storage.full ? "full" : storage.percent >= 80 ? "warning" : "healthy");
-  banner.textContent = storage.full
+  const message = storage.full
     ? t("smsStorageFull", storage)
     : storage.percent >= 80
       ? t("smsStorageNearFull", storage)
       : t("smsStorageUsage", storage);
+  // Bulk cleanup only appears when storage is close to full, so ordinary reading
+  // never puts a destructive button in the way.
+  const purge = storage.percent >= 80 && state.smsDeleteEnabled
+    ? `<button type="button" class="secondary compact" data-sms-purge>${escapeHtml(t("purgeSms"))}</button>`
+    : "";
+  banner.innerHTML = `<span>${escapeHtml(message)}</span>${purge}`;
+  banner.querySelector("[data-sms-purge]")?.addEventListener("click", purgeOldSms);
+}
+
+async function purgeOldSms() {
+  if (!state.smsDeleteEnabled) {
+    append(t("smsInbox"), t("smsDeleteLocked"));
+    return;
+  }
+  const answer = window.prompt(t("purgeKeepPrompt"), "50");
+  if (answer === null) return;
+  const keep = Number(String(answer).trim());
+  if (!Number.isInteger(keep) || keep < 1 || keep > 50) {
+    append(t("purgeSms"), t("purgeKeepInvalid"));
+    return;
+  }
+  if (!window.confirm(t("confirmPurgeSms", { keep }))) return;
+  const port = encodeURIComponent(portInput.value.trim());
+  try {
+    const res = await fetch("/api/sms-purge?port=" + port, {
+      method: "POST",
+      headers: apiHeaders({ "content-type": "application/json" }),
+      body: JSON.stringify({ keep, confirm: "PURGE" }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || t("smsDeleteLocked"));
+    append(t("purgeSms"), data.purged ? t("smsPurged", { purged: data.purged, kept: data.kept }) : t("smsPurgeNothing", { kept: data.kept }));
+    await callApi("sms-list");
+  } catch (error) {
+    append(t("purgeSms"), error.message || String(error));
+  }
 }
 
 async function deleteSmsMessage(index) {
