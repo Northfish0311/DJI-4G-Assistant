@@ -106,8 +106,14 @@ test("native SMS navigation preserves separate reply and new-message drafts with
   assert.equal(focused, "#newSmsBtn");
   assert.ok(scrolls > 0);
   context.nativeCompanion = false;
+  element("#nativeSmsBackBtn").getClientRects = () => [];
   vm.runInContext('selectSmsConversation("+447700900124")', context);
   assert.equal(focused, "#smsMessageInput", "Desktop reply behavior is preserved");
+  element("#nativeSmsBackBtn").getClientRects = () => [{}];
+  vm.runInContext('selectSmsConversation("+447700900123")', context);
+  assert.equal(focused, "#smsConversationTitle", "A narrow web window opens the reader, not the keyboard");
+  vm.runInContext('returnToSmsThreads()', context);
+  assert.equal(focused, "+447700900123");
 });
 
 test("native SMS returns to the list on a card change and keeps navigation available while busy", () => {

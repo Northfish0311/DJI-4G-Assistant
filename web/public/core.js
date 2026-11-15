@@ -102,6 +102,7 @@ function clearCardView() {
   const profileList = document.querySelector("#profilesList");
   profileList.replaceChildren(); delete profileList.dataset.markup;
   state.cardEpoch += 1; state.smsDrafts.clear(); state.smsSentThisSession = []; state.smsLastRead = 0; state.smsReadError = false; state.failedViews.clear(); setSmsFeedback(null);
+  state.smsParsedInbox = null; state.smsRenderedInbox = null; state.smsRenderKey = "";
   state.activeEid = ""; state.activeAid = ""; state.euiccProbes = [];
   state.euiccCandidatesChecked = 0;
   state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms"); state.autoLoadedViews.delete("calls");

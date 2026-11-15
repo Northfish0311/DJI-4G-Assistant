@@ -204,3 +204,22 @@ Object.assign(copy.zh, {
   callAudioPreparing: "正在准备通话声音…", callAudioConnecting: "电话已接通，正在连接声音…", callEndedReason: "通话已结束，模块原因码：{reason}", callEndReadFailed: "通话已结束，暂未读到模块的结束原因。",
   voiceSummaryReady: "声音已就绪 · 本页拨打或接听后自动连接", voiceSummaryPrepare: "语音文件已就绪 · 拨打或接听前准备临时驱动",
 });
+
+Object.assign(copy.zh, {
+  smsSubmitted: "已提交", smsSentTo: "已提交给模块：{number}。尚无送达回执。",
+  smsRejected: "模块拒绝发送：{reason}。已确认提交 {submitted}/{total} 段。草稿已保留。",
+  smsBeforeSubmit: "下一段未提交。已确认提交 {submitted}/{total} 段。请检查模块连接，草稿已保留。",
+  smsUnknownParts: "未收到完整的发送确认。已确认提交 {submitted}/{total} 段。草稿已保留，请先核实再重发。",
+  smsUnknown: "无法确认短信是否已提交。草稿已保留，请先核实再重发。",
+  smsCms310: "未检测到 SIM 卡", smsCms330: "短信中心地址未知", smsCms331: "无网络服务",
+  smsCms332: "网络超时", smsCms500: "模块未给出具体原因",
+});
+Object.assign(copy.en, {
+  smsSubmitted: "Submitted", smsSentTo: "Submitted to the modem for {number}. Delivery is not confirmed.",
+  smsRejected: "Modem rejected the SMS: {reason}. Confirmed segments: {submitted}/{total}. Draft kept.",
+  smsBeforeSubmit: "The next segment was not submitted. Confirmed: {submitted}/{total}. Check the connection. Draft kept.",
+  smsUnknownParts: "Incomplete submission reply. Confirmed segments: {submitted}/{total}. Draft kept; check before resending.",
+  smsUnknown: "SMS submission could not be confirmed. Draft kept; check before resending.",
+  smsCms310: "SIM not detected", smsCms330: "Unknown SMS centre address", smsCms331: "No network service",
+  smsCms332: "Network timed out", smsCms500: "No specific reason reported",
+});

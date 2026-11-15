@@ -49,21 +49,31 @@ test('unchanged SMS polls update freshness and capacity without parsing or measu
   assert.equal(ui.stats.storage.total, 100);
 });
 
-test('SMS render reuse is invalidated by content, search, language, permissions and card identity', () => {
+test('search, language, permissions and draft selection redraw without re-decoding stored messages', () => {
   for (const change of [
     ui => {ui.state.smsQuery = 'Hello';},
     ui => {ui.state.language = 'zh';},
     ui => {ui.state.smsDeleteEnabled = true;},
-    ui => {ui.state.cardEpoch++;},
     ui => {ui.state.smsNewDraft = true;},
   ]) {
     const ui = harness();
-    ui.context.renderSms(inbox); change(ui); ui.context.renderSms(inbox);
-    assert.equal(ui.stats.parse, 2);
+    ui.context.renderSms(inbox);
+    const key = ui.state.smsRenderKey;
+    change(ui); ui.context.renderSms(inbox);
+    assert.notEqual(ui.state.smsRenderKey, key);
+    assert.equal(ui.stats.parse, 1);
   }
+});
+
+test('new inbox content or another card invalidates the parsed inbox', () => {
   const ui = harness(); ui.context.renderSms(inbox); ui.context.renderSms(inbox.replace('Hello', 'Changed'));
   assert.match(ui.element('#smsList').innerHTML, /Changed/);
   assert.equal(ui.stats.parse, 2);
+  const previous = ui.state.smsParsedInbox;
+  ui.state.cardEpoch++;
+  ui.context.renderSms(inbox.replace('Hello', 'Changed'));
+  assert.notEqual(ui.state.smsParsedInbox, previous);
+  assert.equal(ui.stats.parse, 3);
 });
 
 test('local sent messages and draft edits cannot be hidden by reuse', () => {
@@ -73,7 +83,7 @@ test('local sent messages and draft edits cannot be hidden by reuse', () => {
   assert.match(ui.element('#smsList').innerHTML, /Local reply/);
   ui.state.smsDrafts.set('10086', {message: 'Unsent draft', number: '10086'});
   ui.context.renderSms(inbox);
-  assert.equal(ui.stats.parse, 3);
+  assert.equal(ui.stats.parse, 1);
   assert.match(ui.element('#smsThreads').innerHTML, /Draft/);
 });
 
@@ -82,7 +92,7 @@ test('first successful empty read replaces the not-loaded placeholder', () => {
   const initial = ui.element('#smsList').innerHTML;
   ui.state.smsLastRead = 1;
   ui.context.renderSms('');
-  assert.equal(ui.stats.parse, 2);
+  assert.equal(ui.stats.parse, 1);
   assert.notEqual(ui.element('#smsList').innerHTML, initial);
 });
 

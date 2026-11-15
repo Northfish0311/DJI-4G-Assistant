@@ -11,6 +11,8 @@ tokenInput.addEventListener("change", () => {
   if (!nativeCompanion) localStorage.setItem("consoleToken", tokenInput.value.trim());
 });
 languageBtn.addEventListener("click", () => { state.language = state.language === "zh" ? "en" : "zh"; localStorage.setItem("uiLanguage", state.language); applyLanguage(); });
+document.querySelector("#nativeSmsBackBtn").hidden = false;
+document.querySelector("#nativeSmsBackBtn").addEventListener("click", returnToSmsThreads);
 if (nativeCompanion) {
   const details = document.querySelector("#nativeDeviceDetails");
   details.hidden = false;
@@ -18,8 +20,6 @@ if (nativeCompanion) {
   for (const id of ["vidPid", "atPort", "netState", "temperatureValue"]) {
     document.querySelector("#nativeDeviceMetrics").append(document.getElementById(id).closest(".metric"));
   }
-  document.querySelector("#nativeSmsBackBtn").hidden = false;
-  document.querySelector("#nativeSmsBackBtn").addEventListener("click", returnToSmsThreads);
   document.querySelector("#sms .sms-workspace").before(document.querySelector("#smsStorageWarning"));
   const networkDetails = document.querySelector("#nativeNetworkDetails");
   networkDetails.hidden = false;

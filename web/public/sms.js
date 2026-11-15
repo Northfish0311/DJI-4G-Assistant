@@ -95,20 +95,23 @@ function renderTraffic(text, freshSample = true) {
     repairButton: document.querySelector("#installEcmDriverBtn"),
     status: document.querySelector("#trafficStatus"),
   };
+  const show = (key, value) => {
+    if (ids[key].textContent !== value) ids[key].textContent = value;
+  };
   if (!adapter) {
-    ids.adapter.textContent = t("noAdapter");
-    for (const key of ["rxRate", "txRate", "rxSession", "txSession", "ipv4", "gateway", "dhcp"]) ids[key].textContent = "--";
-    ids.driver.textContent = t("driverMissing");
-    ids.driverBadge.textContent = t("driverMissing");
+    show("adapter", t("noAdapter"));
+    for (const key of ["rxRate", "txRate", "rxSession", "txSession", "ipv4", "gateway", "dhcp"]) show(key, "--");
+    show("driver", t("driverMissing"));
+    show("driverBadge", t("driverMissing"));
     ids.driverBadge.className = "driver-badge warning";
-    ids.driverDetail.textContent = t("noAdapter");
+    show("driverDetail", t("noAdapter"));
     ids.repairButton.dataset.driverReady = "0";
     ids.repairButton.dataset.driverEligible = "0";
-    ids.repairButton.textContent = t("repairDriver");
+    show("repairButton", t("repairDriver"));
     ids.repairButton.disabled = true;
     state.trafficPrevious = null;
     state.trafficBaseline = null;
-    ids.status.textContent = t("noAdapter");
+    show("status", t("noAdapter"));
     return true;
   }
   const rx = adapter.receivedBytes;
@@ -137,29 +140,29 @@ function renderTraffic(text, freshSample = true) {
   }
   state.trafficPrevious = statisticsReliable && connected ? { key, rx, tx, time: now, rxRate, txRate } : null;
   if (!statisticsReliable) state.trafficBaseline = null;
-  ids.adapter.textContent = `${adapter.description || adapter.name || t("unknown")} | ${adapter.status || "--"}`;
-  ids.rxRate.textContent = !state.trafficReadError && rxRate !== null ? formatBytes(rxRate, true) : "--";
-  ids.txRate.textContent = !state.trafficReadError && txRate !== null ? formatBytes(txRate, true) : "--";
-  ids.status.textContent = t(state.trafficReadError ? "trafficStale" : !connected ? "trafficDisconnected" : !statisticsReliable ? "trafficCountersUnavailable" : rxRate === null ? "trafficWaiting" : "trafficActive");
-  ids.rxSession.textContent = statisticsReliable ? formatBytes(rx - state.trafficBaseline.rx) : "--";
-  ids.txSession.textContent = statisticsReliable ? formatBytes(tx - state.trafficBaseline.tx) : "--";
-  ids.ipv4.textContent = adapter.ipv4 || "--";
-  ids.gateway.textContent = adapter.gateway || "--";
-  ids.driver.textContent = adapter.driverVersion || t("driverMissing");
-  ids.dhcp.textContent = adapter.dhcp || "--";
+  show("adapter", `${adapter.description || adapter.name || t("unknown")} | ${adapter.status || "--"}`);
+  show("rxRate", !state.trafficReadError && rxRate !== null ? formatBytes(rxRate, true) : "--");
+  show("txRate", !state.trafficReadError && txRate !== null ? formatBytes(txRate, true) : "--");
+  show("status", t(state.trafficReadError ? "trafficStale" : !connected ? "trafficDisconnected" : !statisticsReliable ? "trafficCountersUnavailable" : rxRate === null ? "trafficWaiting" : "trafficActive"));
+  show("rxSession", statisticsReliable ? formatBytes(rx - state.trafficBaseline.rx) : "--");
+  show("txSession", statisticsReliable ? formatBytes(tx - state.trafficBaseline.tx) : "--");
+  show("ipv4", adapter.ipv4 || "--");
+  show("gateway", adapter.gateway || "--");
+  show("driver", adapter.driverVersion || t("driverMissing"));
+  show("dhcp", adapter.dhcp || "--");
 
   const driverTargetPresent = Boolean(adapter.driverTargetPresent);
   const driverReady = Boolean(adapter.driverReady);
-  ids.driverBadge.textContent = driverReady ? t("driverReady") : driverTargetPresent ? t("driverOutdated") : t("driverMissing");
+  show("driverBadge", driverReady ? t("driverReady") : driverTargetPresent ? t("driverOutdated") : t("driverMissing"));
   ids.driverBadge.className = `driver-badge ${driverReady ? "ready" : "warning"}`;
-  ids.driverDetail.textContent = driverReady
+  show("driverDetail", driverReady
     ? t("driverReadyDetail", { version: adapter.driverVersion || "--", ip: adapter.ipv4 || "--" })
     : driverTargetPresent
       ? t("driverOutdatedDetail", { name: adapter.driverName || adapter.description || t("unknown"), version: adapter.driverVersion || "--" })
-      : t("driverUnsupportedDetail");
+      : t("driverUnsupportedDetail"));
   ids.repairButton.dataset.driverEligible = driverTargetPresent ? "1" : "0";
   ids.repairButton.dataset.driverReady = driverReady ? "1" : "0";
-  ids.repairButton.textContent = driverReady ? t("driverReady") : t("repairDriver");
+  show("repairButton", driverReady ? t("driverReady") : t("repairDriver"));
   ids.repairButton.disabled = state.busy || !state.driverInstallEnabled || !driverTargetPresent || driverReady;
   return true;
 }
@@ -266,7 +269,8 @@ function setSmsFeedback(key, tone = "neutral", params = {}) {
   state.smsFeedback = key ? { key, tone, params } : null;
   const element = document.querySelector("#smsComposeFeedback");
   element.hidden = !key;
-  element.textContent = key ? t(key, params) : "";
+  const cms = key === "smsRejected" && /^\+CMS ERROR:\s*(310|330|331|332|500)$/i.exec(params.reason || "");
+  element.textContent = key ? t(key, cms ? {...params, reason: t("smsCms" + cms[1]) + " (" + params.reason + ")"} : params) : "";
   element.dataset.tone = tone;
 }
 
@@ -407,17 +411,28 @@ function renderSmsNewMessages() {
   document.querySelector("#smsNewMessagesText").textContent = t("newSmsMessages", {count: state.smsPendingKeys.size});
 }
 
+function parsedSmsInbox(text) {
+  const cached = state.smsParsedInbox;
+  if (cached && cached.epoch === state.cardEpoch && cached.text === text) return cached;
+  const rows = parseSmsMessages(text).map(match => {
+    const [index, status, from, , time] = parseAtCsv(match[1]);
+    return {index, status, from, sender: normalizePhone(from || ""), time, body: decodeSmsBody(match[2])};
+  });
+  return state.smsParsedInbox = {epoch: state.cardEpoch, text, rows};
+}
+
 function renderSms(text, data = {}) {
   state.smsText = text;
   state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
   renderSmsStorage(state.smsStorage);
+  const inbox = parsedSmsInbox(text);
   const renderKey = () => JSON.stringify([
-    text, state.cardEpoch, state.language, state.smsQuery, state.smsActiveSender, state.smsNewDraft,
+    state.language, state.smsQuery, state.smsActiveSender, state.smsNewDraft,
     Boolean(state.smsLastRead), state.smsDeleteEnabled, state.smsSentThisSession, [...state.smsDrafts],
     document.querySelector("#smsMessageInput").value,
   ]);
   // A successful poll can update freshness without reparsing or measuring unchanged messages.
-  if (state.smsRenderKey === renderKey()) {
+  if (state.smsRenderedInbox === inbox && state.smsRenderKey === renderKey()) {
     updateSmsComposer(); renderSmsRefreshState(); renderSmsNewMessages();
     return;
   }
@@ -429,17 +444,20 @@ function renderSms(text, data = {}) {
   const listTop = list.getBoundingClientRect().top;
   const anchor = previousCards.find(card => card.getBoundingClientRect().bottom > listTop);
   const anchorOffset = anchor ? anchor.getBoundingClientRect().top - listTop : 0;
-  const matches = parseSmsMessages(text);
-  const storedSent = matches.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "sent").map(m => normalizePhone(parseAtCsv(m[1])[2]) + "\n" + decodeSmsBody(m[2]));
+  const matches = [...inbox.rows];
+  const storedSent = new Map();
+  for (const item of matches) if (item.status === "STO SENT") {
+    const key = item.sender + "\n" + item.body;
+    storedSent.set(key, (storedSent.get(key) || 0) + 1);
+  }
   for (const sent of state.smsSentThisSession) {
-    const key = sent.number + "\n" + sent.message, index = storedSent.indexOf(key);
-    if (index >= 0) {storedSent.splice(index, 1); continue;}
-    const match = ["", `local,"STO SENT","${sent.number}","","${sent.time}"`, sent.message];
-    match.local = true; matches.push(match);
+    const key = sent.number + "\n" + sent.message, copies = storedSent.get(key);
+    if (copies) {storedSent.set(key, copies - 1); continue;}
+    matches.push({index:"local", status:"STO SENT", from:sent.number, sender:sent.number, time:sent.time, body:sent.message, local:true});
   }
   const groups = new Map();
   for (const match of matches) {
-    const sender = normalizePhone(parseAtCsv(match[1])[2] || "");
+    const sender = match.sender;
     if (!groups.has(sender)) groups.set(sender, []);
     groups.get(sender).push(match);
   }
@@ -451,7 +469,7 @@ function renderSms(text, data = {}) {
   const threads = document.querySelector("#smsThreads");
   const query = state.smsQuery.trim(), pattern = smsSearchPattern(query);
   const containsQuery = value => !pattern || String(value).search(pattern) >= 0;
-  const filtered = [...groups].filter(([sender, messages]) => containsQuery(sender) || messages.some(m => containsQuery(decodeSmsBody(m[2]))) || containsQuery(state.smsDrafts.get(sender)?.message || ""));
+  const filtered = [...groups].filter(([sender, messages]) => containsQuery(sender) || messages.some(m => containsQuery(m.body)) || containsQuery(state.smsDrafts.get(sender)?.message || ""));
   const searchCount = document.querySelector("#smsSearchCount");
   searchCount.hidden = !state.smsLastRead && !text && !groups.size;
   searchCount.textContent = t(query ? "smsSearchCount" : "smsThreadCount", {visible: filtered.length, total: groups.size});
@@ -459,10 +477,10 @@ function renderSms(text, data = {}) {
   document.querySelector("#clearSmsSearchBtn").title = t("clearSearch");
   threads.className = "sms-threads" + (filtered.length ? "" : " empty");
   const threadHtml = filtered.map(([sender, messages]) => {
-    const unread = messages.filter(m => smsStatus(parseAtCsv(m[1])[1]).className === "unread").length;
+    const unread = messages.filter(m => m.status === "REC UNREAD").length;
     const draft = state.smsDrafts.get(sender)?.message;
-    const matching = query && messages.find(m => containsQuery(decodeSmsBody(m[2])));
-    const preview = matching ? decodeSmsBody(matching[2]) : query && draft && containsQuery(draft) ? draft : messages.length ? decodeSmsBody(messages.at(-1)[2]) : t("draftKept");
+    const matching = query && messages.find(m => containsQuery(m.body));
+    const preview = matching ? matching.body : query && draft && containsQuery(draft) ? draft : messages.length ? messages.at(-1).body : t("draftKept");
     return `<button class="sms-thread" data-sms-thread="${escapeHtml(sender)}" aria-pressed="${sender === state.smsActiveSender && !state.smsNewDraft}"><span class="thread-avatar" aria-hidden="true">${escapeHtml(sender.replace(/\D/g, "").slice(-2) || "SMS")}</span><span class="thread-copy"><strong>${highlightSmsText(sender || t("unknown"), query)}</strong><small>${highlightSmsText(smsSearchPreview(preview, query), query)}</small><em data-draft-for="${escapeHtml(sender)}" ${draft ? "" : "hidden"}>${t("draftLabel")}</em></span><span class="thread-count ${unread ? "has-unread" : ""}" aria-label="${escapeHtml(t(unread ? "unreadCount" : "conversationMessages", {count: unread || messages.length}))}">${unread || messages.length}</span></button>`;
   }).join("") || escapeHtml(query ? t("noMatchingThreads") : t(state.smsLastRead ? "smsNoConversations" : "noSms"));
   if (threads.dataset.markup !== threadHtml) {
@@ -481,25 +499,26 @@ function renderSms(text, data = {}) {
   document.querySelector("#smsConversationTitle").textContent = state.smsNewDraft ? t("newMessage") : (state.smsActiveSender || t("smsInbox"));
   list.className = "sms-list" + (visible.length ? "" : " empty");
   const markup = visible.map(match => {
-    const [index, rawStatus, sender, , receivedAt] = parseAtCsv(match[1]), status = smsStatus(rawStatus || "READ"), body = decodeSmsBody(match[2]), code = extractVerificationCode(body);
+    const {index, status: rawStatus, from: sender, time: receivedAt, body} = match;
+    const status = match.local ? {label: t("smsSubmitted"), className: "sent"} : smsStatus(rawStatus || "READ"), code = extractVerificationCode(body);
     const key = JSON.stringify([index, sender, receivedAt, body]);
-    return `<article data-sms-key="${escapeHtml(key)}" class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}"><div class="sms-card-head"><div class="sms-contact"><strong>${highlightSmsText(sender || t("unknown"), query)}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>${receivedAt ? `<time>${escapeHtml(receivedAt)}</time>` : ""}<p class="sms-body">${highlightSmsText(body, query)}</p>${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}<div class="sms-card-foot"><span>${escapeHtml(match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index}))}</span>${match.local ? "" : `<button class="secondary compact danger-text" data-sms-delete="${escapeHtml(index)}" ${state.smsDeleteEnabled ? "" : "disabled"}>${t("deleteSms")}</button>`}</div></article>`;
+    const stamp = /^(\d{2,4}\/\d{2}\/\d{2}),(\d{2}:\d{2}):\d{2}(?:[+-]\d{2})?$/.exec(receivedAt || "");
+    const time = receivedAt ? `<time title="${escapeHtml(receivedAt)}">${escapeHtml(stamp ? stamp[1] + " " + stamp[2] : receivedAt)}</time>` : "";
+    const label = match.local ? t("sentThisSession") : t("smsMessageNumber", {value:index});
+    const remove = !match.local && state.smsDeleteEnabled ? `<button class="secondary compact sms-remove" data-sms-delete="${escapeHtml(index)}" aria-label="${escapeHtml(t("deleteSms") + " · " + label)}" title="${escapeHtml(t("deleteSms"))}" ${state.busy ? "disabled" : ""}><i data-lucide="trash-2" aria-hidden="true"></i></button>` : "";
+    return `<article data-sms-key="${escapeHtml(key)}" class="sms-card ${["sent","unsent"].includes(status.className) ? "outgoing" : "incoming"}">
+      <div class="sms-card-head"><div class="sms-contact"><strong>${highlightSmsText(sender || t("unknown"), query)}</strong></div><span class="sms-status ${status.className}">${escapeHtml(status.label)}</span></div>
+      <p class="sms-body">${highlightSmsText(body, query)}</p>
+      ${code ? `<div class="sms-code"><span>${t("otpCode")}</span><strong>${escapeHtml(code)}</strong><button class="secondary compact" data-copy-code="${escapeHtml(code)}">${t("copyCode")}</button></div>` : ""}
+      <div class="sms-card-foot">${time}<span>${escapeHtml(label)}</span>${remove}</div></article>`;
   }).join("") || escapeHtml(state.smsNewDraft || state.smsDrafts.get(state.smsActiveSender)?.message ? t("newMessageHint") : state.smsLastRead || text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"));
   if (list.dataset.markup !== markup) {
     list.innerHTML = markup; list.dataset.markup = markup;
     for (const button of list.querySelectorAll("[data-copy-code]")) button.addEventListener("click", async () => {try {await navigator.clipboard.writeText(button.dataset.copyCode); button.textContent = t("copied");} catch {setSmsFeedback("copyCodeFailed", "error");}});
     for (const button of list.querySelectorAll("[data-sms-delete]")) {
       button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
-      if (nativeCompanion) {
-        button.title = t(state.smsDeleteEnabled ? "deleteSms" : "smsDeleteLocked");
-        button.setAttribute("aria-label", `${t("deleteSms")} · ${t("smsMessageNumber", {value: button.dataset.smsDelete})}`);
-        const icon = document.createElement("i");
-        icon.dataset.lucide = "trash-2";
-        icon.setAttribute("aria-hidden", "true");
-        button.replaceChildren(icon);
-      }
     }
-    if (nativeCompanion) window.lucide?.createIcons();
+    if (state.smsDeleteEnabled) window.lucide?.createIcons({root: list});
     const currentCards = [...list.querySelectorAll("[data-sms-key]")];
     if (sameConversation && !wasAtBottom) {
       const keys = new Set(currentCards.map(card => card.dataset.smsKey));
@@ -512,6 +531,7 @@ function renderSms(text, data = {}) {
   }
   updateSmsComposer(); renderSmsRefreshState(); renderSmsNewMessages();
   state.smsRenderKey = renderKey();
+  state.smsRenderedInbox = inbox;
 }
 
 function selectSmsConversation(sender) {
@@ -522,10 +542,11 @@ function selectSmsConversation(sender) {
   document.querySelector("#smsMessageInput").value = draft?.message ?? "";
   setSmsFeedback(null); renderSms(state.smsText);
   setNativeSmsPane(true);
-  if (nativeCompanion) resetViewScroll();
+  const singlePane = nativeCompanion || Boolean(document.querySelector("#nativeSmsBackBtn").getClientRects().length);
+  if (singlePane) resetViewScroll();
   const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
   scrollToSmsSearchMatch();
-  document.querySelector(sender === null ? "#smsNumberInput" : nativeCompanion ? "#smsConversationTitle" : "#smsMessageInput").focus({preventScroll: nativeCompanion});
+  document.querySelector(sender === null ? "#smsNumberInput" : singlePane ? "#smsConversationTitle" : "#smsMessageInput").focus({preventScroll: singlePane});
 }
 
 function scrollToSmsSearchMatch() {
@@ -538,13 +559,11 @@ function scrollToSmsSearchMatch() {
 }
 
 function setNativeSmsPane(open) {
-  if (!nativeCompanion) return;
   state.smsConversationOpen = open;
   document.querySelector("#sms").classList.toggle("native-sms-detail", open);
 }
 
 function returnToSmsThreads() {
-  if (!nativeCompanion) return;
   saveSmsDraft();
   setNativeSmsPane(false);
   renderSms(state.smsText);
@@ -558,24 +577,34 @@ async function sendSmsMessage() {
   const number = normalizePhone(document.querySelector("#smsNumberInput").value), message = document.querySelector("#smsMessageInput").value.trim();
   if (!state.smsSendEnabled) {setSmsFeedback("smsSendLocked", "error"); return;}
   if (!/^\+?[0-9]{3,20}$/.test(number) || !message || message.length > 480) {setSmsFeedback("invalidSms", "error"); return;}
-  const epoch = state.cardEpoch, key = smsDraftKey();
+  const epoch = state.cardEpoch, key = smsDraftKey(), targetPort = state.atPort;
   if (!await confirmOperation({title:t("sendSms"), description:t("smsConfirmDescription"), details:[[t("recipient"), number], [t("message"), message]], confirmLabel:t("sendSms")})) return;
   if (epoch !== state.cardEpoch) {setSmsFeedback("cardChangedRetry", "error"); return;}
   state.smsSending = true; setBusy(true, "sendSms"); setSmsFeedback("smsSending", "working", {number});
+  let posted = false;
   try {
     const found = await requestAction("find-at"); updateSummary(found.text);
-    if (!state.atPort || epoch !== state.cardEpoch) throw new Error("Card unavailable");
-    const res = await fetch(`/api/sms-send?port=${encodeURIComponent(state.atPort)}`, {method:"POST", headers:apiHeaders({"content-type":"application/json"}), body:JSON.stringify({number, message, confirm:"SEND"})});
-    const data = await res.json(); append(t("sendSms"), textFromResult(data) || JSON.stringify(data));
-    if (!res.ok || data.ok === false) throw new Error(data.error || "Send failed");
     if (epoch !== state.cardEpoch) return;
+    if (!targetPort || state.atPort !== targetPort) {setSmsFeedback("cardChangedRetry", "error"); return;}
+    posted = true;
+    const res = await fetch(`/api/sms-send?port=${encodeURIComponent(state.atPort)}`, {method:"POST", headers:apiHeaders({"content-type":"application/json"}), body:JSON.stringify({number, message, confirm:"SEND"})});
+    const data = await res.json();
+    if (epoch !== state.cardEpoch) return;
+    append(t("sendSms"), textFromResult(data) || data.status || t("smsUnknown"));
+    if (!res.ok || data.ok !== true || data.status !== "submitted") {
+      const params = {reason: data.modemError || "ERROR", submitted: data.submittedSegments, total: data.totalSegments};
+      const key = res.status === 401 ? "tokenRequired" : res.status === 403 ? "smsSendLocked" : res.status === 400 ? "invalidSms"
+        : data.status === "rejected" ? "smsRejected" : data.status === "not-submitted" ? "smsBeforeSubmit"
+        : Number.isInteger(data.submittedSegments) ? "smsUnknownParts" : "smsUnknown";
+      setSmsFeedback(key, "error", params); return;
+    }
     state.smsSentThisSession.push({number, message, time:new Date().toLocaleTimeString()});
     if (state.smsDrafts.get(key)?.message.trim() === message) state.smsDrafts.delete(key);
     if (smsDraftKey() === key && document.querySelector("#smsMessageInput").value.trim() === message && normalizePhone(document.querySelector("#smsNumberInput").value) === number) {
       document.querySelector("#smsMessageInput").value = ""; state.smsActiveSender = number; state.smsNewDraft = false;
     }
     renderSms(state.smsText); setSmsFeedback("smsSentTo", "success", {number});
-  } catch (error) {if (epoch === state.cardEpoch) setSmsFeedback("smsSendFailedDraft", "error"); append(t("sendSms"), error.message);}
+  } catch (error) {if (epoch === state.cardEpoch) {setSmsFeedback(posted ? "smsUnknown" : "smsSendFailedDraft", "error"); append(t("sendSms"), error.message);}}
   finally {state.smsSending = false; setBusy(false);}
 }
 

@@ -61,6 +61,18 @@ test("traffic speed waits for two samples, uses byte deltas and survives a langu
   assert.equal(ui.text("#trafficStatus"), "Live USB adapter statistics");
 });
 
+test("traffic samples leave unchanged labels alone but update a changed gateway", () => {
+  const ui = summaryHarness(), gateway = ui.element("#trafficGateway");
+  let text = "", writes = 0;
+  Object.defineProperty(gateway, "textContent", {get: () => text, set: value => {text = value; writes++;}});
+  for (let i = 0; i < 12; i++) ui.renderTraffic(trafficSample({sampledAt: 10000 + i * 1000, receivedBytes: 1000 + i * 50, gateway: "192.0.2.1"}));
+  assert.equal(writes, 1);
+  assert.equal(ui.text("#trafficRxRate"), "50 B/s");
+  ui.renderTraffic(trafficSample({gateway: "192.0.2.9"}));
+  assert.equal(writes, 2);
+  assert.equal(text, "192.0.2.9");
+});
+
 test("traffic resets without spikes on source changes, disconnects or counter resets", () => {
   for (const changes of [
     { statisticsSource: "adapter" }, { interfaceIndex: 12 }, { receivedBytes: 2000 }, { sentBytes: 1000 },

@@ -660,47 +660,35 @@ function buildSmsPdus(number, message) {
   });
 }
 
-function sendSms(portName, number, message) {
-  const payload = Buffer.from(JSON.stringify({ pdus: buildSmsPdus(number, message) }), "utf8").toString("base64");
-  const ps = `
-$payload = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('${payload}')) | ConvertFrom-Json
-$sp = New-Object System.IO.Ports.SerialPort '${portName.replace(/'/g, "''")}',115200,'None',8,'One'
-$sp.ReadTimeout = 1800
-$sp.WriteTimeout = 1800
-$sp.NewLine = "\`r"
-function Read-Until([string]$pattern, [int]$seconds) {
-  $out = ''
-  $deadline = (Get-Date).AddSeconds($seconds)
-  while ((Get-Date) -lt $deadline) {
-    $out += $sp.ReadExisting()
-    if ($out -match $pattern) { return $out }
-    Start-Sleep -Milliseconds 120
+function smsSubmitResult(run, total) {
+  let reply;
+  if (run.ok) {
+    try { reply = JSON.parse(run.stdout); } catch { /* No trustworthy submission receipt. */ }
   }
-  return $out
+  const count = reply?.submittedSegments;
+  const valid = reply?.totalSegments === total && Number.isInteger(count) && count >= 0 && count <= total
+    && (reply.status === "submitted" ? count === total
+      : ["not-submitted", "rejected", "unconfirmed"].includes(reply.status) && count < total);
+  const status = valid ? reply.status : "unconfirmed";
+  const modemError = status === "rejected" && typeof reply?.modemError === "string" && /^(?:ERROR|\+CM[ES] ERROR\s*:[^\x00-\x1f\x7f]{0,108})$/i.test(reply.modemError) ? reply.modemError : null;
+  const note = status === "submitted" ? "Submitted to the modem; delivery is not confirmed."
+    : status === "rejected" ? `The modem rejected the SMS: ${modemError || "ERROR"}.`
+    : status === "not-submitted" ? "The modem did not accept the next SMS segment for submission."
+    : "Submission could not be confirmed. Check before resending.";
+  const detail = valid ? `${note} Confirmed segments: ${count}/${total}.` : note;
+  return {ok: status === "submitted", status, totalSegments: total, submittedSegments: valid ? count : null, modemError,
+    ...(valid && reply.cleanupFailed ? {portCleanupFailed: true} : {}),
+    ...(status === "submitted" ? {stdout: detail} : {error: detail})};
 }
-try {
-  $sp.Open()
-  $sp.DiscardInBuffer()
-  $sp.WriteLine('AT+CMGF=0')
-  $mode = Read-Until '(\\r|\\n)(OK|ERROR)(\\r|\\n)' 8
-  if ($mode -notmatch '(\\r|\\n)OK(\\r|\\n)') { throw 'The modem did not accept SMS PDU mode.' }
-  $segment = 0
-  foreach ($item in $payload.pdus) {
-    $segment += 1
-    $sp.DiscardInBuffer()
-    $sp.WriteLine(('AT+CMGS={0}' -f $item.length))
-    $prompt = Read-Until '>' 10
-    if ($prompt -notmatch '>') { throw ('The modem did not present an SMS prompt for segment {0}.' -f $segment) }
-    $sp.Write([string]$item.pdu)
-    $sp.Write([char]26)
-    $sent = Read-Until '(\\r|\\n)(OK|ERROR)(\\r|\\n)' 60
-    if ($sent -notmatch '(\\r|\\n)OK(\\r|\\n)') { throw ('The modem rejected SMS segment {0} or did not finish in time.' -f $segment) }
-    ('SMS segment {0}/{1} accepted by modem.' -f $segment, $payload.pdus.Count)
-  }
-} finally {
-  if ($sp.IsOpen) { $sp.Close() }
-}`;
-  return enqueueSerial(() => runPowerShell(["-Command", ps], 90000));
+
+function sendSms(portName, number, message) {
+  const pdus = buildSmsPdus(number, message);
+  const payload = Buffer.from(JSON.stringify({pdus}), "utf8").toString("base64");
+  return enqueueSerial(async () => {
+    // Each segment has its own prompt and network acknowledgement deadlines.
+    const run = await runPowerShell(["-File", script("send-sms.ps1"), portName, payload], 20000 + 75000 * pdus.length);
+    return smsSubmitResult(run, pdus.length);
+  });
 }
 
 function ussdCode(value) {
@@ -2312,4 +2300,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };
+module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, smsSubmitResult, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };

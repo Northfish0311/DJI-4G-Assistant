@@ -134,10 +134,25 @@ test("prefers a Wi-Fi console URL over the modem ECM subnet", () => {
   }
 });
 
-test("matches PowerShell SMS responses with regex newline escapes", () => {
+test("sender passes structured PDU segments to the packaged PowerShell helper inside the serial queue", async () => {
   const source = fs.readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
-  const responsePattern = "Read-Until '(\\\\r|\\\\n)(OK|ERROR)(\\\\r|\\\\n)'";
-  assert.equal(source.split(responsePattern).length - 1, 2);
+  let queued = false, invoked = false;
+  const ctx = vm.createContext({Buffer, buildSmsPdus, smsSubmitResult: require("../web/server").smsSubmitResult,
+    script: name => path.join(__dirname, "../scripts/windows", name),
+    enqueueSerial: fn => {queued = true; return fn();},
+    runPowerShell(args, timeout) {
+      assert.equal(queued, true); assert.equal(args[0], "-File");
+      assert.equal(path.basename(args[1]), "send-sms.ps1"); assert.ok(fs.existsSync(args[1]));
+      assert.equal(args[2], "COM9");
+      const parts = JSON.parse(Buffer.from(args[3], "base64").toString("utf8")).pdus;
+      assert.equal(parts.length, 2); assert.ok(parts.every(x => /^[0-9A-F]+$/.test(x.pdu)));
+      assert.ok(timeout >= 2 * 70000);
+      invoked = true;
+      return {ok:true, stdout:JSON.stringify({status:"submitted",submittedSegments:2,totalSegments:2})};
+    }});
+  vm.runInContext(source.slice(source.indexOf("function sendSms("), source.indexOf("function ussdCode(")), ctx);
+  assert.equal((await ctx.sendSms("COM9", "10086", "A".repeat(100))).status, "submitted");
+  assert.equal(invoked,true);
 });
 
 

@@ -7,6 +7,7 @@ const {spawnSync} = require("node:child_process");
 async function smoke() {
   const resources = process.env.ROAMDOCK_RESOURCE_ROOT;
   const app = path.join(resources, "app.asar");
+  assert.ok(fs.statSync(path.join(resources, "scripts", "windows", "send-sms.ps1")).size > 0, "The packaged SMS worker must exist outside app.asar");
   const expected = process.env.PACKAGE_EXPECTED_VERSION;
   assert.equal(require(path.join(app, "package.json")).version, expected);
   const usb = require(path.join(app, "node_modules", "usb"));
