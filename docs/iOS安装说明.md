@@ -1,18 +1,14 @@
 # iPhone / iPad 远程管理（实验性）
 
-**当前提供未签名测试包，可自行用免费 Apple ID 自签安装。** 下载页：[ios-remote-v1.0.2](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)，文件为 `DJI-4G-Assistant-iOS-Unsigned.ipa`。它没有签名，必须用 Sideloadly 之类的工具配合你自己的 Apple ID 现场签名；免费账号签出的 App **7 天后失效**，最多同时安装 3 个。不装 App 也可以随时用 Safari 打开 Windows 助手“系统”页显示的局域网地址，电脑和手机需连接同一可信 Wi-Fi，按提示输入控制密码。
+**日常使用推荐 Safari，不用签名或安装 App。** 模块插在 Windows，打开助手并保持运行。iPhone/iPad 连到同一可信 Wi-Fi，在 Safari 输入电脑助手「系统」页显示的局域网地址（含端口），按提示输入控制密码。不要输入手机自己的 `127.0.0.1`。
 
-**更稳定的安装方式：TestFlight。** 目前仍在准备发布条件，尚无邀请链接。开放后用户通过 Apple 官方 TestFlight 接受邀请并安装，不用自己给 IPA 签名。见 [TestFlight 安装与发布](TestFlight发布说明.md)。在 TestFlight 开放前，只能按下面的自签步骤安装。
+**想试原生 App：** [打开 iOS 远程版 1.0.2 发布页](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)。真机选 `DJI-4G-Assistant-iOS-Unsigned.ipa`，最低 iOS/iPadOS 16；下载后不能直接点开安装，需要按下文自行签名。`Simulator.zip` 仅供 Mac 模拟器。**目前没有公开 TestFlight 邀请链接。**
 
-## 先看这一段
-
-这是电脑助手的手机和平板遥控端，不是模块直插手机的驱动。模块插在 Windows 上，电脑助手保持运行；手机和平板连接同一可信局域网后扫码配对。日常使用不需要把模块改成其他 USB 模式。
-
-首次安装 App 仍需要有效签名。没有已签名 App 时，可以先在 Safari 打开电脑助手显示的局域网管理地址，不必为了网页管理安装 App。不要输入手机自己的 `127.0.0.1`。
+两种方式都管理插在 Windows 上的模块，不是手机或平板的 USB 直插管理版。
 
 ## v1.0.2 改进
 
-- 配合 Windows 1.7.4，手机使用五个底部入口，iPad 使用左侧导航；短信可在列表和正文间返回，eSIM 空间、拨号盘和实时流量重新排版。配对页仍使用原生 iOS 控件。
+- 管理页由所连接的 Windows 助手提供；升级电脑端并重新连接即可加载对应页面。只有配对页由原生 iOS 客户端提供。
 - 在正常页面点“更多 → 重新载入”会先确认，提醒未发送短信和未保存输入将丢失；取消就留在原页面。正常切回 App 不主动刷新页面。
 - 页面加载失败最多自动重试三次，间隔为 2、4、8 秒；切回前台不会重置重试次数。主页面返回 401/403 时停止自动重试并提示授权错误，不把错误页面显示成“已连接”。这些检查针对页面加载，不代表模块已经注册网络。
 - 重新连接和退出时解除旧网页的回调，避免旧页面覆盖新的连接状态。不会自动重发短信、删除或切换套餐。
@@ -27,9 +23,7 @@ Windows 本机不能运行 Xcode；发布流程使用云端 Mac 编译，运行�
 
 **模块直插 iPhone / iPad、无需 Windows 的独立管理 App 尚未实现。** 这是后续需要验证的目标，不是当前版本已有功能。现有 `ios/` 源码和 iOS 构建产物均不具备该能力。
 
-远程客户端会继续开发完善，直插独立版也保留为后续方向。前者用于从手机或平板管理电脑连接的模块，后者目标是离开电脑使用；两者分别说明进度，不以远程客户端的完成代替直插版。
-
-本文只供开发者测试已有的实验性远程客户端。它通过局域网连接 Windows 主机，扫码配对后显示管理界面，控制密码保存在 Apple Keychain。模块必须插在 Windows 电脑上，电脑保持运行。普通 Windows 用户无需安装它；手机和平板远程访问可使用浏览器。
+此页的安装步骤适用于现有实验性远程客户端，不代表直插版已发布，也不承诺后续发布时间。
 
 ## 先理解连接方式
 
@@ -51,7 +45,7 @@ Apple 要求 iPhone/iPad App 必须经过有效代码签名。仓库没有保存
 | **DJI-4G-Assistant-iOS-Simulator.zip** | 只给 Mac 上的 iOS Simulator 测试，不能安装到真实 iPhone/iPad |
 | **DJI-4G-Assistant-iOS-SHA256SUMS.txt** | 校验上面两个文件是否完整 |
 
-从 [Releases 的 ios-remote-v1.0.2](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2) 下载上面这几个文件。仓库不保存任何 Apple 证书，所以包里永远是未签名版本，签名这一步只能在你自己电脑上完成。GitHub Actions 的产物有保留期限，需要长期可用的包时请以 Releases 为准。
+真机测试只需从上述发布页下载 IPA；需要核对文件时再下载校验文件。只用 Safari 的用户一个文件也不用下载。
 
 ## 开发测试：安装远程客户端
 

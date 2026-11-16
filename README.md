@@ -4,7 +4,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 **当前主攻 Windows 版，不开发 Mac 版。** 手机和平板可以通过同一局域网访问 Windows 助手；模块仍插在 Windows 电脑上。
 
-**iPhone / iPad 直插独立管理版尚未提供，当前暂停开发。** 已发布的实验性 iOS 远程客户端同样依赖 Windows，不能直接管理插在手机或平板上的模块。iOS 暂停新增开发和发布，已有资料仅供实验参考。
+**安卓、iPhone 和 iPad 都可以用浏览器远程管理，无需装 App。** 模块插在 Windows 电脑上，助手保持运行；目前没有把模块直接插在手机或平板上就能管理短信、eSIM 的独立版。
 
 这是目前唯一维护的完整版本。
 
@@ -19,8 +19,8 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 | 设备 | 下载与使用 |
 | --- | --- |
 | Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |
-| 安卓手机/平板 | 用浏览器打开 Windows 助手显示的局域网地址。旧 APK 发布页已不可用；原生客户端资料见[安卓中文说明](docs/Android使用说明.md) |
-| iPhone/iPad | 用 Safari 打开 Windows 助手显示的局域网地址。旧 IPA 发布页已不可用；TestFlight 尚未开放邀请 |
+| 安卓手机/平板 | 推荐用浏览器。安卓远程客户端源码为 0.2.0，目前没有公开 APK。[安卓使用说明](docs/Android使用说明.md) |
+| iPhone/iPad | 推荐用 Safari。iOS/iPadOS 16 及以上可选用 [1.0.2 实验版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)，真机 IPA 须自行签名，无公开 TestFlight 邀请。[iOS 安装说明](docs/iOS安装说明.md) |
 
 **手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
 
@@ -111,31 +111,13 @@ Windows 本机直接使用桌面窗口。同一可信 Wi-Fi 下的手机、平�
 
 桌面版第一次运行会为当前 Windows 用户生成一个随机控制密码，并只保存在应用数据目录。它会在以后启动时继续使用，让 iPhone/iPad 配对一次后无需每次重扫。源码版 Start-Web-Console.cmd 仍为每次启动生成临时密码。
 
-### 安卓远程管理
+### 手机怎么连
 
-**旧安卓测试包已从 Releases 移除，目前只发布最新 Windows 版。** 安卓用户可在同一可信 Wi-Fi 下，用浏览器打开 Windows 助手“系统”页显示的局域网地址；按提示输入控制密码。已有安卓 0.2.0 客户端仍可尝试连接，但真实手机扫码与模块操作未全面验证。[历史测试与开发说明](docs/Android使用说明.md)。
+1. 把模块插到 Windows，打开助手并保持运行。让手机和电脑接入同一可信局域网。
+2. 在 Windows 助手「系统」页找到**局域网地址**（含端口）。在安卓浏览器或 iPhone/iPad 的 Safari 输入这个地址，按提示输入控制密码。地址由你的电脑决定，不是统一网址。
+3. 已安装实验性 App 的用户可改用扫码：打开 Windows 顶部「连接手机 / 平板」，再用 **App 内的扫码按钮**配对。配对后的管理页面来自 Windows；通常更新电脑端并重新连接即可看到新版页面。
 
-这是调试签名测试包。若旧测试版提示签名冲突，需卸载旧版后重新安装并扫码，手机保存的配对信息会清除，不会删除模块里的套餐。**模块仍插在 Windows 电脑上，不是安卓 USB 直插版。配对后的新版管理页面由 Windows 1.7.4 提供，已有安卓 0.2.0 无需重装，重新连接即可。**
-
-Windows 顶部的“连接手机 / 平板”二维码由 Android 和 iOS 客户端共用。网络、短信和 eSIM 能力由电脑助手提供；通话声音不传到安卓手机。
-
-### iPhone / iPad 支持状态
-
-**旧 iOS 测试包已从 Releases 移除。** 普通用户使用 Safari 访问 Windows 助手的局域网地址即可；源码和[历史开发说明](docs/iOS安装说明.md)保留。通话声音仍在 Windows 电脑处理，不是 USB 直插独立管理版。
-
-**TestFlight 尚未开放邀请，iOS 当前暂停新增开发和发布。** GitHub 的未签名 IPA 不是 TestFlight 安装包；普通用户可以直接用 Safari 访问 Windows 助手，无需安装实验性客户端。此前准备资料保留在 [TestFlight 说明](docs/TestFlight发布说明.md)。
-
-| 使用方式 | 模块插在哪里 | 当前状态 |
-| --- | --- | --- |
-| 手机或平板浏览器远程管理 | Windows 电脑 | 已提供，电脑需保持运行 |
-| iPhone/iPad App 远程管理 | Windows 电脑 | 已有实验性客户端，暂停新增开发 |
-| iPhone/iPad App 直插独立管理 | iPhone 或 iPad | 尚未提供，暂停开发 |
-
-**模块直插、独立管理：尚未实现，也没有可供普通用户安装的直插版 App。** iPhone 和 iPad 的设备访问能力需要分别验证，当前不承诺支持范围或完成时间。
-
-现有 `ios/` 和 **Build iOS companion** 构建产物属于实验性远程客户端，管理的是插在 Windows 上的模块。Windows 必须保持运行；电话控制可远程操作，通话声音仍在 Windows 端处理。签名或安装这些产物不会增加模块直插管理能力。
-
-普通用户远程管理可直接使用浏览器，无需安装上述实验客户端。开发测试步骤单独保留在 [iOS 状态与实验性远程客户端](docs/iOS安装说明.md)。模块直插后能够上网，不代表 App 已能读取短信、管理 eSIM 或接打电话。
+手机能远程操作电脑端已开放的功能，但通话声音留在 Windows。模块直插手机能上网，不等于 App 能读短信或管理 eSIM。
 
 **127.0.0.1** 永远表示当前设备自己，不能把电脑上的本机地址原样输入手机。不要把管理端口映射到公网或无认证隧道。
 
@@ -259,7 +241,7 @@ npm run build
 
 DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. The experimental SwiftUI iPhone/iPad remote companion remains an ongoing development direction: it discovers the Windows host over Bonjour, pairs by QR code, stores the token in Keychain, and opens its management interface. The modem must be connected to Windows, which must remain running and handles USB call audio. A standalone app managing a modem plugged directly into an iPhone or iPad is a separate planned direction and is not implemented; device access and compatibility still need verification. Provider data allowance still requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. Android and iOS users can open the Windows console in a browser on the same trusted LAN. Android 0.2.0 is available as source, not as a public APK. The [iOS 1.0.2 prerelease](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2) includes an unsigned IPA that requires signing before installation. Neither companion manages a modem plugged directly into the phone or tablet. Windows hosts the modem and handles USB call audio. Provider data allowance still requires a provider API.
 
 ## License
 
