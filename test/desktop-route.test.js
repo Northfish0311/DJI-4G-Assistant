@@ -58,3 +58,18 @@ test("the helper invocation is bounded and keeps room for diagnostics", ()=>{
   // 4 KiB was small enough for one PowerShell warning to look like a generic failure.
   assert.match(source, /maxBuffer:\s*16384/);
 });
+
+test("the console publishes its version and API level", async()=>{
+  const {server, startServer, stopServer} = require("../web/server");
+  // Reuse the exported helpers instead of binding a port: they are the same code path.
+  const packageVersion = JSON.parse(require("node:fs").readFileSync(path.join(__dirname, "../package.json"), "utf8")).version;
+  assert.match(packageVersion, /^\d+\.\d+\.\d+$/);
+  const source = require("node:fs").readFileSync(path.join(__dirname, "../web/server.js"), "utf8");
+  assert.match(source, /version: APP_VERSION/);
+  assert.match(source, /apiVersion: CONSOLE_API_VERSION/);
+  const client = require("node:fs").readFileSync(path.join(__dirname, "../web/public/api.js"), "utf8");
+  const serverLevel = /const CONSOLE_API_VERSION = (\d+);/.exec(source);
+  const clientLevel = /const CONSOLE_API_VERSION = (\d+);/.exec(client);
+  assert.ok(serverLevel && clientLevel, "both sides must declare an API level");
+  assert.equal(serverLevel[1], clientLevel[1], "server and page API levels drifted apart");
+});

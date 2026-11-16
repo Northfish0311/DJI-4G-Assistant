@@ -226,7 +226,7 @@ Object.assign(copy.en, {
 Object.assign(copy.zh, {
   measuredAdapter:"正在统计的网卡", defaultIpv4:"Windows 默认 IPv4 出口", routeAbsent:"无默认路由", routeUnavailable:"暂时无法读取", routeTie:"同优先级：{names}",
   revealIds:"显示卡号", hideIds:"隐藏卡号", olderSms:"更早的短信（还有 {count} 条）", micSignal:"麦克风输入", modemSignal:"模块返回声音", audioSignal:"有信号", audioQuiet:"暂未测到声音", meterUnavailable:"无法测量",
-  preferWifi:"优先使用 Wi-Fi", restoreRoute:"恢复原优先级", routeWorking:"正在检查 Windows 网络设置…",
+  apiVersionMismatch:"当前页面需要 API {expected}，电脑端是 {app}（API {api}）。请先强制刷新页面；仍然提示就升级两端的程序。", preferWifi:"优先使用 Wi-Fi", restoreRoute:"恢复原优先级", routeWorking:"正在检查 Windows 网络设置…",
   routeSaved:"已核对大疆网卡的优先级。实际默认出口见上方；Wi-Fi 断开时仍可能使用 4G。", routeRestored:"已恢复这块网卡原先的自动或手动优先级。",
   routeResult10:"请先插入支持的 Quectel ECM 大疆模块；没有修改设置。", routeResult11:"检测到多个匹配的模块，仅保留要设置的那一个后再试。",
   routeResult12:"请先连接有 IPv4 默认路由的 Wi-Fi。", routeResult13:"这块网卡没有可恢复的备份。", routeResult14:"网卡在操作期间发生变化，请重新检查连接。",
@@ -236,7 +236,7 @@ Object.assign(copy.zh, {
 Object.assign(copy.en, {
   measuredAdapter:"Measured adapter", defaultIpv4:"Windows default IPv4 route", routeAbsent:"No default route", routeUnavailable:"Unavailable", routeTie:"Equal priority: {names}",
   revealIds:"Show numbers", hideIds:"Hide numbers", olderSms:"Earlier messages ({count} more)", micSignal:"Microphone input", modemSignal:"Audio from modem", audioSignal:"Signal present", audioQuiet:"No signal detected", meterUnavailable:"Unavailable",
-  preferWifi:"Prefer Wi-Fi", restoreRoute:"Restore original priority", routeWorking:"Checking Windows network settings…",
+  apiVersionMismatch:"This page expects console API {expected} but the computer runs {app} with API {api}. Hard-refresh the page; if it persists, upgrade the app on both sides.", preferWifi:"Prefer Wi-Fi", restoreRoute:"Restore original priority", routeWorking:"Checking Windows network settings…",
   routeSaved:"Dongle metrics verified. See the default route above. Windows may still use 4G if Wi-Fi disconnects.", routeRestored:"Original interface metrics restored.",
   routeResult10:"Connect a supported Quectel ECM dongle first. No settings changed.", routeResult11:"Connect only the intended dongle.", routeResult12:"Connect Wi-Fi with an IPv4 default route first.",
   routeResult13:"No saved settings for this adapter.", routeResult14:"The adapter changed. Check the connection.", routeResult15:"Cancelled. No settings changed.",

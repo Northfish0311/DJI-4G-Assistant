@@ -12,6 +12,16 @@ const { parseVoiceNetwork } = require("./voice-network");
 const { createSerialQueue } = require("./serial-queue");
 const { createPowerShellHost } = require("./powershell-host");
 const { createNetworkSampler } = require("./network-sampler");
+// The page is served by this server, so a mismatch only happens with a stale cached
+// page or an older companion app; both are worth naming instead of debugging blind.
+const APP_VERSION = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8")).version || "unknown";
+  } catch {
+    return "unknown";
+  }
+})();
+const CONSOLE_API_VERSION = 2;
 let defaultRouteCache, defaultRoutePending;
 async function invalidateDefaultRoute() {
   if (defaultRoutePending) await defaultRoutePending.catch(() => {});
@@ -1252,6 +1262,10 @@ async function handleApi(req, res, url) {
     sendJson(res, 200, {
       ok: true,
       name: "DJI 4G Assistant for Windows",
+      version: APP_VERSION,
+      // Bumped whenever the console API changes shape. Clients compare it instead of
+      // guessing from a failed request why the page and the server disagree.
+      apiVersion: CONSOLE_API_VERSION,
       time: new Date().toISOString(),
       host: os.hostname(),
       ...consoleAddresses(),

@@ -14,7 +14,8 @@ async function requestAction(action, {refreshDetails = false, startup = false} =
   const epoch = state.cardEpoch, portName = portInput.value.trim(), selectedAid = state.activeAid, selectedEid = state.activeEid;
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
-  const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, "module-temperature": `/api/module-temperature?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}&brief=1`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
+  const CONSOLE_API_VERSION = 2;
+const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, "module-temperature": `/api/module-temperature?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}&brief=1`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const cardScoped = !["health", "ports", "device-check", "windows-network", "network-traffic", "stock-module-probe"].includes(action);
   const stale = () => cardScoped && (epoch !== state.cardEpoch || (action !== "find-at" && portName !== portInput.value.trim()) || (action.startsWith("lpac-") && (selectedAid !== state.activeAid || selectedEid !== state.activeEid)));
   let data;
@@ -40,6 +41,14 @@ async function requestAction(action, {refreshDetails = false, startup = false} =
 }
 
 function applyHealth(data) {
+  // Must match CONSOLE_API_VERSION in web/server.js. A page restored from the browser
+  // cache after an upgrade talks to a newer server, which is exactly when "some button
+  // silently does nothing" happens; name it instead of leaving it to guesswork.
+  const serverApi = Number(data.apiVersion);
+  if (Number.isInteger(serverApi) && serverApi !== CONSOLE_API_VERSION && !state.apiVersionWarned) {
+    state.apiVersionWarned = true;
+    showFeedback(t("apiVersionMismatch", {app: data.version || "?", api: serverApi, expected: CONSOLE_API_VERSION}), "warn");
+  }
   state.accessMode = data.accessMode || "lan";
   state.pairingAvailable = data.pairingAvailable;
   state.authRequired = Boolean(data.authRequired); state.dangerousAtEnabled = Boolean(data.dangerousAtEnabled); state.profileActionsEnabled = Boolean(data.profileActionsEnabled); state.profileDownloadEnabled = Boolean(data.profileDownloadEnabled); state.profileNicknameEnabled = Boolean(data.profileNicknameEnabled); state.profileNotificationsEnabled = Boolean(data.profileNotificationsEnabled); state.profileDeleteEnabled = Boolean(data.profileDeleteEnabled); state.smsSendEnabled = Boolean(data.smsSendEnabled); state.smsDeleteEnabled = Boolean(data.smsDeleteEnabled); state.callActionsEnabled = Boolean(data.callActionsEnabled); state.ussdEnabled = Boolean(data.ussdEnabled); state.usbModeEnabled = Boolean(data.usbModeEnabled); state.stockBootstrapEnabled = Boolean(data.stockBootstrapEnabled); state.driverInstallEnabled = Boolean(data.driverInstallEnabled); state.voiceRuntimeEnabled = Boolean(data.voiceRuntimeEnabled); state.primaryUrl = data.primaryUrl || "";
