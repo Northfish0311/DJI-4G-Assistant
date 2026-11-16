@@ -19,7 +19,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 | 设备 | 下载与使用 |
 | --- | --- |
 | Windows 电脑 | [Windows 版本](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)，下载 `Setup-版本号-x64.exe` |
-| 安卓手机/平板 | 推荐用浏览器。安卓远程客户端源码为 0.2.0，目前没有公开 APK。[安卓使用说明](docs/Android使用说明.md) |
+| 安卓手机/平板 | 无需安装，用浏览器即可。想用 App 扫码配对？Android 7.0 及以上可[下载 0.2.0 测试版 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)。[安卓安装和配对说明](docs/Android使用说明.md) |
 | iPhone/iPad | 推荐用 Safari。iOS/iPadOS 16 及以上可选用 [1.0.2 实验版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)，真机 IPA 须自行签名，无公开 TestFlight 邀请。[iOS 安装说明](docs/iOS安装说明.md) |
 
 **手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
@@ -241,7 +241,7 @@ npm run build
 
 DJI 4G Assistant is the single maintained all-in-one Windows desktop app for compatible DJI Cellular Dongle, Baiwang/QDC507, and Quectel USB LTE devices. Download an installer or portable EXE from [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases), plug in the device, and open the app. It detects the AT port and reads the basic device state automatically; **Auto Scan** is only needed when you want to run the checks again.
 
-It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. Android and iOS users can open the Windows console in a browser on the same trusted LAN. Android 0.2.0 is available as source, not as a public APK. The [iOS 1.0.2 prerelease](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2) includes an unsigned IPA that requires signing before installation. Neither companion manages a modem plugged directly into the phone or tablet. Windows hosts the modem and handles USB call audio. Provider data allowance still requires a provider API.
+It includes diagnostics, Windows network and driver status, guarded official ECM driver repair, a dynamic multi-EID eSIM library, UCS2/PDU SMS with storage warnings and per-message deletion, call control, and an experimental guided QDC507GLEFM21 audio path. The audio setup pins and verifies an on-demand MaVo runtime, preserves existing USB functions, backs up and reads back `usbcfg`, and requires confirmation before enabling ADB/UAC. Android and iOS users can open the Windows console in a browser on the same trusted LAN. Android 7.0 or later can also use the [0.2.0 test APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk) for QR pairing. The [iOS 1.0.2 prerelease](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2) includes an unsigned IPA that requires signing before installation. Neither companion manages a modem plugged directly into the phone or tablet. Windows hosts the modem and handles USB call audio. Provider data allowance still requires a provider API.
 
 ## License
 
