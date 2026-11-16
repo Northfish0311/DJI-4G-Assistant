@@ -7,10 +7,13 @@ function runPreference(mode, guid) {
   const exe = path.join(process.env.SystemRoot, "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
   const args = ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, "-Mode", mode];
   if (guid) args.push("-ExpectedGuid", guid);
-  return new Promise(resolve => execFile(exe, args, {windowsHide:true, maxBuffer:4096}, (error, stdout) => {
-    resolve({code:error ? (typeof error.code === "number" && error.code >= 10 && error.code <= 21 ? error.code : 21) : 0,
-      guid:mode === "Check" && !error ? stdout.trim() : ""});
-  }));
+  // A wedged WMI or adapter query must not leave the promise unresolved: the caller
+  // latches a running flag that would then refuse every later attempt until restart.
+  return new Promise(resolve => execFile(exe, args, {windowsHide:true, maxBuffer:16384, timeout:20000},
+    (error, stdout) => {
+      resolve({code:error ? (typeof error.code === "number" && error.code >= 10 && error.code <= 21 ? error.code : 21) : 0,
+        guid:mode === "Check" && !error ? stdout.trim() : ""});
+    }));
 }
 
 function preferenceHandler({windowFor, origin, confirm, changed = () => {}, run = runPreference}) {
@@ -39,4 +42,4 @@ function preferenceHandler({windowFor, origin, confirm, changed = () => {}, run 
     finally { running = false; }
   };
 }
-module.exports = {preferenceHandler};
+module.exports = {preferenceHandler, runPreference};

@@ -36,3 +36,25 @@ test("Windows metric transactions against simulated adapters", {skip:process.pla
   const r=spawnSync("powershell",["-NoProfile","-ExecutionPolicy","Bypass","-File",path.join(__dirname,"fixtures","route-preference.ps1")],{encoding:"utf8",windowsHide:true,timeout:20000});
   assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/fixtures passed/);
 });
+
+test("a missing helper fails fast instead of wedging the button", async()=>{
+  const previous = process.env.ROAMDOCK_RESOURCE_ROOT;
+  process.env.ROAMDOCK_RESOURCE_ROOT = path.join(__dirname, "fixtures", "no-such-root");
+  try {
+    const {runPreference} = require("../desktop/network-preference");
+    const result = await runPreference("Check");
+    assert.equal(result.code, 21);
+    assert.equal(result.guid, "");
+  } finally {
+    if (previous === undefined) delete process.env.ROAMDOCK_RESOURCE_ROOT;
+    else process.env.ROAMDOCK_RESOURCE_ROOT = previous;
+  }
+});
+
+test("the helper invocation is bounded and keeps room for diagnostics", ()=>{
+  const source = require("node:fs").readFileSync(path.join(__dirname, "../desktop/network-preference.js"), "utf8");
+  // Without a timeout a wedged WMI call leaves the running flag latched forever.
+  assert.match(source, /timeout:\s*20000/);
+  // 4 KiB was small enough for one PowerShell warning to look like a generic failure.
+  assert.match(source, /maxBuffer:\s*16384/);
+});
