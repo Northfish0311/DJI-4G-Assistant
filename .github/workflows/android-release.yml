@@ -5,6 +5,10 @@ name: Publish verified Android test APK
 # stale the first time the app version changed.
 
 on:
+  # Pushing an android-remote-v* tag publishes without anyone opening the Actions page.
+  push:
+    tags:
+      - "android-remote-v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -29,7 +33,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/android-remote-v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -75,9 +79,10 @@ jobs:
       - name: Create or update the release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag }}
-          TITLE: ${{ inputs.title }}
-          NOTES: ${{ inputs.notes }}
+          # A tag push supplies the tag name; manual runs use the inputs.
+          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+          TITLE: ${{ inputs.title || '安卓远程助手测试版' }}
+          NOTES: ${{ inputs.notes || 'docs/RELEASE-android-remote-v0.2.0.md' }}
         run: |
           set -euo pipefail
           cd verified-android/download
