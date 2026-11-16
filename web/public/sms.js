@@ -167,6 +167,12 @@ function renderTraffic(text, freshSample = true) {
   return true;
 }
 
+function renderDefaultRoute() {
+  const names = state.routeNames;
+  document.querySelector("#defaultRouteName").textContent = names === undefined ? "--" : !names ? t("routeUnavailable") :
+    names.length > 1 ? t("routeTie", {names:names.join(" / ")}) : names[0] || t("routeAbsent");
+}
+
 function renderTrafficSyncState() {
   const element = document.querySelector("#trafficSyncState");
   const time = state.trafficLastRead ? new Date(state.trafficLastRead).toLocaleTimeString(state.language === "zh" ? "zh-CN" : "en-GB", {hour:"2-digit", minute:"2-digit", second:"2-digit"}) : "";
@@ -458,13 +464,14 @@ function parsedSmsInbox(text) {
 }
 
 function renderSms(text, data = {}) {
+  if (Object.hasOwn(data, "store")) state.smsInboxStore = data.store;
   state.smsText = text;
   state.smsStorage = data.storage || parseSmsStorageText(text) || state.smsStorage;
   renderSmsStorage(state.smsStorage);
   const inbox = parsedSmsInbox(text);
   const renderKey = () => JSON.stringify([
     state.language, state.smsQuery, state.smsActiveSender, state.smsNewDraft,
-    Boolean(state.smsLastRead), state.smsDeleteEnabled, state.smsSentThisSession, [...state.smsDrafts],
+    Boolean(state.smsLastRead), state.smsPageSize, state.smsDeleteEnabled, state.smsSentThisSession, [...state.smsDrafts],
     document.querySelector("#smsMessageInput").value,
   ]);
   // A successful poll can update freshness without reparsing or measuring unchanged messages.
@@ -529,12 +536,20 @@ function renderSms(text, data = {}) {
   const visible = state.smsNewDraft ? [] : (groups.get(state.smsActiveSender) || []);
   const conversationKey = JSON.stringify([state.cardEpoch, state.smsNewDraft, state.smsActiveSender]);
   const sameConversation = list.dataset.conversation === conversationKey;
+  const pageKey = JSON.stringify([conversationKey, query]);
+  if (list.dataset.page !== pageKey) {list.dataset.page = pageKey; state.smsPageSize = 40;}
+  const results = query && !containsQuery(state.smsActiveSender) ? visible.filter(row => containsQuery(row.body)) : visible;
+  const windowSize = state.smsPageSize || 40;
+  const rows = results.slice(-windowSize);
+  const older = results.length - rows.length;
+  const loadingOlder = state.smsLoadingOlder;
   list.dataset.conversation = conversationKey;
   if (!sameConversation) state.smsPendingKeys.clear();
   document.querySelector("#smsCount").textContent = t(visible.length === 1 ? "conversationMessage" : "conversationMessages", {count:visible.length});
   document.querySelector("#smsConversationTitle").textContent = state.smsNewDraft ? t("newMessage") : (state.smsActiveSender || t("smsInbox"));
   list.className = "sms-list" + (visible.length ? "" : " empty");
-  const markup = visible.map(match => {
+  const olderButton = older ? `<button type="button" class="secondary compact" data-sms-older>${escapeHtml(t("olderSms", {count:older}))}</button>` : "";
+  const markup = olderButton + rows.map(match => {
     const {index, status: rawStatus, from: sender, time: receivedAt, body} = match;
     const status = match.local ? {label: t("smsSubmitted"), className: "sent"} : smsStatus(rawStatus || "READ"), code = extractVerificationCode(body);
     const key = JSON.stringify([index, sender, receivedAt, body]);
@@ -550,6 +565,7 @@ function renderSms(text, data = {}) {
   }).join("") || escapeHtml(state.smsNewDraft || state.smsDrafts.get(state.smsActiveSender)?.message ? t("newMessageHint") : state.smsLastRead || text.includes("+CPMS:") ? t("smsEmpty") : t("noSmsData"));
   if (list.dataset.markup !== markup) {
     list.innerHTML = markup; list.dataset.markup = markup;
+    if (older) list.querySelector("[data-sms-older]")?.addEventListener("click", loadEarlierSms);
     for (const button of list.querySelectorAll("[data-copy-code]")) button.addEventListener("click", async () => {try {await navigator.clipboard.writeText(button.dataset.copyCode); button.textContent = t("copied");} catch {setSmsFeedback("copyCodeFailed", "error");}});
     for (const button of list.querySelectorAll("[data-sms-delete]")) {
       button.addEventListener("click", () => deleteSmsMessage(Number(button.dataset.smsDelete)));
@@ -558,7 +574,7 @@ function renderSms(text, data = {}) {
     const currentCards = [...list.querySelectorAll("[data-sms-key]")];
     if (sameConversation && !wasAtBottom) {
       const keys = new Set(currentCards.map(card => card.dataset.smsKey));
-      for (const key of keys) if (!previousKeys.has(key)) state.smsPendingKeys.add(key);
+      for (const key of keys) if (!loadingOlder && !previousKeys.has(key)) state.smsPendingKeys.add(key);
       for (const key of state.smsPendingKeys) if (!keys.has(key)) state.smsPendingKeys.delete(key);
       list.scrollTop = previousTop;
       const restored = currentCards.find(card => card.dataset.smsKey === anchor?.dataset.smsKey);
@@ -583,6 +599,43 @@ function selectSmsConversation(sender) {
   const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
   scrollToSmsSearchMatch();
   document.querySelector(sender === null ? "#smsNumberInput" : singlePane ? "#smsConversationTitle" : "#smsMessageInput").focus({preventScroll: singlePane});
+}
+
+function loadEarlierSms() {
+  if (state.smsLoadingOlder) return;
+  state.smsLoadingOlder = true;
+  try { state.smsPageSize = (state.smsPageSize || 40) + 40; renderSms(state.smsText); }
+  finally { state.smsLoadingOlder = false; }
+}
+
+function mergeIndexedSms(text, record, index) {
+  if (!/^\d{1,5}$/.test(index) || !record.startsWith("+CMGL: " + index + ",") || parseSmsMessages(record + "\nOK").length !== 1) return null;
+  // An occupied or reused index needs a real snapshot, never a duplicate bubble.
+  if (parseSmsMessages(text).some(m => parseAtCsv(m[1])[0] === index)) return null;
+  return text.trimEnd().replace(/(?:^|\n)OK$/, "") + "\n" + record + "\nOK";
+}
+
+async function pollSmsNotice() {
+  const allowed = () => state.started && state.smsPolling && !document.hidden && document.querySelector("#sms").classList.contains("active") &&
+    !state.busy && !state.confirming && !state.smsRefreshing && !state.smsSending && !state.callActionInFlight &&
+    !state.callStatusData?.callStateUncertain && !state.callStatusData?.voiceCalls?.length;
+  if (!allowed() || state.smsWatchPending || !state.cardSignature || !state.smsInboxStore || Date.now() < (state.smsWatchBackoff || 0)) return;
+  const port = state.atPort, epoch = state.cardEpoch, signature = state.cardSignature, before = state.smsText;
+  state.smsWatchPending = true;
+  try {
+    const reply = await fetch("/api/sms-watch?port=" + encodeURIComponent(port), {method:"POST", headers:apiHeaders({"content-type":"application/json"}),
+      body:JSON.stringify({signature, store:state.smsInboxStore}), signal:AbortSignal.timeout(25000)});
+    if (!reply.ok) throw new Error();
+    const data = await reply.json();
+    if (!allowed() || epoch !== state.cardEpoch || signature !== state.cardSignature || port !== state.atPort || before !== state.smsText) return;
+    if (data.unavailable) state.smsWatchBackoff = Date.now() + 60000;
+    if (data.record) {
+      const merged = mergeIndexedSms(before, data.record, data.index);
+      if (merged !== null) {state.smsLastRead = Date.now(); state.smsReadError = false; renderSms(merged); return;}
+    }
+    if (data.reconcile || data.record) await refreshSmsQuietly();
+  } catch { state.smsWatchBackoff = Date.now() + 20000; } // The independent full-inbox poll stays available.
+  finally { state.smsWatchPending = false; }
 }
 
 function scrollToSmsSearchMatch() {

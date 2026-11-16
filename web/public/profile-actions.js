@@ -48,7 +48,7 @@ async function runProfileAction(action, id) {
   const aid = state.activeAid, epoch = state.cardEpoch;
   const profile = item.profiles?.find(p => (p.iccid || p.isdpAid) === id);
   if (!profile) return;
-  if (!await confirmOperation({title:label, description:t("confirmProfile", {action:label}), details:[[t("confirmTarget"), euiccDisplayLabel(item, state.euiccInventory.indexOf(item)) + " · " + shortEid(item.eid)], [t("profileNameLabel"), profile.profileNickname || profile.profileName || profile.serviceProviderName || id]], confirmLabel:label})) return;
+  if (!await confirmOperation({title:label, description:t("confirmProfile", {action:label}), details:[[t("confirmTarget"), euiccDisplayLabel(item, state.euiccInventory.indexOf(item)) + " · " + shortEid(item.eid)], [t("profileNameLabel"), profile.profileNickname || profile.profileName || profile.serviceProviderName || shortEid(id)]], confirmLabel:label})) return;
   if (epoch !== state.cardEpoch || aid !== state.activeAid) {showFeedback(t("cardChangedRetry"), "error"); return;}
   setBusy(true, action);
   try {

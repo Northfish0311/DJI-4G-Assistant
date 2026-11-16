@@ -11,7 +11,7 @@ function harness() {
   const stats = {parse: 0, layout: 0, refresh: 0, storage: null};
   const element = id => {
     if (!elements.has(id)) elements.set(id, {textContent: '', innerHTML: '', value: '', dataset: {},
-      scrollTop: 0, scrollHeight: 400, clientHeight: 400, querySelectorAll: () => [],
+      scrollTop: 0, scrollHeight: 400, clientHeight: 400, querySelectorAll: () => [], querySelector: () => null,
       getBoundingClientRect: () => {stats.layout++; return {top: 0, bottom: 400};},
     });
     return elements.get(id);
@@ -74,6 +74,19 @@ test('new inbox content or another card invalidates the parsed inbox', () => {
   ui.context.renderSms(inbox.replace('Hello', 'Changed'));
   assert.notEqual(ui.state.smsParsedInbox, previous);
   assert.equal(ui.stats.parse, 3);
+});
+
+test('long conversation starts with 40 bubbles, expands, and searches older messages', () => {
+  const ui = harness(), records = Array.from({length:125}, (_, i) =>
+    '+CMGL: ' + (i+1) + ',"REC READ","10086","","26/11/15,09:00:00+32"\nmessage-' + (i+1) + '.').join('\n') + '\nOK';
+  const body = () => ui.element('#smsList').innerHTML;
+  ui.context.renderSms(records);
+  assert.equal((body().match(/<article /g)||[]).length,40);
+  assert.match(body(),/message-125\./);assert.doesNotMatch(body(),/message-1\./);
+  ui.state.smsPageSize += 40; ui.context.renderSms(records);
+  assert.equal((body().match(/<article /g)||[]).length,80);
+  ui.state.smsQuery = 'message-1.'; ui.context.renderSms(records);
+  assert.match(body(),/<mark>message-1\.<\/mark>/); assert.equal(ui.stats.parse,1);
 });
 
 test('local sent messages and draft edits cannot be hidden by reuse', () => {

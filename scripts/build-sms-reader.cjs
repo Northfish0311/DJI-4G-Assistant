@@ -1,0 +1,10 @@
+const {spawnSync} = require("node:child_process");
+const fs = require("node:fs");
+const path = require("node:path");
+const root = path.resolve(__dirname, "..");
+const csc = path.join(process.env.SystemRoot || "C:\\Windows", "Microsoft.NET", "Framework64", "v4.0.30319", "csc.exe");
+const exe = path.join(root, "tools", "sms-reader", "SmsReader.exe");
+fs.mkdirSync(path.dirname(exe), {recursive:true});
+const result = spawnSync(csc, ["/nologo", "/optimize+", "/target:exe", "/out:" + exe, path.join(root, "native", "SmsReader.cs")], {stdio:"inherit", windowsHide:true});
+if (result.error) console.error(result.error.message);
+process.exitCode = result.status ?? 1;

@@ -1,7 +1,8 @@
 const fs = require("fs");
 const net = require("net");
 const path = require("path");
-const { app, BrowserWindow, Menu, dialog, session, shell } = require("electron");
+const { app, BrowserWindow, Menu, dialog, ipcMain, session, shell } = require("electron");
+const { preferenceHandler } = require("./network-preference");
 const { loadOrCreateConsoleToken } = require("../web/pairing");
 
 let mainWindow = null;
@@ -85,6 +86,7 @@ function createWindow(port) {
     title: "DJI 4G Assistant",
     autoHideMenuBar: true,
     webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
@@ -141,6 +143,20 @@ function createWindow(port) {
 async function startDesktop() {
   const port = await choosePort();
   configureRuntime(port);
+  if (!smokeTest) ipcMain.handle("dongle:route-preference", preferenceHandler({
+    windowFor: () => mainWindow, origin: "http://127.0.0.1:" + port,
+    changed: () => require("../web/server").invalidateDefaultRoute(),
+    confirm: async (win, mode, zh) => {
+      const restore = mode === "Restore";
+      const message = zh ? (restore ? "恢复这块大疆网卡原来的优先级？" : "让 Windows 优先用 Wi-Fi 上网？")
+        : (restore ? "Restore this dongle's original interface metrics?" : "Prefer Wi-Fi to this dongle?");
+      const result = await dialog.showMessageBox(win, {type:"question", message,
+        detail: zh ? "只调整已识别的大疆 USB 网卡，不禁用网卡，不修改 SIM 或 APN。Windows 可能需要管理员批准。"
+          : "Only the identified USB adapter's metrics will change. The adapter stays enabled. SIM and APN settings are untouched. Windows may request administrator approval.",
+        buttons: zh ? ["取消","继续"] : ["Cancel","Continue"], defaultId:0, cancelId:0});
+      return result.response === 1;
+    },
+  }));
   const { startServer } = require("../web/server");
   localServer = await startServer();
   Menu.setApplicationMenu(null);

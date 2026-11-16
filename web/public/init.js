@@ -1,5 +1,40 @@
 setInterval(() => {if (state.smsPolling && document.querySelector("#sms").classList.contains("active")) refreshSmsQuietly();}, 20000);
 setInterval(refreshTrafficQuietly, 2000);
+setInterval(pollSmsNotice, 2000);
+async function refreshDefaultRoute() {
+  if (document.hidden || !document.querySelector("#network").classList.contains("active") || state.routeReading) return;
+  state.routeReading = true;
+  try {
+    const data = await fetchJson("/api/default-route", 17000);
+    state.routeNames = Array.isArray(data.names) && data.ok ? data.names : null;
+  } catch { state.routeNames = null; }
+  finally { state.routeReading = false; renderDefaultRoute(); }
+}
+setInterval(refreshDefaultRoute, 15000);
+if (window.dongleRouting) {
+  const panel = document.querySelector("#routePreferenceActions");
+  panel.hidden = false;
+  for (const [id, method] of [["preferWifiBtn","preferWifi"], ["restoreRouteBtn","restore"]]) {
+    document.getElementById(id).addEventListener("click", async () => {
+      if (state.busy || state.routeWriting || state.confirming) return;
+      state.routeWriting = true;
+      const buttons = panel.querySelectorAll("button");
+      buttons.forEach(b => {b.disabled = true;});
+      const result = document.querySelector("#routePreferenceResult");
+      const report = key => { result.dataset.i18n = key; result.textContent = t(key); };
+      report("routeWorking");
+      try {
+        const code = await window.dongleRouting[method](state.language);
+        report(code === 0 ? (method === "restore" ? "routeRestored" : "routeSaved") : "routeResult" + code);
+        if (code === 0) {
+          await refreshDefaultRoute();
+          setTimeout(refreshDefaultRoute, 12500);
+        }
+      } catch { report("routeResult21"); }
+      finally { state.routeWriting = false; buttons.forEach(b => {b.disabled = !!state.busy;}); }
+    });
+  }
+}
 setInterval(refreshCallStatusQuietly, 1000);
 setInterval(refreshModuleStatusQuietly, 30000);
 
@@ -26,6 +61,7 @@ if (nativeCompanion) {
   const adapter = document.querySelector("#nativeNetworkAdapter");
   adapter.hidden = false;
   adapter.append(document.querySelector("#trafficAdapter").closest(".network-metric"));
+  adapter.append(document.querySelector("#defaultRouteName").closest(".network-metric"));
   for (const id of ["trafficIpv4", "trafficGateway", "trafficDriver", "trafficDhcp"]) {
     document.querySelector("#nativeNetworkMetrics").append(document.getElementById(id).closest(".network-metric"));
   }
@@ -64,6 +100,8 @@ function selectView(target, updateHash = false) {
   document.querySelectorAll(".view").forEach((item) => item.classList.remove("active"));
   button.classList.add("active");
   view.classList.add("active");
+  if (target !== "euicc" && state.revealCardIds) setCardIdVisibility(false);
+  if (target === "network") refreshDefaultRoute();
   showFeedback("");
   document.querySelectorAll(".nav-btn").forEach(item => item.setAttribute("aria-current", item === button ? "page" : "false"));
   if (nativeCompanion) {
@@ -125,6 +163,20 @@ document.querySelector("#downloadProfileBtn").addEventListener("click", download
 document.querySelector("#addEuiccAidBtn").addEventListener("click", addEuiccAid);
 document.querySelector("#processNotificationsBtn").addEventListener("click", processNotifications);
 document.querySelector("#renameSelectedEidBtn").addEventListener("click", () => {if (state.activeEid && !state.busy) renameEuicc(state.activeEid);});
+function setCardIdVisibility(visible) {
+  state.revealCardIds = visible;
+  if (visible) document.querySelector("#selectedEidDetails").open = true;
+  const button = document.querySelector("#revealCardIds");
+  button.textContent = t(state.revealCardIds ? "hideIds" : "revealIds");
+  button.setAttribute("aria-pressed", String(state.revealCardIds));
+  if (state.inventoryLoaded) renderActiveEuicc();
+  else {
+    if (state.chipText) renderChip(state.chipText);
+    if (state.profileText) renderProfiles(state.profileText);
+  }
+  if (state.notificationText) renderNotifications(state.notificationText);
+}
+document.querySelector("#revealCardIds").addEventListener("click", () => setCardIdVisibility(!state.revealCardIds));
 document.querySelector("#callNextBtn").addEventListener("click", () => {
   const next = document.querySelector("#callNextBtn").dataset.next;
   if (next === "scan") document.querySelector("#autoScanBtn").click();
@@ -187,6 +239,10 @@ document.querySelector("#installEcmDriverBtn").addEventListener("click", install
 for (const button of document.querySelectorAll("button[data-usb-mode]")) button.addEventListener("click", () => switchUsbMode(Number(button.dataset.usbMode)));
 document.querySelector("#smsPollingBtn").addEventListener("click", toggleSmsPolling);
 document.querySelector("#smsList").addEventListener("scroll", renderSmsNewMessages, {passive: true});
+document.querySelector("#smsList").addEventListener("scroll", event => {
+  const list = event.currentTarget;
+  if (list.clientHeight && list.scrollTop <= 1 && list.scrollHeight > list.clientHeight && list.querySelector("[data-sms-older]")) loadEarlierSms();
+}, {passive:true});
 document.querySelector("#smsNewMessagesBtn").addEventListener("click", () => {
   const list = document.querySelector("#smsList"); list.scrollTop = list.scrollHeight;
   renderSmsNewMessages();

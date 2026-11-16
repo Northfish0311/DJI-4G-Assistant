@@ -18,8 +18,10 @@ function euiccDisplayLabel(item, index = 0) {
 
 function shortEid(value) {
   const eid = String(value || "");
-  return eid.length > 12 ? `${eid.slice(0, 6)}...${eid.slice(-6)}` : eid || "--";
+  return eid.length > 6 ? `•••• ${eid.slice(-6)}` : eid || "--";
 }
+
+function cardIdText(value) { return state.revealCardIds ? String(value || "--") : shortEid(value); }
 
 function activeEuicc() {
   return state.euiccInventory.find((item) => item.eid === state.activeEid) || null;
@@ -47,7 +49,7 @@ function renderActiveEuicc() {
   }
   const index = state.euiccInventory.indexOf(item);
   label.textContent = euiccDisplayLabel(item, index);
-  eid.textContent = item.eid;
+  eid.textContent = cardIdText(item.eid);
   status.className = "profile-state active";
   status.textContent = t("selected");
   installed.textContent = String(item.profileCount ?? item.profiles?.length ?? "--");
@@ -134,7 +136,7 @@ function renderEuiccInventory(data) {
       </button>`;
     }
     return `<article class="euicc-slot-card ${selected ? "active" : ""}">
-      <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code title="${escapeHtml(item.eid)}">${escapeHtml(shortEid(item.eid))}</code><span class="euicc-slot-count">${escapeHtml(Array.isArray(item.profiles) ? t("compactProfiles", {count:item.profiles.length, active:item.profiles.filter(p => p.profileState === "enabled").length}) : t("profilesReadFailed"))}</span></div>
+      <div class="euicc-slot-copy"><strong>${escapeHtml(label)}</strong><code>${escapeHtml(shortEid(item.eid))}</code><span class="euicc-slot-count">${escapeHtml(Array.isArray(item.profiles) ? t("compactProfiles", {count:item.profiles.length, active:item.profiles.filter(p => p.profileState === "enabled").length}) : t("profilesReadFailed"))}</span></div>
       <button data-euicc-select="${escapeHtml(item.eid)}" aria-pressed="${selected}" ${selected || state.busy ? "disabled" : ""}>${escapeHtml(selected ? t("viewing") : t("viewProfiles"))}</button>
     </article>`;
   }).join("");
@@ -154,7 +156,7 @@ function renderChip(text) {
     memory.textContent = "--";
     return;
   }
-  eid.textContent = data.eidValue || "--";
+  eid.textContent = cardIdText(data.eidValue);
   const bytes = data.EUICCInfo2?.extCardResource?.freeNonVolatileMemory;
   memory.textContent = Number.isFinite(Number(bytes)) ? formatBytes(bytes) : "--";
 }
@@ -272,7 +274,7 @@ function renderProfileItems(profiles) {
       <summary>${escapeHtml(t("moreProfile"))}</summary>
       ${nativeCompanion && enabled ? `<div class="profile-actions">${actionButton}</div>` : ""}
       <div class="profile-detail-grid">
-        <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${id}</code></div>
+        <div><span>${escapeHtml(t("iccidLabel"))}</span><code>${escapeHtml(cardIdText(profile.iccid))}</code></div>
         <div><span>${escapeHtml(t("profileClassLabel"))}</span><strong>${profileClass}</strong></div>
         <div class="profile-traffic"><span>${escapeHtml(t("trafficBalance"))}</span><strong>${escapeHtml(t("trafficUnavailable"))}</strong></div>
       </div>
@@ -312,7 +314,7 @@ function renderNotifications(text) {
     const notifications = JSON.parse(jsonLine)?.payload?.data || [];
     if (!notifications.length) { list.className = "notification-list empty"; list.textContent = t("noPendingNotifications"); return; }
     list.className = "notification-list";
-    list.innerHTML = notifications.map((item) => `<article class="notification-card"><strong>${escapeHtml(item.profileManagementOperation || "profile")}</strong><div>${escapeHtml(item.notificationAddress || "")}</div><code>${escapeHtml(item.iccid || item.seqNumber || "")}</code></article>`).join("");
+    list.innerHTML = notifications.map((item) => `<article class="notification-card"><strong>${escapeHtml(item.profileManagementOperation || "profile")}</strong><div>${escapeHtml(item.notificationAddress || "")}</div><code>${escapeHtml(item.iccid ? cardIdText(item.iccid) : item.seqNumber || "")}</code></article>`).join("");
   } catch (error) { list.className = "notification-list empty"; list.textContent = t("notificationsParseError", { error: error.message }); }
 }
 

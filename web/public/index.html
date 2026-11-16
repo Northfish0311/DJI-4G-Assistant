@@ -116,7 +116,8 @@
           <div class="panel flat-section">
             <div id="nativeNetworkAdapter" class="native-network-adapter" hidden></div>
             <div class="network-metric-grid">
-              <article class="network-metric"><span data-i18n="adapterStatus">Adapter</span><strong id="trafficAdapter">--</strong></article>
+              <article class="network-metric"><span data-i18n="measuredAdapter">Measured adapter</span><strong id="trafficAdapter">--</strong></article>
+              <article class="network-metric"><span data-i18n="defaultIpv4">Windows default IPv4 route</span><strong id="defaultRouteName">--</strong></article>
               <article class="network-metric"><span data-i18n="downloadSpeed">Download</span><strong id="trafficRxRate">--</strong></article>
               <article class="network-metric"><span data-i18n="uploadSpeed">Upload</span><strong id="trafficTxRate">--</strong></article>
               <article class="network-metric"><span data-i18n="sessionDownload">Session download</span><strong id="trafficRxSession">--</strong></article>
@@ -128,6 +129,13 @@
             </div>
             <p id="trafficStatus" class="hint" role="status"></p>
             <p class="hint" data-i18n="trafficScope">USB adapter traffic only, including local traffic. Not your plan balance.</p>
+            <div id="routePreferenceActions" hidden>
+              <div class="panel-actions">
+                <button id="preferWifiBtn" class="secondary" data-i18n="preferWifi">Prefer Wi-Fi</button>
+                <button id="restoreRouteBtn" class="secondary" data-i18n="restoreRoute">Restore original priority</button>
+              </div>
+              <p id="routePreferenceResult" class="hint" role="status"></p>
+            </div>
           </div>
 
           <details id="nativeNetworkDetails" class="panel disclosure-panel" hidden>
@@ -179,7 +187,7 @@
 
           <div class="esim-workspace">
             <div class="panel profile-panel">
-              <div class="panel-head"><div><h2 data-i18n="esimProfiles">eSIM Profiles</h2><p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p></div></div>
+              <div class="panel-head"><div><h2 data-i18n="esimProfiles">eSIM Profiles</h2><p id="profileCount" class="panel-subtitle" data-i18n="profilesNotLoaded">Profiles not loaded</p></div><button id="revealCardIds" class="secondary compact" aria-pressed="false" data-i18n="revealIds">Show numbers</button></div>
           <details class="active-euicc-band" id="selectedEidDetails">
             <summary class="active-euicc-heading">
               <div>
@@ -350,6 +358,10 @@
                 </div>
                 <button id="startAudioBridgeBtn" class="secondary" data-i18n="startAudio">Start Audio</button>
                 <button id="stopAudioBridgeBtn" class="secondary" data-i18n="stopAudio" disabled>Stop Audio</button>
+                <div id="audioSignals" class="audio-signals" hidden>
+                  <div><span data-i18n="micSignal">Microphone input</span><strong id="micSignalValue">--</strong></div>
+                  <div><span data-i18n="modemSignal">Audio from modem</span><strong id="modemSignalValue">--</strong></div>
+                </div>
               </div>
             </div>
 

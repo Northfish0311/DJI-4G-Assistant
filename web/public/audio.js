@@ -81,6 +81,7 @@ function stopModuleVoiceRoute(keepalive = false) {
 function stopAudioBridge(messageKey = "audioNotConnected", notifyServer = true) {
   state.audioStartGeneration = (state.audioStartGeneration || 0) + 1;
   const bridge = state.audioBridge;
+  bridge?.stopSignals?.();
   stopStream(bridge?.moduleDownlink);
   stopStream(bridge?.microphoneStream);
   stopAudioElement(bridge?.downlinkAudio);
@@ -204,6 +205,7 @@ async function startAudioBridge() {
     checkCurrent();
 
     state.audioBridge = { moduleDownlink, microphoneStream, downlinkAudio, uplinkAudio, moduleRouteStarted };
+    state.audioBridge.stopSignals = observeAudioSignals(microphoneStream, moduleDownlink);
     document.querySelector("#audioBridgeState").textContent = t("audioBridgeActive");
     return true;
   } catch (error) {
@@ -222,6 +224,46 @@ async function startAudioBridge() {
     state.audioBridgeStarting = false;
     syncCallButtons();
   }
+}
+
+function observeAudioSignals(mic, modem) {
+  const panel = document.querySelector("#audioSignals");
+  if (!panel) return;
+  panel.hidden = false;
+  const labels = ["#micSignalValue", "#modemSignalValue"].map(id => document.querySelector(id));
+  let context, timer, stopped = false;
+  const nodes = [];
+  function status(el, key) {
+    if (el.textContent !== t(key)) el.textContent = t(key);
+    el.dataset.signal = key;
+  }
+  try {
+    context = new AudioContext();
+    // Measure the two existing streams without adding a playback path or recording.
+    const channels = [mic, modem].map(stream => {
+      const source = context.createMediaStreamSource(stream), analyser = context.createAnalyser();
+      analyser.fftSize = 1024; source.connect(analyser); nodes.push(source, analyser);
+      return {stream, analyser, samples:new Float32Array(analyser.fftSize)};
+    });
+    const sample = () => {
+      if (stopped || document.hidden) return;
+      channels.forEach(({stream, analyser, samples}, i) => {
+        if (context.state !== "running" || !stream.active) return status(labels[i], "meterUnavailable");
+        analyser.getFloatTimeDomainData(samples);
+        let sum = 0;
+        for (const n of samples) sum += n * n;
+        status(labels[i], sum / samples.length > 0.000016 ? "audioSignal" : "audioQuiet");
+      });
+    };
+    context.resume().catch(() => {});
+    sample(); timer = setInterval(sample, 250);
+  } catch { labels.forEach(el => status(el, "meterUnavailable")); }
+  return () => {
+    stopped = true; clearInterval(timer);
+    nodes.forEach(node => node.disconnect());
+    if (context && context.state !== "closed") context.close().catch(() => {});
+    panel.hidden = true;
+  };
 }
 
 async function prepareLocalCallAudio() {

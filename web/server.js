@@ -12,6 +12,26 @@ const { parseVoiceNetwork } = require("./voice-network");
 const { createSerialQueue } = require("./serial-queue");
 const { createPowerShellHost } = require("./powershell-host");
 const { createNetworkSampler } = require("./network-sampler");
+let defaultRouteCache, defaultRoutePending;
+async function invalidateDefaultRoute() {
+  if (defaultRoutePending) await defaultRoutePending.catch(() => {});
+  defaultRouteCache = null;
+}
+async function defaultIpv4Route() {
+  if (defaultRouteCache && Date.now() - defaultRouteCache.at < 12000) return defaultRouteCache.value;
+  if (!defaultRoutePending) defaultRoutePending = (async () => {
+    const result = await runPowerShell(["-File", script("default-route.ps1")], 15000);
+    let value = {ok:false, names:[]};
+    if (result.ok) {
+      const routes = JSON.parse(result.stdout);
+      const cost = Math.min(...routes.map(r => r.cost));
+      value = {ok:true, names:[...new Set(routes.filter(r => r.cost === cost).map(r => r.name))]};
+    }
+    defaultRouteCache = {at:Date.now(), value};
+    return value;
+  })().finally(() => { defaultRoutePending = null; });
+  return defaultRoutePending;
+}
 const { createEuiccInventoryCache } = require("./euicc-inventory-cache");
 const { consoleAccess } = require("./console-addresses");
 const {
@@ -30,7 +50,10 @@ const port = Number(process.env.PORT || 8787);
 let detectedAtPort = "";
 const host = process.env.HOST || "127.0.0.1";
 const consoleToken = process.env.CONSOLE_TOKEN || "";
-const serialQueue = createSerialQueue();
+const {startReader, createNoticeGate} = require("./sms-notices");
+const smsExe = path.join(root, "tools", "sms-reader", "SmsReader.exe");
+const smsGate = createNoticeGate(createSerialQueue(), port => startReader(smsExe, ["watch", port]));
+const serialQueue = smsGate.serial;
 let driverInstallRunning = false;
 const voiceRuntime = new VoiceRuntimeManager(dataRoot);
 let voiceQueue = Promise.resolve();
@@ -45,6 +68,7 @@ function pickPowerShellHost() {
   return powerShellHosts.reduce((best, host) => (host.pending() < best.pending() ? host : best), powerShellHosts[0]);
 }
 process.on("exit", () => {
+  smsGate.stop();
   for (const host of powerShellHosts) host.dispose();
 });
 
@@ -1776,6 +1800,27 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (url.pathname === "/api/default-route") {
+    const value = await defaultIpv4Route();
+    sendJson(res, value.ok ? 200 : 503, value);
+    return;
+  }
+
+  if (url.pathname === "/api/sms-watch" && req.method === "POST") {
+    const port = portArg(url), body = await readJsonBody(req);
+    if (port !== detectedAtPort || !/^[a-f0-9]{64}$/.test(body.signature || "") ||
+        !["SM", "ME", "MT"].includes(body.store) || !fs.existsSync(smsExe)) {
+      sendJson(res, 200, {ok:true, unavailable:true}); return;
+    }
+    const notice = await smsGate.watch(port);
+    const match = /^(SM|ME|MT):([0-9]{1,5})$/.exec(notice.text);
+    if (!match || res.destroyed) { if (!res.destroyed) sendJson(res, 200, {ok:true}); return; }
+    if (match[1] !== body.store) { sendJson(res, 200, {ok:true, reconcile:true}); return; }
+    const record = await enqueueSerial(() => startReader(smsExe, ["read", port, match[1], match[2], body.signature]).done, {priority:-1, waitMs:2000});
+    sendJson(res, 200, record.ok ? {ok:true, index:match[2], record:record.text} : {ok:true, reconcile:true});
+    return;
+  }
+
   if (url.pathname === "/api/sms-list") {
     const commands = [
       "AT+CMGF=1",
@@ -1784,6 +1829,7 @@ async function handleApi(req, res, url) {
       "AT+CMGL=\"ALL\"",
     ];
     const result = parseSmsListResult(await enqueueAt(portArg(url), commands, 60000));
+    result.store = /^\+CPMS:\s*"(MT|SM|ME)",/m.exec(extractAtResponse(result, "AT+CPMS?"))?.[1] || null;
     sendJson(res, result.ok ? 200 : 502, result);
     return;
   }
@@ -2344,4 +2390,5 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, smsSubmitResult, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };
+
+module.exports = { invalidateDefaultRoute, server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, smsSubmitResult, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };

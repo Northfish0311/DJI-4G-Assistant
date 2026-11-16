@@ -10,9 +10,9 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**Windows 1.8.6（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.8.6/DJI-4G-Assistant-Setup-1.8.6-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.8.6/DJI-4G-Assistant-Portable-1.8.6-x64.exe)。先退出旧版，再双击下载的文件；两种都不需要安装 Node.js。
+**Windows 1.8.7（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.8.7/DJI-4G-Assistant-Setup-1.8.7-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.8.7/DJI-4G-Assistant-Portable-1.8.7-x64.exe)。先退出旧版，再双击下载的文件；两种都不需要安装 Node.js。
 
-这个版本让你能看清短信是被模块接受、被拒绝，还是暂时无法确认，也减少切换会话时的重复加载。[查看 1.8.6 中文更新说明](docs/RELEASE-v1.8.6.md) · [GitHub 发布页与校验文件](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.6)
+本版新增可恢复的 Wi-Fi 优先设置，改善长短信会话的加载，并将默认联网出口和 USB 模块流量分开显示。[查看 1.8.7 中文更新说明](docs/RELEASE-v1.8.7.md) · [GitHub 发布页与校验文件](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.7)
 
 **驱动不是每台电脑都会自动装好。** 能上网不代表能读短信或管理 eSIM；这些管理功能还需要可用的 AT 串口。助手安装包不会自动修复缺失或被改成 WinUSB 的串口驱动，遇到这种情况先看[Windows 驱动说明](docs/Windows驱动说明.md)，不要反复修改模块或套餐。
 
@@ -25,6 +25,14 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 **手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
 
 ## Windows 怎么用
+
+**短信收件箱：** 短信页先显示一段会话的最后 40 条，向上翻或点“更早的短信”可继续；搜索包含较早的短信。在 Windows 上，构建时会编译一个小型 C# 组件，打开短信页后在串口空闲时监听新短信通知。卡、读取存储区及文本模式匹配才按编号读；不匹配或通知丢失会使用完整刷新，并保留原有的定时补查。它不会为了监听去切换套餐或修改通知配置。开发者从源码启动时可先运行 `npm run build:sms-reader`；未编译时仍可使用原收件箱。
+
+网络页分别显示正在统计的 USB 网卡和 Windows 默认 IPv4 出口；VPN 或特定目标可能有单独路由。仅查看页面或插入模块都不会更改路由。eSIM 页默认只显示卡号末六位，点“显示卡号”才展开，离开后会重新隐藏。Windows 电话接通并启动声音后，可分别查看麦克风输入与模块下行是否有声音信号；静音并不代表已挂断。
+
+**想用 Wi-Fi 上网、把大疆卡留着收短信？** 先连接 Wi-Fi，插入模块，在 Windows 桌面助手打开 **网络 → 优先使用 Wi-Fi**，核对提示并允许 Windows 管理员授权，再看上方“Windows 默认 IPv4 出口”。源码用户也可双击 [WiFi-Preference.cmd](scripts/windows/WiFi-Preference.cmd)。手机和普通浏览器不提供这个系统设置入口。
+
+它只调整唯一匹配的 Quectel ECM 大疆网卡。不会禁用设备，不改 APN、SIM、DNS 或 Wi-Fi；没插、识别不唯一、Wi-Fi 没有 IPv4 默认路由时不会设置。助手保存该 Windows 网卡原来的自动或手动优先级；要撤销，接回同一网卡，点 **恢复原优先级**。如果后来手动改过设置，助手不会强行覆盖。**这是优先 Wi-Fi，不是禁止 4G：Wi-Fi 断开时，Windows 仍可能使用 SIM 流量。**
 
 1. 打开 [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases)，找到最上方带 **Latest** 标记的版本。
 2. 只下载 `DJI-4G-Assistant-Setup-版本号-x64.exe`，这是普通用户使用的安装版。

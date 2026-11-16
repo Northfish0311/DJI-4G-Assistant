@@ -46,7 +46,8 @@ test(`${surface}: eUICC names and EID attributes escape external markup`, () => 
   const ui = harness(nativeCompanion);
   ui.context.renderEuiccInventory({ eids: [{ eid: payload, aid: "test", label: payload, profiles: [] }] });
   escaped(ui.html("#euiccInventory"));
-  assert.ok(ui.html("#euiccInventory").includes(`${nativeCompanion ? "data-euicc-select" : "title"}="&quot;&gt;&lt;img`));
+  assert.ok(ui.html("#euiccInventory").includes('data-euicc-select="&quot;&gt;&lt;img'));
+  assert.ok(!ui.html("#euiccInventory").includes('title="&quot;&gt;&lt;img'));
 });
 
 test(`${surface}: profile text, identifiers and nickname inputs escape external markup`, () => {

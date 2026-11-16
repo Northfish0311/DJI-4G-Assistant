@@ -9,6 +9,8 @@ async function smoke() {
   const app = path.join(resources, "app.asar");
   assert.ok(fs.statSync(path.join(resources, "scripts", "windows", "send-sms.ps1")).size > 0, "The packaged SMS worker must exist outside app.asar");
   const expected = process.env.PACKAGE_EXPECTED_VERSION;
+  const smsReader = spawnSync(path.join(resources, "tools", "sms-reader", "SmsReader.exe"), ["--probe"], {encoding:"utf8", timeout:5000, windowsHide:true});
+  assert.equal(smsReader.stdout?.trim(), "sms-reader-v1", "Bundled C# reader must run without touching a COM port");
   assert.equal(require(path.join(app, "package.json")).version, expected);
   const usb = require(path.join(app, "node_modules", "usb"));
   assert.equal(typeof usb.getDeviceList, "function", "The packaged USB native addon must load without external dependencies");

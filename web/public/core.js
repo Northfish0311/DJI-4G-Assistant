@@ -59,6 +59,10 @@ function applyLanguage() {
   document.querySelector("#closePairingBtn").title = t("close");
   renderConnectionState();
   hostLine.textContent = state.primaryUrl ? t(state.accessMode === "local" ? "localConsoleUrl" : state.pairingAvailable === false ? "noLanConsoleUrl" : "ipadUrl", { url: state.primaryUrl }) : t("hostLocal");
+  const reveal = document.querySelector("#revealCardIds");
+  reveal.textContent = t(state.revealCardIds ? "hideIds" : "revealIds");
+  reveal.setAttribute("aria-pressed", String(!!state.revealCardIds));
+  renderDefaultRoute();
   updateProfileHint();
   renderSummary();
   if (state.inventoryLoaded) renderEuiccInventory({ eids: state.euiccInventory, candidatesChecked: state.euiccCandidatesChecked });
@@ -102,8 +106,10 @@ function clearCardView() {
   const profileList = document.querySelector("#profilesList");
   profileList.replaceChildren(); delete profileList.dataset.markup;
   state.cardEpoch += 1; state.smsDrafts.clear(); state.smsSentThisSession = []; state.smsLastRead = 0; state.smsReadError = false; state.failedViews.clear(); setSmsFeedback(null);
-  state.smsParsedInbox = null; state.smsRenderedInbox = null; state.smsRenderKey = "";
-  state.activeEid = ""; state.activeAid = ""; state.euiccProbes = [];
+  state.smsParsedInbox = null; state.smsRenderedInbox = null; state.smsRenderKey = ""; state.revealCardIds = false;
+  const reveal = document.querySelector("#revealCardIds");
+  reveal.textContent = t("revealIds"); reveal.setAttribute("aria-pressed", "false");
+  state.activeEid = ""; state.activeAid = ""; state.euiccProbes = []; state.smsInboxStore = null; state.smsWatchBackoff = 0;
   state.euiccCandidatesChecked = 0;
   state.autoLoadedViews.delete("euicc"); state.autoLoadedViews.delete("sms"); state.autoLoadedViews.delete("calls");
   state.chipText = ""; state.profileText = ""; state.discoveryText = ""; state.notificationText = "";
@@ -133,6 +139,7 @@ function setBusy(isBusy, labelKey = "running", params = {}) {
   renderConnectionState();
   statusPill.classList.toggle("busy", isBusy);
   for (const button of document.querySelectorAll("button")) {
+    if (button.closest("#routePreferenceActions")) { button.disabled = isBusy || !!state.routeWriting; continue; }
     if (button.matches(".nav-btn, [data-open-view], #languageBtn, #nativeMoreBtn, #nativeLanguageBtn, #nativeRailLanguageBtn, #nativeSmsBackBtn, #newSmsBtn, #smsPollingBtn, #smsNewMessagesBtn, #clearProfileSearchBtn, #clearSmsSearchBtn, [data-sms-thread], [data-copy-code], #dismissFeedbackBtn") || button.closest("#actionConfirmDialog, #nativeToolsDialog")) {button.disabled = false; continue;}
     if (button.closest(".log-actions, #calls, #pairingDialog")) continue;
     button.disabled = button.dataset.profileAction ? isBusy || !state.profileActionsEnabled
@@ -157,6 +164,7 @@ function append(title, text) {
   const stamp = new Date().toLocaleTimeString();
   let entry = `[${stamp}] ${title}\n${text || "(no output)"}\n`;
   if (entry.length > 24000) entry = entry.slice(0, 24000) + `\n${t("logTruncated")}\n`;
+  entry = entry.replace(/\b89(?:\d{30}|\d{16,20})\b/g, id => "•••• " + id.slice(-6));
   const top = output.scrollTop;
   const node = document.createElement("span");
   node.className = "log-entry";
