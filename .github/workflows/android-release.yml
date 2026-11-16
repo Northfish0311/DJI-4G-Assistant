@@ -1,11 +1,32 @@
-name: Publish verified Android 0.1.0 test APK
+name: Publish verified Android test APK
+
+# Publishes the APK that a successful "Build Android remote companion" run produced for
+# the current main commit. The previous version pinned one run id and one SHA, so it went
+# stale the first time the app version changed.
+
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to create or update
+        type: string
+        default: android-remote-v0.2.0
+      title:
+        description: Release title
+        type: string
+        default: 安卓远程助手 0.2.0（测试版）
+      notes:
+        description: Notes file, relative to the repository root
+        type: string
+        default: docs/RELEASE-android-remote-v0.2.0.md
+
 permissions:
   contents: read
+
 concurrency:
-  group: android-remote-v0.1.0-release
+  group: android-remote-release
   cancel-in-progress: false
+
 jobs:
   publish:
     if: github.ref == 'refs/heads/main'
@@ -15,32 +36,59 @@ jobs:
       actions: read
     steps:
       - uses: actions/checkout@v4
-      - name: Verify tested source and successful build
+
+      - name: Require a successful build of this exact commit
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/runs/35221564045" > "$RUNNER_TEMP/android-run.json"
-          jq -e '.conclusion == "success" and .head_sha == "38ae80bda862db381a3901a12e49314bb050c7ca" and .head_branch == "main" and .path == ".github/workflows/android.yml"' "$RUNNER_TEMP/android-run.json"
+          set -euo pipefail
+          gh api \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/android.yml/runs?branch=main&status=success&per_page=1" \
+            > "$RUNNER_TEMP/runs.json"
+          run_id=$(jq -r '.workflow_runs[0].id // empty' "$RUNNER_TEMP/runs.json")
+          run_sha=$(jq -r '.workflow_runs[0].head_sha // empty' "$RUNNER_TEMP/runs.json")
+          test -n "$run_id" || { echo "No successful Android build found."; exit 1; }
+          test "$run_sha" = "$GITHUB_SHA" || {
+            echo "Newest Android build is $run_sha, not $GITHUB_SHA. Build this commit first."
+            exit 1
+          }
+          echo "run_id=$run_id" >> "$GITHUB_ENV"
+
       - uses: actions/download-artifact@v4
         with:
           name: DJI-4G-Remote-Android-test
-          run-id: 35221564045
+          run-id: ${{ env.run_id }}
           github-token: ${{ github.token }}
           path: verified-android
-      - name: Verify and publish original APK
-        env:
-          GH_TOKEN: ${{ github.token }}
+
+      - name: Verify the artifact before publishing
         run: |
+          set -euo pipefail
           cd verified-android/download
           sha256sum --check SHA256SUMS.txt
-          test -s DJI-4G-Remote-Android-0.1.0-test.apk
+          apk=$(ls DJI-4G-Remote-Android-*-test.apk | head -n 1)
+          test -s "$apk"
+          echo "apk=$apk" >> "$GITHUB_ENV"
           test -s ../screenshots/phone.png
           test -s ../screenshots/tablet-layout.png
-          gh release create android-remote-v0.1.0 \
-            --repo "$GITHUB_REPOSITORY" \
-            --target 38ae80bda862db381a3901a12e49314bb050c7ca \
-            --prerelease --latest=false \
-            --title "安卓远程助手 0.1.0（测试版）" \
-            --notes-file ../../docs/RELEASE-android-remote-v0.1.0.md \
-            DJI-4G-Remote-Android-0.1.0-test.apk SHA256SUMS.txt \
-            ../screenshots/phone.png ../screenshots/tablet-layout.png
+
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          TITLE: ${{ inputs.title }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          set -euo pipefail
+          cd verified-android/download
+          assets=("$apk" SHA256SUMS.txt ../screenshots/phone.png ../screenshots/tablet-layout.png)
+          # Re-running must not duplicate assets: upload with --clobber after creating.
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "$TITLE" --notes-file "../../$NOTES" --prerelease
+            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "${assets[@]}"
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+              --prerelease --latest=false --title "$TITLE" --notes-file "../../$NOTES" \
+              "${assets[@]}"
+          fi
