@@ -73,3 +73,12 @@ test("the console publishes its version and API level", async()=>{
   assert.ok(serverLevel && clientLevel, "both sides must declare an API level");
   assert.equal(serverLevel[1], clientLevel[1], "server and page API levels drifted apart");
 });
+
+test("closing the window is wired to a bounded full exit", () => {
+  // Closing the window used to leave the main, renderer, GPU and utility processes alive
+  // with no window left to close again; only Task Manager could end them.
+  const source = require("node:fs").readFileSync(path.join(__dirname, "../desktop/main.js"), "utf8");
+  assert.match(source, /window-all-closed", \(\) => quitEveryProcess\(\)/);
+  assert.match(source, /setTimeout\(\(\) => app\.exit\(code\), 1500\)/);
+  assert.match(source, /if \(!hasLock\) \{\s*\/\/[^]*?app\.exit\(0\);/);
+});
