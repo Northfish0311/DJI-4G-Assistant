@@ -1,28 +1,31 @@
 name: Publish verified Android test APK
 
-# Publishes the APK that a successful "Build Android remote companion" run produced for
-# the current main commit. The previous version pinned one run id and one SHA, so it went
-# stale the first time the app version changed.
+# Publishes the APK for whatever the Android build just produced:
+#   - automatically when "Build Android remote companion" finishes green on main
+#   - manually from the Actions page
+#   - by pushing an android-remote-v* tag
+# The release tag follows the APK versionName, so a version bump starts a new release and
+# a rebuild of the same version refreshes the existing one instead of piling up assets.
 
 on:
-  # Pushing an android-remote-v* tag publishes without anyone opening the Actions page.
+  workflow_run:
+    workflows: ["Build Android remote companion"]
+    types: [completed]
+    branches: [main]
   push:
     tags:
       - "android-remote-v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to create or update
+        description: Release tag to create or update (defaults to android-remote-v<versionName>)
         type: string
-        default: android-remote-v0.2.0
       title:
-        description: Release title
+        description: Release title (defaults to 安卓远程助手 <version>（测试版）)
         type: string
-        default: 安卓远程助手 0.2.0（测试版）
       notes:
-        description: Notes file, relative to the repository root
+        description: Notes file, relative to the repository root (defaults to docs/RELEASE-android-remote-v<version>.md)
         type: string
-        default: docs/RELEASE-android-remote-v0.2.0.md
 
 permissions:
   contents: read
@@ -33,30 +36,49 @@ concurrency:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/android-remote-v')
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+      || github.ref == 'refs/heads/main'
+      || startsWith(github.ref, 'refs/tags/android-remote-v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
       actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Require a successful build of this exact commit
+      - name: Resolve the build to publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api \
-            "repos/$GITHUB_REPOSITORY/actions/workflows/android.yml/runs?branch=main&status=success&per_page=1" \
-            > "$RUNNER_TEMP/runs.json"
-          run_id=$(jq -r '.workflow_runs[0].id // empty' "$RUNNER_TEMP/runs.json")
-          run_sha=$(jq -r '.workflow_runs[0].head_sha // empty' "$RUNNER_TEMP/runs.json")
-          test -n "$run_id" || { echo "No successful Android build found."; exit 1; }
-          test "$run_sha" = "$GITHUB_SHA" || {
-            echo "Newest Android build is $run_sha, not $GITHUB_SHA. Build this commit first."
-            exit 1
-          }
-          echo "run_id=$run_id" >> "$GITHUB_ENV"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            run_id="${{ github.event.workflow_run.id }}"
+            run_sha="${{ github.event.workflow_run.head_sha }}"
+          else
+            gh api \
+              "repos/$GITHUB_REPOSITORY/actions/workflows/android.yml/runs?branch=main&status=success&per_page=1" \
+              > "$RUNNER_TEMP/runs.json"
+            run_id=$(jq -r '.workflow_runs[0].id // empty' "$RUNNER_TEMP/runs.json")
+            run_sha=$(jq -r '.workflow_runs[0].head_sha // empty' "$RUNNER_TEMP/runs.json")
+            test -n "$run_id" || { echo "No successful Android build found."; exit 1; }
+            # A tag on an old commit must not publish someone else's build.
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              test "$run_sha" = "$GITHUB_SHA" || {
+                echo "Newest Android build is $run_sha, not $GITHUB_SHA. Build this commit first."
+                exit 1
+              }
+            fi
+          fi
+          version=$(sed -n "s/^[[:space:]]*versionName[[:space:]]*['\"]\([^'\"]*\)['\"].*/\1/p" android/app/build.gradle | head -n 1)
+          test -n "$version" || { echo "Cannot read versionName from android/app/build.gradle."; exit 1; }
+          {
+            echo "run_id=$run_id"
+            echo "run_sha=$run_sha"
+            echo "version=$version"
+          } >> "$GITHUB_ENV"
 
       - uses: actions/download-artifact@v4
         with:
@@ -79,21 +101,28 @@ jobs:
       - name: Create or update the release
         env:
           GH_TOKEN: ${{ github.token }}
-          # A tag push supplies the tag name; manual runs use the inputs.
-          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
-          TITLE: ${{ inputs.title || '安卓远程助手测试版' }}
-          NOTES: ${{ inputs.notes || 'docs/RELEASE-android-remote-v0.2.0.md' }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_TITLE: ${{ inputs.title }}
+          INPUT_NOTES: ${{ inputs.notes }}
         run: |
           set -euo pipefail
+          tag="${INPUT_TAG:-}"
+          if [ -z "$tag" ]; then
+            if [ "${{ github.event_name }}" = "push" ]; then tag="${{ github.ref_name }}"; else tag="android-remote-v$version"; fi
+          fi
+          title="${INPUT_TITLE:-安卓远程助手 $version（测试版）}"
+          notes="${INPUT_NOTES:-docs/RELEASE-android-remote-v$version.md}"
+          test -f "$notes" || { echo "Missing release notes: $notes"; exit 1; }
           cd verified-android/download
           assets=("$apk" SHA256SUMS.txt ../screenshots/phone.png ../screenshots/tablet-layout.png)
           # Re-running must not duplicate assets: upload with --clobber after creating.
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "$TITLE" --notes-file "../../$NOTES" --prerelease
-            gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber "${assets[@]}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$tag" --repo "$GITHUB_REPOSITORY" \
+              --title "$title" --notes-file "../../$notes" --prerelease
+            gh release upload "$tag" --repo "$GITHUB_REPOSITORY" --clobber "${assets[@]}"
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-              --prerelease --latest=false --title "$TITLE" --notes-file "../../$NOTES" \
+            gh release create "$tag" --repo "$GITHUB_REPOSITORY" --target "$run_sha" \
+              --prerelease --latest=false --title "$title" --notes-file "../../$notes" \
               "${assets[@]}"
           fi
+          echo "Published $tag from run $run_id ($run_sha)."
