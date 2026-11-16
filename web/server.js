@@ -1855,7 +1855,7 @@ async function handleApi(req, res, url) {
     }
     const body = await readJsonBody(req);
     const index = Number(body.index);
-    if (!Number.isInteger(index) || index < 1 || index > 255 || String(body.confirm || "").toUpperCase() !== "DELETE") {
+    if (!Number.isInteger(index) || index < 0 || index > 255 || String(body.confirm || "").toUpperCase() !== "DELETE") {
       sendJson(res, 400, { ok: false, error: "Choose one valid SMS and confirm DELETE." });
       return;
     }
@@ -1889,7 +1889,7 @@ async function handleApi(req, res, url) {
       const complete = Boolean(listing.ok && /(?:^|\n)OK\s*$/i.test(response));
       const indices = [...response.matchAll(/^\+CMGL:\s*(\d+)\s*,/gm)]
         .map((match) => Number(match[1]))
-        .filter((value) => Number.isInteger(value) && value >= 1 && value <= 255);
+        .filter((value) => Number.isInteger(value) && value >= 0 && value <= 255);
       return { complete, indices: [...new Set(indices)].sort((a, b) => a - b) };
     };
     const before = await readIndices();

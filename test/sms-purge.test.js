@@ -84,3 +84,14 @@ test("purge validates the delete switch, the keep count and the confirmation", a
     assert.equal(rejected.commands.length, 0, "a rejected request must not touch the modem");
   }
 });
+
+test("zero-based module indices are not skipped", async () => {
+  // This Unicom module numbers messages from 0. Treating 0 as invalid left the oldest
+  // message undeletable and made a successful purge still report six messages.
+  const {res, commands} = await callRoute({body: {keep: 1, confirm: "PURGE"}, indices: [0, 1, 2]});
+  assert.equal(res.status, 200);
+  const deletions = commands.flat().filter((item) => item.startsWith("AT+CMGD="));
+  assert.deepEqual(deletions, ["AT+CMGD=0", "AT+CMGD=1"]);
+  assert.equal(res.payload.purged, 2);
+  assert.equal(res.payload.kept, 1);
+});
