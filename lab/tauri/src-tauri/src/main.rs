@@ -53,7 +53,10 @@ fn backend_smoke() -> Result<(),Box<dyn std::error::Error>> {
     connection.set_read_timeout(Some(Duration::from_secs(5)))?;
     write!(connection,"GET /api/health HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nX-Console-Token: {}\r\nConnection: close\r\n\r\n",r.port,r.token)?;
     let mut response=String::new();connection.read_to_string(&mut response)?;
-    if !response.starts_with("HTTP/1.1 200") || !response.contains("\"smsDeleteEnabled\":false") {return Err("Health probe failed".into());}
+    let (headers,body)=response.split_once("\r\n\r\n").ok_or("Invalid HTTP response")?;
+    if !headers.starts_with("HTTP/1.1 200") {return Err("Health HTTP status failed".into());}
+    let health:serde_json::Value=serde_json::from_str(body)?;
+    if health["ok"]!=true || health["smsDeleteEnabled"]!=false {return Err("Health permission probe failed".into());}
     let _=connection.shutdown(Shutdown::Both);
     let Backend{_job:job,_child:mut child}=backend;
     drop(job);
@@ -65,7 +68,10 @@ fn backend_smoke() -> Result<(),Box<dyn std::error::Error>> {
 }
 fn main(){
     if std::env::args().any(|a|a=="--backend-smoke") {
-        if backend_smoke().is_err(){std::process::exit(2);}
+        if let Err(error)=backend_smoke(){
+            let _=std::fs::write("backend-smoke-result.txt",format!("FAIL: {error}"));
+            std::process::exit(2);
+        }
         return;
     }
     tauri::Builder::default().setup(|app|{
