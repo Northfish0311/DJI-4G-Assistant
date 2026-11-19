@@ -80,6 +80,9 @@ $seen = @{}
 
 for ($pass = 1; $pass -le 2; $pass += 1) {
   $ports = @(Get-SerialInventory)
+  # Capture the same inventory we are about to probe, including an empty list.
+  $portNames = @($ports | ForEach-Object { $_.PortName } | Sort-Object)
+  Write-Host ("PORT_SNAPSHOT=" + ($portNames -join ','))
 
   if ($ports.Count -eq 0) {
     Write-Host "No serial ports found on scan $pass."
@@ -115,4 +118,14 @@ if ($attempted -eq 0) {
 }
 else {
   Write-Host "No AT port responded. Close other modem tools and run Auto Scan again."
+}
+
+# Only a present device with a known USB vendor ID is evidence for the driver hint.
+try {
+  # Filter in the provider instead of materializing every PnP device in PowerShell.
+  $filter = "Present = TRUE AND (PNPDeviceID LIKE 'USB\\VID[_]2CA3&%' OR PNPDeviceID LIKE 'USB\\VID[_]2C7C&%')"
+  if (Get-CimInstance -ClassName Win32_PnPEntity -Filter $filter -Property PNPDeviceID -OperationTimeoutSec 3 -ErrorAction Stop) {
+    Write-Host "MODEM_USB_PRESENT=1"
+  }
+} catch { # Optional metadata may be unavailable without elevated access.
 }

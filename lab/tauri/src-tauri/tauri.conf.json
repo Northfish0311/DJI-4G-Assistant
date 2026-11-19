@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier":"com.northfish0311.dji4g.taurilab",
+  "productName":"DJI 4G Tauri Lab",
+  "version":"0.1.0",
+  "build":{"frontendDist":"../bootstrap"},
+  "app":{"windows":[],"security":{"capabilities":[]}},
+  "bundle":{"active":true,"targets":["nsis"],"icon":["icons/icon.ico"],
+    "resources":{"payload/":"payload/"},
+    "windows":{"nsis":{"installMode":"currentUser"},"webviewInstallMode":{"type":"downloadBootstrapper"}}}
+}

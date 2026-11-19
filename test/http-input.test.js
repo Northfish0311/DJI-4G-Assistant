@@ -105,6 +105,13 @@ test("real HTTP boundary rejects invalid input before accessing a modem", async 
   });
   try {
     assert.equal((await post("null", "wrong-token")).status, 401);
+    for (const [query, status, code] of [["", 409, "AT_PORT_REQUIRED"], ["?port=unknown", 400, "INVALID_AT_PORT"]]) {
+      const response = await fetch(`http://127.0.0.1:${port}/api/module-status${query}`, {
+        headers: {"x-console-token": process.env.CONSOLE_TOKEN},
+      });
+      assert.equal(response.status, status);
+      assert.equal((await response.json()).code, code);
+    }
     for (const body of ["null", "[]", "false", "42", '{"activationCode":"LPA:1$secret"']) {
       const response = await post(body);
       assert.equal(response.status, 400);

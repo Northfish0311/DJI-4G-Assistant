@@ -877,8 +877,10 @@ try {
   return enqueueSerial(() => runPowerShell(["-Command", ps], 45000));
 }
 function portArg(url) {
-  const value = url.searchParams.get("port") || detectedAtPort || "COM5";
-  return /^COM\d+$/i.test(value) ? value.toUpperCase() : (detectedAtPort || "COM5");
+  const value = url.searchParams.get("port") || detectedAtPort;
+  if (!value) throw new RequestError(409, "AT_PORT_REQUIRED", "Connect the module and scan for an AT port first.");
+  if (!/^COM\d+$/i.test(value)) throw new RequestError(400, "INVALID_AT_PORT", "Invalid AT port.");
+  return value.toUpperCase();
 }
 
 function atAccepted(result) {
@@ -1398,9 +1400,12 @@ async function handleApi(req, res, url) {
   if (url.pathname === "/api/find-at") {
     const result = await enqueueSerial(() => runPowerShell(["-File", script("find-at-port.ps1")], 30000));
     const found = String(result.stdout || "").match(/AT_PORT=(COM\d+)/i);
+    const snapshot = [...String(result.stdout || "").matchAll(/^PORT_SNAPSHOT=((?:COM\d+(?:,COM\d+)*)?)\r?$/gim)].pop();
     detectedAtPort = found ? found[1].toUpperCase() : "";
     invalidateEuiccInventory();
-    sendJson(res, 200, { ...result, port: detectedAtPort || null });
+    sendJson(res, 200, { ...result, port: detectedAtPort || null,
+      ports: snapshot ? snapshot[1].split(",").filter(Boolean) : undefined,
+      usbDetected: /^MODEM_USB_PRESENT=1\s*$/m.test(result.stdout || "") });
     return;
   }
 

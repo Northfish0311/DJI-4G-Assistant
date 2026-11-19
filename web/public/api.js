@@ -68,6 +68,12 @@ async function callApi(action, {manageBusy = true, refreshDetails = false} = {})
     if (["sms-list", "euicc-inventory"].includes(action) && !state.atPort) {
       const found = await requestAction("find-at");
       append(actionTitle("find-at"), found.text);
+      // Without an AT port the inbox and eSIM reads cannot return anything useful; say so
+      // instead of spending a serial round trip on every action.
+      if (!state.atPort) {
+        showFeedback(t(found.data.usbDetected ? "usbWithoutAt" : "cardNotConnected"), "neutral", view);
+        return false;
+      }
       updateSummary(found.text);
     }
     const { data, text } = await requestAction(action, {refreshDetails: refreshDetails || action === "network-traffic"});

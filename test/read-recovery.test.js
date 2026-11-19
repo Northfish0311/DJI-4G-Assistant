@@ -84,10 +84,17 @@ test("a nested refresh leaves its parent operation busy", async () => {
   assert.deepEqual(ui.busy, []);
 });
 
-test("automatic scanning does not turn a failed SMS read into an empty inbox", async () => {
-  const ui = harness();await ui.context.autoScan();
+test("opening the inbox without a responding port does not read SMS or replace the inbox", async () => {
+  const ui = harness();
+  ui.state.atPort = "";
+  ui.context.fetch = async url => {
+    ui.requests.push(url);
+    return {ok: true, json: async () => ({ok:true, port:null})};
+  };
+  await ui.context.callApi("sms-list");
+  assert.deepEqual(ui.requests, ["/api/find-at"]);
   assert.equal(ui.rendered.some(item => item.name === "renderSms"), false);
-  assert.equal(ui.state.smsReadError, true);
+  assert.equal(ui.feedback.at(-1)[0], "cardNotConnected");
 });
 
 test("background SMS polling pauses during a voice call", async () => {

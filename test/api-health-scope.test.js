@@ -16,27 +16,36 @@ test("the console API level is declared once, at module scope", () => {
   assert.equal(indented.length, 0, "the constant must not be declared inside a function");
 });
 
-test("applyHealth can actually resolve the API level at call time", () => {
-  const sandbox = {
-    state: {},
-    t: (key, params) => key + JSON.stringify(params || {}),
-    showFeedback: () => {},
-    document: { querySelector: () => ({ style: {}, textContent: "" }) },
-    updateProfileHint: () => {},
-    applyLanguage: () => {},
-  };
-  vm.createContext(sandbox);
-  vm.runInContext(SOURCE, sandbox, { filename: "api.js" });
-  // A mismatching level must reach showFeedback instead of throwing.
+function harness() {
   const warnings = [];
-  sandbox.showFeedback = (message, tone) => warnings.push({ message, tone });
-  sandbox.state = {};
-  sandbox.applyHealth({ apiVersion: 999, version: "9.9.9" });
-  assert.equal(warnings.length, 1, "a version mismatch should warn exactly once");
-  assert.equal(warnings[0].tone, "warn");
-  assert.match(warnings[0].message, /999/);
-  // A matching level must stay silent.
-  sandbox.state = {};
-  sandbox.applyHealth({ apiVersion: 2, version: "1.8.11" });
+  const tokenRow = {style: {}};
+  const context = vm.createContext({
+    state: {},
+    document: {querySelector: () => tokenRow},
+    showFeedback: (...args) => warnings.push(args),
+    t: (key, args) => ({key, ...args}),
+    updateProfileHint() {},
+    applyLanguage() {},
+  });
+  vm.runInContext(SOURCE, context, {filename: "api.js"});
+  return {context, warnings, tokenRow};
+}
+
+test("health applies before any request action without a scope error", () => {
+  const {context, warnings, tokenRow} = harness();
+  context.applyHealth({apiVersion: 2, authRequired: true, smsDeleteEnabled: false});
+  assert.equal(context.state.authRequired, true);
+  assert.equal(context.state.smsDeleteEnabled, false);
+  assert.equal(tokenRow.style.display, "grid");
+  assert.equal(warnings.length, 0);
+});
+
+test("health API mismatch warns once using the shared client API level", () => {
+  const {context, warnings} = harness();
+  context.applyHealth({apiVersion: 999, version: "9.9.9"});
+  context.applyHealth({apiVersion: 999, version: "9.9.9"});
   assert.equal(warnings.length, 1);
+  // The message reaches showFeedback already formatted, so check the rendered text.
+  assert.match(warnings[0][0], /999/);
+  assert.equal(warnings[0][1], "warn");
 });

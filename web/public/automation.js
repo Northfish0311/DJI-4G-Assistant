@@ -22,36 +22,8 @@ async function rescueScan() {
 }
 async function autoScan() {
   if (state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) {showFeedback(t("finishCallFirst"), "neutral"); return;}
-  const actions = ["health", "device-check", "find-at", "module-status", "network-traffic", "euicc-inventory", "sms-list"];
-  setBusy(true, "starting");
-  try {
-    for (let index = 0; index < actions.length; index += 1) {
-      const action = actions[index]; setBusy(true, "scanProgress", { current: index + 1, total: actions.length });
-      try {
-        const { data, text } = await requestAction(action);
-        append(actionTitle(action), text);
-        updateSummary(text);
-        if (action === "module-status") updateTemperature(data);
-        if (action === "health") applyHealth(data);
-        if (action === "euicc-inventory") renderEuiccInventory(data);
-        if (action === "lpac-chip") renderChip(text);
-        if (action === "lpac-discovery") renderDiscovery(text);
-        if (action === "lpac-profiles") renderProfiles(text);
-        if (action === "lpac-notifications") renderNotifications(text);
-        if (action === "sms-list") {state.smsLastRead = Date.now(); state.smsReadError = false; renderSms(text, data); renderSmsRefreshState();}
-        if (action === "call-status") renderCallStatus(data);
-        if (action === "call-capabilities") renderCallCapabilities(data);
-        if (action === "network-traffic") renderTraffic(data.stdout || "");
-      }
-      catch (error) {
-        if (error.code === "STALE_RESPONSE") break;
-        if (action === "sms-list") {state.smsReadError = true; renderSmsRefreshState();}
-        if (action === "euicc-inventory") showFeedback(t("readUnavailable"), "error", "euicc");
-        if (action === "network-traffic") noteTrafficReadFailure();
-        append(actionTitle(action), error.name === "AbortError" ? t("scanTimedOut") : error.stack || error.message);
-      }
-    }
-  } finally { setBusy(false); }
+  if (state.busy || state.connecting || state.confirming) return;
+  await quickStart();
 }
 
 async function quickStart() {
@@ -62,21 +34,26 @@ async function quickStart() {
   try {
     const health = await requestAction("health");
     applyHealth(health.data);
-    state.portsSignature = (await requestAction("ports")).text.trim();
     const found = await requestAction("find-at");
-    updateSummary(found.text);
+    state.portsSignature = Array.isArray(found.data.ports)
+      ? found.data.ports.join("\n")
+      : String((await requestAction("ports")).data.stdout || "").trim();
     if (!state.atPort) {
+      state.deviceModel = ""; state.deviceRevision = ""; state.usb = "";
+      state.cardReady = null;
       clearCardView();
-      showFeedback(t("cardNotConnected"));
+      showFeedback(t(found.data.usbDetected ? "usbWithoutAt" : "cardNotConnected"));
       return;
     }
+    updateSummary(found.text);
     // Network details and eSIM discovery are loaded on demand by their views.
     const { data, text } = await requestAction("module-status", {startup: true});
     append(actionTitle("module-status"), text);
-    updateSummary(text);
-    updateTemperature(data);
     const card = data.card ?? await fetchJson("/api/card-status?port=" + encodeURIComponent(state.atPort), 20000);
     if (card.ok) {
+      if ((state.cardSignature && card.signature && state.cardSignature !== card.signature) || (state.cardReady && !card.ready)) clearCardView();
+      updateSummary(text);
+      updateTemperature(data);
       state.cardSignature = card.signature; state.cardReady = card.ready;
       showFeedback(card.ready ? t("deviceConnected", {port: state.atPort}) : t("cardRemoved"), card.ready ? "success" : "neutral");
     } else {
@@ -96,7 +73,7 @@ async function monitorCard() {
   if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   state.cardMonitorBusy = true;
   try {
-    const ports = (await requestAction("ports")).text.trim();
+    const ports = String((await requestAction("ports")).data.stdout || "").trim();
     if (ports !== state.portsSignature) {
       state.portsSignature = ports;
       clearCardView();
