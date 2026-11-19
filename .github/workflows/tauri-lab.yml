@@ -32,6 +32,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: lab/tauri/src-tauri -> target
+          cache-on-failure: true
       - name: Build Tauri NSIS
         working-directory: lab/tauri
         run: npx --yes @tauri-apps/cli@2 build --bundles nsis

@@ -8,6 +8,8 @@ struct Backend { _job: OwnedHandle, _child: Child }
 struct Ready { port: u16, token: String }
 
 fn start(payload: &Path, data: &Path, lan: bool) -> io::Result<(Backend, Ready)> {
+    let payload=dunce::simplified(payload);
+    let data=dunce::simplified(data);
     let mut command = Command::new(payload.join("node.exe"));
     // Windows current_exe can carry a verbatim prefix that Node's main-module
     // resolver rejects. The executable cwd is already pinned to our own payload.
