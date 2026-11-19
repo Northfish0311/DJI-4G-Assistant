@@ -1983,11 +1983,17 @@ async function handleApi(req, res, url) {
 
   if (url.pathname === "/api/network-traffic") {
     const ps = `
-$connectedNetDevices = (& pnputil /enum-devices /connected /class Net 2>$null | Out-String)
-$targetPresent = [bool]($connectedNetDevices -match 'USB\\\\VID_2C7C&PID_0125&MI_04')
-$driver = Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Where-Object {
-  $_.DeviceID -like 'USB\\VID_2C7C&PID_0125&MI_04*'
-} | Sort-Object DriverDate -Descending | Select-Object -First 1
+# pnputil needs ~11 s on this machine and Win32_PnPSignedDriver ~2.4 s, both paid on every
+# full read. Detect the interface through .NET (about 55 ms) and only look up the driver
+# when the adapter is actually present.
+$targetPresent = [bool]([System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() |
+  Where-Object { $_.Description -eq 'Quectel ECM Adapter' })
+$driver = $null
+if ($targetPresent) {
+  $driver = Get-CimInstance Win32_PnPSignedDriver -ErrorAction SilentlyContinue | Where-Object {
+    $_.DeviceID -like 'USB\\VID_2C7C&PID_0125&MI_04*'
+  } | Sort-Object DriverDate -Descending | Select-Object -First 1
+}
 $driverVersion = $null
 if ($driver -and $driver.DriverVersion) {
   try { $driverVersion = [version]$driver.DriverVersion } catch { $driverVersion = $null }

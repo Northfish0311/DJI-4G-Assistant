@@ -69,9 +69,13 @@ test("network polling never stacks slow Windows adapter reads", () => {
   assert.match(server, /if \(!networkSampler\) networkSampler = createNetworkSampler/);
   assert.match(server, /await networkSampler\.sample\(/);
   assert.match(server, /script\("network-counters\.ps1"\)/);
-  assert.match(server, /pnputil \/enum-devices \/connected \/class Net/);
+  // Presence must come from .NET: pnputil costs ~11 s and Win32_PnPSignedDriver ~2.4 s per
+  // read, which is what made this page wait. Neither may creep back in.
+  assert.match(server, /\[System\.Net\.NetworkInformation\.NetworkInterface\]::GetAllNetworkInterfaces\(\)/);
+  assert.doesNotMatch(server, /pnputil \/enum-devices/);
   assert.doesNotMatch(server, /\$targetDevice = Get-PnpDevice/);
-  assert.ok(server.includes("-match 'USB\\\\\\\\VID_2C7C"));
+  // The driver lookup may stay, but only behind a presence check.
+  assert.match(server, /if \(\$targetPresent\) \{\s*\$driver = Get-CimInstance Win32_PnPSignedDriver/);
   assert.match(server, /Get-NetIPAddress -InterfaceIndex \$adapter\.ifIndex/);
   assert.match(server, /Get-NetRoute -InterfaceIndex \$adapter\.ifIndex/);
 });
