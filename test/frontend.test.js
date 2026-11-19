@@ -306,6 +306,8 @@ test("ignores Bluetooth COM ports during modem discovery", () => {
   assert.match(finder, /for \(\$pass = 1; \$pass -le 2/);
   assert.match(finder, /foreach \(\$command in @\("AT", "ATI"\)\)/);
   assert.match(finder, /Waiting briefly for newly attached USB serial interfaces/);
+  assert.doesNotMatch(finder, /Get-PnpDevice -PresentOnly/);
+  assert.match(finder, /Win32_PnPEntity -Filter \$filter/);
   assert.match(diagnostics, /none are USB modem interfaces/);
 });
 

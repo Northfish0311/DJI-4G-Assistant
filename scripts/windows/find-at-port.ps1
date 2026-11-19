@@ -122,7 +122,9 @@ else {
 
 # Only a present device with a known USB vendor ID is evidence for the driver hint.
 try {
-  if (Get-PnpDevice -PresentOnly -ErrorAction Stop | Where-Object { $_.InstanceId -match '^USB\\VID_(2CA3|2C7C)&' } | Select-Object -First 1) {
+  # Filter in the provider instead of materializing every PnP device in PowerShell.
+  $filter = "Present = TRUE AND (PNPDeviceID LIKE 'USB\\VID[_]2CA3&%' OR PNPDeviceID LIKE 'USB\\VID[_]2C7C&%')"
+  if (Get-CimInstance -ClassName Win32_PnPEntity -Filter $filter -Property PNPDeviceID -OperationTimeoutSec 3 -ErrorAction Stop) {
     Write-Host "MODEM_USB_PRESENT=1"
   }
 } catch { # Optional metadata may be unavailable without elevated access.
