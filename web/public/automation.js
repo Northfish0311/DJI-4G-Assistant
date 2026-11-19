@@ -34,8 +34,10 @@ async function quickStart() {
   try {
     const health = await requestAction("health");
     applyHealth(health.data);
-    state.portsSignature = (await requestAction("ports")).text.trim();
     const found = await requestAction("find-at");
+    state.portsSignature = Array.isArray(found.data.ports)
+      ? found.data.ports.join("\n")
+      : String((await requestAction("ports")).data.stdout || "").trim();
     if (!state.atPort) {
       state.deviceModel = ""; state.deviceRevision = ""; state.usb = "";
       state.cardReady = null;
@@ -71,7 +73,7 @@ async function monitorCard() {
   if (!state.started || state.busy || state.cardMonitorBusy || document.hidden || state.callStatusData?.callStateUncertain || state.callStatusData?.voiceCalls?.length) return;
   state.cardMonitorBusy = true;
   try {
-    const ports = (await requestAction("ports")).text.trim();
+    const ports = String((await requestAction("ports")).data.stdout || "").trim();
     if (ports !== state.portsSignature) {
       state.portsSignature = ports;
       clearCardView();

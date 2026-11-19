@@ -16,7 +16,7 @@ function startup({legacy = false, port = "COM5", usbDetected = false} = {}) {
     state, document: {querySelector: () => view},
     requestAction: async (action, options) => {
       actions.push(action);
-      if (action === "find-at") {state.atPort = port; return {data:{ok:true, port, usbDetected}, text:action};}
+      if (action === "find-at") {state.atPort = port; return {data:{ok:true, port, usbDetected, ...(legacy ? {} : {ports:port ? [port] : []})}, text:action};}
       if (["euicc-inventory", "network-traffic"].includes(action)) throw new Error("Expensive startup read");
       if (action === "module-status") assert.equal(options.startup, true);
       return {data: {ok: true, ...(action === "module-status" && !legacy ? {card} : {})}, text: action};
@@ -36,7 +36,8 @@ function startup({legacy = false, port = "COM5", usbDetected = false} = {}) {
 test("startup unlocks after basic identification without waiting for eSIM or adapter discovery", async () => {
   const ui = startup();
   await ui.context.quickStart();
-  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status"]);
+  assert.deepEqual(ui.actions, ["health", "find-at", "module-status"]);
+  assert.equal(ui.state.portsSignature, "COM5");
   assert.equal(ui.state.busy, false);
   assert.equal(ui.state.connecting, false);
   assert.equal(ui.state.cardSignature, "test-card");
@@ -48,7 +49,8 @@ test("manual scan without AT stops before hardware reads and distinguishes USB e
   for (const usbDetected of [true, false]) {
     const ui = startup({port:"", usbDetected});
     await ui.context.autoScan();
-    assert.deepEqual(ui.actions, ["health", "ports", "find-at"]);
+    assert.deepEqual(ui.actions, ["health", "find-at"]);
+    assert.equal(ui.state.portsSignature, "");
     assert.equal(ui.feedback.at(-1)[0], usbDetected ? "usbWithoutAt" : "cardNotConnected");
     assert.equal(ui.state.busy, false);
   }
@@ -61,8 +63,29 @@ test("manual overview defers SMS and eSIM and skips scanning during a call", asy
   assert.deepEqual(ui.actions, []);
   ui.state.callStatusData = null;
   await ui.context.autoScan();
-  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status"]);
+  assert.deepEqual(ui.actions, ["health", "find-at", "module-status"]);
   assert.equal(ui.state.busy, false);
+});
+
+test("the discovery snapshot stays stable when empty and detects a later insertion", async () => {
+  const ui = startup({port:""});
+  await ui.context.quickStart();
+  ui.state.started = true;
+  let stdout = "";
+  let rescans = 0;
+  ui.context.requestAction = async action => {
+    assert.equal(action, "ports");
+    return {data:{ok:true, stdout}, text:stdout || '{"ok":true}'};
+  };
+  ui.context.quickStart = async () => { rescans++; };
+  vm.runInContext(automation.slice(automation.indexOf("async function monitorCard()"), automation.indexOf("async function sendAt()")), ui.context);
+  await ui.context.monitorCard();
+  assert.equal(rescans, 0);
+  stdout = "COM3\nCOM4";
+  await ui.context.monitorCard();
+  assert.equal(rescans, 1);
+  await ui.context.monitorCard();
+  assert.equal(rescans, 1);
 });
 
 test("each expensive view loads once on first visit and is not preloaded by overview", async () => {
@@ -126,7 +149,7 @@ test("failed eSIM discovery stays retryable rather than looping or blocking othe
 test("an older server without combined SIM status keeps the separate read fallback", async () => {
   const ui = startup({legacy: true});
   await ui.context.quickStart();
-  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status", "/api/card-status?port=COM5"]);
+  assert.deepEqual(ui.actions, ["health", "find-at", "ports", "module-status", "/api/card-status?port=COM5"]);
   assert.equal(ui.state.cardReady, true);
   assert.equal(ui.state.cardSignature, "test-card");
 });

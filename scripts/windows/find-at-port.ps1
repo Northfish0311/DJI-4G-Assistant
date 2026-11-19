@@ -80,6 +80,9 @@ $seen = @{}
 
 for ($pass = 1; $pass -le 2; $pass += 1) {
   $ports = @(Get-SerialInventory)
+  # Capture the same inventory we are about to probe, including an empty list.
+  $portNames = @($ports | ForEach-Object { $_.PortName } | Sort-Object)
+  Write-Host ("PORT_SNAPSHOT=" + ($portNames -join ','))
 
   if ($ports.Count -eq 0) {
     Write-Host "No serial ports found on scan $pass."
