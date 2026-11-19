@@ -48,6 +48,7 @@ jobs:
           if (!$probe.WaitForExit(45000)) { Stop-Process -Id $probe.Id; throw 'Rust lifecycle smoke timed out' }
           Get-Content backend-smoke-result.txt
           if ($probe.ExitCode -ne 0) { throw "Rust lifecycle smoke failed (exit $($probe.ExitCode))" }
+          ./lab/tauri/test-single-instance.ps1 -Executable artifacts/tauri/portable/dji-4g-tauri-lab.exe
           Copy-Item -LiteralPath "$out/bundle/nsis" -Destination artifacts/tauri/nsis -Recurse
           Copy-Item -LiteralPath lab/tauri/README.md -Destination artifacts/tauri/
           Copy-Item -LiteralPath lab/tauri/src-tauri/Cargo.lock -Destination artifacts/tauri/

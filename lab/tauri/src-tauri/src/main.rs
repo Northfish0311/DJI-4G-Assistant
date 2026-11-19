@@ -74,7 +74,16 @@ fn main(){
         }
         return;
     }
-    tauri::Builder::default().setup(|app|{
+    tauri::Builder::default()
+    .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        // Later launches may raise the window, never change the running server's access mode.
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window.unminimize();
+            let _ = window.show();
+            let _ = window.set_focus();
+        }
+    }))
+    .setup(|app|{
         let (backend,r)=start(&app.path().resource_dir()?.join("payload"),&app.path().app_local_data_dir()?,std::env::args().any(|a|a=="--lan"))?;
         app.manage(Mutex::new(backend));
         let url=tauri::Url::parse(&format!("http://127.0.0.1:{}/?token={}",r.port,r.token))?;
