@@ -12,9 +12,9 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**Windows 1.8.11（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.8.11/DJI-4G-Assistant-Setup-1.8.11-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.8.11/DJI-4G-Assistant-Portable-1.8.11-x64.exe)。先退出旧版，再双击下载的文件；两种都不需要安装 Node.js。
+**Windows 1.9.0（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.0/DJI-4G-Assistant-Setup-1.9.0-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.0/DJI-4G-Assistant-Portable-1.9.0-x64.exe)。先退出旧版，再双击下载的文件；两种都不需要安装 Node.js。
 
-1.8.8 到 1.8.11 主要是修问题，功能面沿用 1.8.7：关掉窗口后整组进程会真正退出（以前会在后台残留）；短信索引从 0 开始的模块也能正常删除；「优先使用 Wi-Fi」这类操作最多等 20 秒，不会再把按钮卡死；页面与电脑端版本对不上时会直接提示，而不是某个按钮点了没反应。[查看 1.8.11 中文更新说明](docs/RELEASE-v1.8.11.md) · [GitHub 发布页与校验文件](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.8.11)
+1.9.0 的主题是「不用等」：设备检查从约 11 秒降到 0.1 秒以内，网络页流量从约 9.7 秒降到 0.05 秒，网卡信息从 0.3 秒降到 0.04 秒；没有 AT 端口时启动不再逐项扫描。1.8.8 到 1.8.12 带来的修复也都在：关掉窗口后整组进程真正退出、短信索引从 0 开始的模块可以正常删除、「优先使用 Wi-Fi」最多等 20 秒不会卡住按钮、页面与电脑端版本不一致会直接提示。[查看 1.9.0 中文更新说明](docs/RELEASE-v1.9.0.md) · [GitHub 发布页与校验文件](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.9.0)
 
 **驱动不是每台电脑都会自动装好。** 能上网不代表能读短信或管理 eSIM；这些管理功能还需要可用的 AT 串口。助手安装包不会自动修复缺失或被改成 WinUSB 的串口驱动，遇到这种情况先看[Windows 驱动说明](docs/Windows驱动说明.md)，不要反复修改模块或套餐。
 
