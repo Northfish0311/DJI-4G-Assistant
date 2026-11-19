@@ -3,7 +3,7 @@ const {spawn}=require('node:child_process'),readline=require('node:readline'),{o
 const target=path.join(__dirname,'src-tauri/payload');
 (async()=>{
  const data=fs.mkdtempSync(path.join(os.tmpdir(),'dji-tauri-test-'));
- const child=spawn(path.join(target,'node.exe'),[path.join(target,'backend.cjs')],{
+ const child=spawn(path.join(target,'node.exe'),['backend.cjs'],{
    cwd:target,windowsHide:true,stdio:['pipe','pipe','pipe'],
    env:{...process.env,ROAMDOCK_DATA_ROOT:data,ALLOW_SMS_DELETE:'1',ALLOW_DANGEROUS_AT:'1'}
  });

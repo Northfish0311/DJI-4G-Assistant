@@ -9,7 +9,9 @@ struct Ready { port: u16, token: String }
 
 fn start(payload: &Path, data: &Path, lan: bool) -> io::Result<(Backend, Ready)> {
     let mut command = Command::new(payload.join("node.exe"));
-    command.current_dir(payload).arg(payload.join("backend.cjs")).env("ROAMDOCK_DATA_ROOT", data)
+    // Windows current_exe can carry a verbatim prefix that Node's main-module
+    // resolver rejects. The executable cwd is already pinned to our own payload.
+    command.current_dir(payload).arg("backend.cjs").env("ROAMDOCK_DATA_ROOT", data)
         .env_remove("NODE_OPTIONS").env_remove("NODE_PATH")
         .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).creation_flags(0x08000000);
     if lan { command.arg("--lan"); }

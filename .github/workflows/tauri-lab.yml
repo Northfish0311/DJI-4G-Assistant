@@ -29,6 +29,9 @@ jobs:
         run: node lab/tauri/test-backend.cjs
       - name: Rust toolchain
         run: rustup update stable --no-self-update
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: lab/tauri/src-tauri -> target
       - name: Build Tauri NSIS
         working-directory: lab/tauri
         run: npx --yes @tauri-apps/cli@2 build --bundles nsis
