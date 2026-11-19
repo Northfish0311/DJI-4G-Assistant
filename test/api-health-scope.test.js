@@ -45,7 +45,8 @@ test("health API mismatch warns once using the shared client API level", () => {
   context.applyHealth({apiVersion: 999, version: "9.9.9"});
   context.applyHealth({apiVersion: 999, version: "9.9.9"});
   assert.equal(warnings.length, 1);
-  // The message reaches showFeedback already formatted, so check the rendered text.
-  assert.match(warnings[0][0], /999/);
+  assert.equal(warnings[0][0].key, "apiVersionMismatch");
+  assert.equal(warnings[0][0].expected, 2);
+  assert.equal(warnings[0][0].api, 999);
   assert.equal(warnings[0][1], "warn");
 });
