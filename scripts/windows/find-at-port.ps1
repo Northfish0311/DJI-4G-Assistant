@@ -116,3 +116,11 @@ if ($attempted -eq 0) {
 else {
   Write-Host "No AT port responded. Close other modem tools and run Auto Scan again."
 }
+
+# Only a present device with a known USB vendor ID is evidence for the driver hint.
+try {
+  if (Get-PnpDevice -PresentOnly -ErrorAction Stop | Where-Object { $_.InstanceId -match '^USB\\VID_(2CA3|2C7C)&' } | Select-Object -First 1) {
+    Write-Host "MODEM_USB_PRESENT=1"
+  }
+} catch { # Optional metadata may be unavailable without elevated access.
+}

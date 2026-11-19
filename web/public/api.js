@@ -68,6 +68,10 @@ async function callApi(action, {manageBusy = true, refreshDetails = false} = {})
     if (["sms-list", "euicc-inventory"].includes(action) && !state.atPort) {
       const found = await requestAction("find-at");
       append(actionTitle("find-at"), found.text);
+      if (!state.atPort) {
+        showFeedback(t(found.data.usbDetected ? "usbWithoutAt" : "cardNotConnected"), "neutral", view);
+        return false;
+      }
       updateSummary(found.text);
     }
     const { data, text } = await requestAction(action, {refreshDetails: refreshDetails || action === "network-traffic"});

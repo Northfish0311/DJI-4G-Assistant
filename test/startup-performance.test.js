@@ -7,7 +7,7 @@ const vm = require("node:vm");
 const automation = fs.readFileSync(path.join(__dirname, "../web/public/automation.js"), "utf8");
 const sms = fs.readFileSync(path.join(__dirname, "../web/public/sms.js"), "utf8");
 
-function startup({legacy = false} = {}) {
+function startup({legacy = false, port = "COM5", usbDetected = false} = {}) {
   const state = {busy: false, connecting: false, atPort: "", cardEpoch: 0, autoLoadedViews: new Set(), failedViews: new Set()};
   const actions = [], feedback = [], rendered = [];
   const view = {id: "overview"};
@@ -16,7 +16,7 @@ function startup({legacy = false} = {}) {
     state, document: {querySelector: () => view},
     requestAction: async (action, options) => {
       actions.push(action);
-      if (action === "find-at") state.atPort = "COM5";
+      if (action === "find-at") {state.atPort = port; return {data:{ok:true, port, usbDetected}, text:action};}
       if (["euicc-inventory", "network-traffic"].includes(action)) throw new Error("Expensive startup read");
       if (action === "module-status") assert.equal(options.startup, true);
       return {data: {ok: true, ...(action === "module-status" && !legacy ? {card} : {})}, text: action};
@@ -28,7 +28,7 @@ function startup({legacy = false} = {}) {
     append() {}, updateSummary() {}, updateTemperature() {}, applyHealth() {}, clearCardView() {}, refreshVoiceSetup() {},
     renderSmsRefreshState() {}, callApi: action => {rendered.push(action);},
   });
-  vm.runInContext(automation.slice(automation.indexOf("async function quickStart()"), automation.indexOf("async function monitorCard()")), context);
+  vm.runInContext(automation.slice(automation.indexOf("async function autoScan()"), automation.indexOf("async function monitorCard()")), context);
   vm.runInContext(sms.slice(sms.indexOf("function ensureCurrentViewLoaded()"), sms.indexOf("function renderSmsNewMessages()")), context);
   return {state, actions, feedback, rendered, view, context, card};
 }
@@ -42,6 +42,27 @@ test("startup unlocks after basic identification without waiting for eSIM or ada
   assert.equal(ui.state.cardSignature, "test-card");
   assert.equal(ui.state.autoLoadedViews.has("euicc"), false);
   assert.equal(ui.feedback.at(-1)[0], "deviceConnected");
+});
+
+test("manual scan without AT stops before hardware reads and distinguishes USB evidence", async () => {
+  for (const usbDetected of [true, false]) {
+    const ui = startup({port:"", usbDetected});
+    await ui.context.autoScan();
+    assert.deepEqual(ui.actions, ["health", "ports", "find-at"]);
+    assert.equal(ui.feedback.at(-1)[0], usbDetected ? "usbWithoutAt" : "cardNotConnected");
+    assert.equal(ui.state.busy, false);
+  }
+});
+
+test("manual overview defers SMS and eSIM and skips scanning during a call", async () => {
+  const ui = startup();
+  ui.state.callStatusData = {voiceCalls:[{}]};
+  await ui.context.autoScan();
+  assert.deepEqual(ui.actions, []);
+  ui.state.callStatusData = null;
+  await ui.context.autoScan();
+  assert.deepEqual(ui.actions, ["health", "ports", "find-at", "module-status"]);
+  assert.equal(ui.state.busy, false);
 });
 
 test("each expensive view loads once on first visit and is not preloaded by overview", async () => {
