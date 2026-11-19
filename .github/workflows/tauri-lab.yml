@@ -1,0 +1,64 @@
+name: Tauri Windows lab
+on:
+  push:
+    branches: [experiment/tauri-win-shell]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:sms-reader
+      - name: Install pinned lpac
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: .\scripts\windows\install-lpac.ps1
+      - name: Prepare self-contained Node payload
+        run: node lab/tauri/prepare.cjs
+      - name: Verify sidecar without touching a modem
+        run: node lab/tauri/test-backend.cjs
+      - name: Rust toolchain
+        run: rustup update stable --no-self-update
+      - name: Build Tauri NSIS
+        working-directory: lab/tauri
+        run: npx --yes @tauri-apps/cli@2 build --bundles nsis
+      - name: Collect test artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $PWD 'lab/tauri/src-tauri/target/release'
+          New-Item -ItemType Directory -Path artifacts/tauri/portable -Force | Out-Null
+          Copy-Item -LiteralPath "$out/dji-4g-tauri-lab.exe" -Destination artifacts/tauri/portable/
+          Copy-Item -LiteralPath lab/tauri/src-tauri/payload -Destination artifacts/tauri/portable/payload -Recurse
+          Copy-Item -LiteralPath "$out/bundle/nsis" -Destination artifacts/tauri/nsis -Recurse
+          Copy-Item -LiteralPath lab/tauri/README.md -Destination artifacts/tauri/
+          Copy-Item -LiteralPath lab/tauri/src-tauri/Cargo.lock -Destination artifacts/tauri/
+          Compress-Archive -Path artifacts/tauri/portable/* -DestinationPath artifacts/tauri/portable.zip
+          Get-ChildItem artifacts/tauri/nsis/*.exe,artifacts/tauri/portable.zip | Get-FileHash -Algorithm SHA256 | Format-Table -AutoSize | Out-File artifacts/tauri/SHA256SUMS.txt
+          Get-ChildItem artifacts/tauri/nsis/*.exe,artifacts/tauri/portable.zip | Select-Object Name,Length | Format-Table -AutoSize
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJI-4G-Tauri-Lab
+          retention-days: 14
+          path: |
+            artifacts/tauri/nsis/
+            artifacts/tauri/portable.zip
+            artifacts/tauri/README.md
+            artifacts/tauri/Cargo.lock
+            artifacts/tauri/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: Tauri-lab-lock
+          path: lab/tauri/src-tauri/Cargo.lock
+
