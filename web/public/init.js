@@ -7,7 +7,8 @@ async function refreshDefaultRoute() {
   try {
     const data = await fetchJson("/api/default-route", 17000);
     state.routeNames = Array.isArray(data.names) && data.ok ? data.names : null;
-  } catch { state.routeNames = null; }
+    state.routeKind = data.ok ? (data.kind || "unknown") : "";
+  } catch { state.routeNames = null; state.routeKind = ""; }
   finally { state.routeReading = false; renderDefaultRoute(); }
 }
 setInterval(refreshDefaultRoute, 15000);

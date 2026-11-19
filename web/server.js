@@ -27,15 +27,33 @@ async function invalidateDefaultRoute() {
   if (defaultRoutePending) await defaultRoutePending.catch(() => {});
   defaultRouteCache = null;
 }
+// Module first, then virtual adapters: a TUN interface (Clash, WireGuard, TAP) reports
+// HardwareInterface=false and would otherwise look like an ordinary Ethernet card.
+function classifyEgress(route) {
+  if (!route) return "unknown";
+  const text = `${route.description || ""} ${route.name || ""}`;
+  if (/Quectel|Mobile Broadband|WWAN|Cellular|ECM|Baiwang|QDC507/i.test(text)) return "module";
+  if (route.hardware === false) return "vpn";
+  if (/Wi-?Fi|WLAN|802\.11|Wireless/i.test(text)) return "wifi";
+  return "ethernet";
+}
 async function defaultIpv4Route() {
   if (defaultRouteCache && Date.now() - defaultRouteCache.at < 12000) return defaultRouteCache.value;
   if (!defaultRoutePending) defaultRoutePending = (async () => {
     const result = await runPowerShell(["-File", script("default-route.ps1")], 15000);
-    let value = {ok:false, names:[]};
+    let value = {ok:false, names:[], kind:"unknown"};
     if (result.ok) {
       const routes = JSON.parse(result.stdout);
       const cost = Math.min(...routes.map(r => r.cost));
-      value = {ok:true, names:[...new Set(routes.filter(r => r.cost === cost).map(r => r.name))]};
+      const best = routes.filter(r => r.cost === cost);
+      // The page used to show only a name, so "Meta" or "WLAN" said nothing about whether
+      // the module carries any traffic at all.
+      value = {
+        ok: true,
+        names: [...new Set(best.map(r => r.name))],
+        kind: classifyEgress(best[0]),
+        detail: best[0] ? String(best[0].description || "") : "",
+      };
     }
     defaultRouteCache = {at:Date.now(), value};
     return value;
@@ -2437,4 +2455,4 @@ if (require.main === module) {
 }
 
 
-module.exports = { invalidateDefaultRoute, server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, smsSubmitResult, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };
+module.exports = { invalidateDefaultRoute, classifyEgress, server, startServer, startBonjour, stopBonjour, pairingServiceName, localIps, primaryConsoleUrl, buildSmsPdus, smsSubmitResult, parseClcc, extractAtResponse, parseCallStatusResult, hasVoiceSession, parseModuleTemperature, parseDialString, buildCallAction, normalizeIccid, parseSimIdentity, normalizeIsdrAid, parseLpacData, mergeEuiccRecords, inventoryCandidateAids, scanEuiccInventory, atAccepted, sameUsbComposition, parseVoiceIdentity, voiceBackupSummary, parseSmsStorage, normalizeNetworkTrafficResult, redactModemIdentifiers };

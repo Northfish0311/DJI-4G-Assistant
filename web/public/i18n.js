@@ -226,7 +226,7 @@ Object.assign(copy.en, {
   smsCms332: "Network timed out", smsCms500: "No specific reason reported",
 });
 Object.assign(copy.zh, {
-  measuredAdapter:"正在统计的网卡", defaultIpv4:"Windows 默认 IPv4 出口", routeAbsent:"无默认路由", routeUnavailable:"暂时无法读取", routeTie:"同优先级：{names}",
+  measuredAdapter:"正在统计的网卡", defaultIpv4:"Windows 默认 IPv4 出口", routeAbsent:"无默认路由", routeKindModule:"模块", routeKindWifi:"Wi-Fi", routeKindVpn:"VPN/代理虚拟网卡", routeKindEthernet:"有线网卡", routeUnavailable:"暂时无法读取", routeTie:"同优先级：{names}",
   revealIds:"显示卡号", hideIds:"隐藏卡号", olderSms:"更早的短信（还有 {count} 条）", micSignal:"麦克风输入", modemSignal:"模块返回声音", audioSignal:"有信号", audioQuiet:"暂未测到声音", meterUnavailable:"无法测量",
   apiVersionMismatch:"当前页面需要 API {expected}，电脑端是 {app}（API {api}）。请先强制刷新页面；仍然提示就升级两端的程序。", preferWifi:"优先使用 Wi-Fi", restoreRoute:"恢复原优先级", routeWorking:"正在检查 Windows 网络设置…",
   routeSaved:"已核对大疆网卡的优先级。实际默认出口见上方；Wi-Fi 断开时仍可能使用 4G。", routeRestored:"已恢复这块网卡原先的自动或手动优先级。",
@@ -236,7 +236,7 @@ Object.assign(copy.zh, {
   routeResult18:"无法确认已完全回退。备份仍在，请接回同一网卡后点“恢复原优先级”。", routeResult19:"另一个网络优先级操作正在进行。", routeResult20:"当前网卡配置不受支持，不能安全继续。", routeResult21:"未能确认操作结果。请检查连接、管理员权限和当前优先级。"
 });
 Object.assign(copy.en, {
-  measuredAdapter:"Measured adapter", defaultIpv4:"Windows default IPv4 route", routeAbsent:"No default route", routeUnavailable:"Unavailable", routeTie:"Equal priority: {names}",
+  measuredAdapter:"Measured adapter", defaultIpv4:"Windows default IPv4 route", routeAbsent:"No default route", routeKindModule:"module", routeKindWifi:"Wi-Fi", routeKindVpn:"VPN/proxy adapter", routeKindEthernet:"Ethernet", routeUnavailable:"Unavailable", routeTie:"Equal priority: {names}",
   revealIds:"Show numbers", hideIds:"Hide numbers", olderSms:"Earlier messages ({count} more)", micSignal:"Microphone input", modemSignal:"Audio from modem", audioSignal:"Signal present", audioQuiet:"No signal detected", meterUnavailable:"Unavailable",
   apiVersionMismatch:"This page expects console API {expected} but the computer runs {app} with API {api}. Hard-refresh the page; if it persists, upgrade the app on both sides.", preferWifi:"Prefer Wi-Fi", restoreRoute:"Restore original priority", routeWorking:"Checking Windows network settings…",
   routeSaved:"Dongle metrics verified. See the default route above. Windows may still use 4G if Wi-Fi disconnects.", routeRestored:"Original interface metrics restored.",

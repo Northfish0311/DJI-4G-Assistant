@@ -168,9 +168,14 @@ function renderTraffic(text, freshSample = true) {
 }
 
 function renderDefaultRoute() {
-  const names = state.routeNames;
-  document.querySelector("#defaultRouteName").textContent = names === undefined ? "--" : !names ? t("routeUnavailable") :
+  const names = state.routeNames, kind = state.routeKind;
+  // A bare adapter name ("Meta", "WLAN") does not tell anyone whether the module carries
+  // the traffic, so name the egress type next to it.
+  const kindLabel = names && names.length && kind && kind !== "unknown"
+    ? t("routeKind" + kind.charAt(0).toUpperCase() + kind.slice(1)) : "";
+  const text = names === undefined ? "--" : !names ? t("routeUnavailable") :
     names.length > 1 ? t("routeTie", {names:names.join(" / ")}) : names[0] || t("routeAbsent");
+  document.querySelector("#defaultRouteName").textContent = kindLabel ? `${text} · ${kindLabel}` : text;
 }
 
 function renderTrafficSyncState() {
