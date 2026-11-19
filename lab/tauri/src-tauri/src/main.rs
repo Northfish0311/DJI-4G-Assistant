@@ -40,7 +40,30 @@ fn start(payload: &Path, data: &Path, lan: bool) -> io::Result<(Backend, Ready)>
         .ok_or_else(||io::Error::other("Private backend did not become ready"))?;
     Ok((Backend{_job:job,_child:child},ready))
 }
+fn backend_smoke() -> Result<(),Box<dyn std::error::Error>> {
+    use std::{net::{TcpStream,Shutdown},io::Read};
+    let payload=std::env::current_exe()?.parent().unwrap().join("payload");
+    let data=std::env::temp_dir().join(format!("dji-tauri-smoke-{}",std::process::id()));
+    let (backend,r)=start(&payload,&data,false)?;
+    let mut connection=TcpStream::connect(("127.0.0.1",r.port))?;
+    connection.set_read_timeout(Some(Duration::from_secs(5)))?;
+    write!(connection,"GET /api/health HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nX-Console-Token: {}\r\nConnection: close\r\n\r\n",r.port,r.token)?;
+    let mut response=String::new();connection.read_to_string(&mut response)?;
+    if !response.starts_with("HTTP/1.1 200") || !response.contains("\"smsDeleteEnabled\":false") {return Err("Health probe failed".into());}
+    let _=connection.shutdown(Shutdown::Both);
+    let Backend{_job:job,_child:mut child}=backend;
+    drop(job);
+    child.wait()?;
+    if TcpStream::connect(("127.0.0.1",r.port)).is_ok(){return Err("Listener survived job close".into());}
+    std::fs::remove_dir_all(&data)?;
+    std::fs::write("backend-smoke-result.txt","PASS: bundled Rust/Node handshake, health, disabled writes, job cleanup. No modem access.")?;
+    Ok(())
+}
 fn main(){
+    if std::env::args().any(|a|a=="--backend-smoke") {
+        if backend_smoke().is_err(){std::process::exit(2);}
+        return;
+    }
     tauri::Builder::default().setup(|app|{
         let (backend,r)=start(&app.path().resource_dir()?.join("payload"),&app.path().app_local_data_dir()?,std::env::args().any(|a|a=="--lan"))?;
         app.manage(Mutex::new(backend));
