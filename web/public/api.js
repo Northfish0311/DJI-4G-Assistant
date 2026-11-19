@@ -1,3 +1,5 @@
+const CONSOLE_API_VERSION = 2;
+
 async function fetchJson(path, timeoutMs = 90000) {
   const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -14,7 +16,6 @@ async function requestAction(action, {refreshDetails = false, startup = false} =
   const epoch = state.cardEpoch, portName = portInput.value.trim(), selectedAid = state.activeAid, selectedEid = state.activeEid;
   const port = encodeURIComponent(portInput.value.trim());
   const aid = encodeURIComponent(state.activeAid || "");
-  const CONSOLE_API_VERSION = 2;
 const paths = { health: "/api/health", ports: "/api/ports", "device-check": "/api/device-check", "find-at": "/api/find-at", "module-status": `/api/module-status?port=${port}`, "module-temperature": `/api/module-temperature?port=${port}`, baseline: `/api/baseline?port=${port}`, "sms-list": `/api/sms-list?port=${port}`, "call-status": `/api/call-status?port=${port}&brief=1`, "call-capabilities": `/api/call-capabilities?port=${port}`, "euicc-inventory": `/api/euicc-inventory?port=${port}`, "lpac-chip": `/api/lpac-chip?port=${port}&aid=${aid}`, "lpac-discovery": `/api/lpac-discovery?port=${port}&aid=${aid}`, "lpac-profiles": `/api/lpac-profiles?port=${port}&aid=${aid}`, "lpac-notifications": `/api/lpac-notifications?port=${port}&aid=${aid}`, "windows-network": "/api/windows-network", "network-traffic": "/api/network-traffic", "stock-module-probe": "/api/stock-module-probe" };
   const cardScoped = !["health", "ports", "device-check", "windows-network", "network-traffic", "stock-module-probe"].includes(action);
   const stale = () => cardScoped && (epoch !== state.cardEpoch || (action !== "find-at" && portName !== portInput.value.trim()) || (action.startsWith("lpac-") && (selectedAid !== state.activeAid || selectedEid !== state.activeEid)));
