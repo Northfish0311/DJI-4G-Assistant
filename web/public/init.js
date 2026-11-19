@@ -15,7 +15,7 @@ setInterval(refreshDefaultRoute, 15000);
 if (window.dongleRouting) {
   const panel = document.querySelector("#routePreferenceActions");
   panel.hidden = false;
-  for (const [id, method] of [["preferWifiBtn","preferWifi"], ["restoreRouteBtn","restore"]]) {
+  for (const [id, method] of [["preferWifiBtn","preferWifi"], ["restoreRouteBtn","restore"], ["blockDataBtn","block"], ["unblockDataBtn","unblock"]]) {
     document.getElementById(id).addEventListener("click", async () => {
       if (state.busy || state.routeWriting || state.confirming) return;
       state.routeWriting = true;
@@ -26,7 +26,7 @@ if (window.dongleRouting) {
       report("routeWorking");
       try {
         const code = await window.dongleRouting[method](state.language);
-        report(code === 0 ? (method === "restore" ? "routeRestored" : "routeSaved") : "routeResult" + code);
+        report(code === 0 ? ({restore:"routeRestored", preferWifi:"routeSaved", block:"dataBlocked", unblock:"dataAllowed"})[method] : "routeResult" + code);
         if (code === 0) {
           await refreshDefaultRoute();
           setTimeout(refreshDefaultRoute, 12500);

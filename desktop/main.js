@@ -148,10 +148,14 @@ async function startDesktop() {
     changed: () => require("../web/server").invalidateDefaultRoute(),
     confirm: async (win, mode, zh) => {
       const restore = mode === "Restore";
+      const lock = mode === "Block" || mode === "Unblock";
+      const lockMessage = mode === "Block"
+        ? (zh ? "禁止电脑使用大疆流量？" : "Block this PC from using dongle data?")
+        : (zh ? "重新允许电脑使用大疆流量？" : "Allow this PC to use dongle data again?");
       const message = zh ? (restore ? "恢复这块大疆网卡原来的优先级？" : "让 Windows 优先用 Wi-Fi 上网？")
         : (restore ? "Restore this dongle's original interface metrics?" : "Prefer Wi-Fi to this dongle?");
-      const result = await dialog.showMessageBox(win, {type:"question", message,
-        detail: zh ? "只调整已识别的大疆 USB 网卡，不禁用网卡，不修改 SIM 或 APN。Windows 可能需要管理员批准。"
+      const result = await dialog.showMessageBox(win, {type:"question", message:lock ? lockMessage : message,
+        detail: lock ? (zh ? "只停用或启用大疆 USB 网卡。停用期间模块网页也不可达；不修改短信串口、SIM 或 Wi-Fi。Windows 可能需要管理员批准。" : "Only the dongle network adapter changes. Its USB web page is unavailable while blocked. The SMS port, SIM and Wi-Fi are untouched. Windows may ask for administrator approval.") : zh ? "只调整已识别的大疆 USB 网卡，不禁用网卡，不修改 SIM 或 APN。Windows 可能需要管理员批准。"
           : "Only the identified USB adapter's metrics will change. The adapter stays enabled. SIM and APN settings are untouched. Windows may request administrator approval.",
         buttons: zh ? ["取消","继续"] : ["Cancel","Continue"], defaultId:0, cancelId:0});
       return result.response === 1;

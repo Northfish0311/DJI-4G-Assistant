@@ -2,6 +2,22 @@ const test = require("node:test"), assert = require("node:assert/strict");
 const {spawnSync} = require("node:child_process"), path = require("node:path");
 const {preferenceHandler} = require("../desktop/network-preference");
 const guid = "11223344-1234-1234-1234-112233445566";
+test("data lock pins the ECM device instance even when restoring a disabled NIC", async()=>{
+  const target="USB\\VID_2C7C&PID_0125&MI_04\\EXAMPLE";
+  for (const mode of ["Block","Unblock"]) {
+    const seen=[];
+    const h=harness({run:async(...args)=>{seen.push(args);return {code:0,guid:target};}});
+    assert.equal(await h.handler(h.event,mode),0);
+    assert.deepEqual(seen,[["CheckLock"],[mode,target]]);
+    const invalid=harness();
+    assert.equal(await invalid.handler(invalid.event,mode),21);
+    assert.deepEqual(invalid.ops,[["CheckLock"]]);
+  }
+});
+test("Windows ECM lock fixtures", {skip:process.platform!=="win32"},()=>{
+  const r=spawnSync("powershell",["-NoProfile","-ExecutionPolicy","Bypass","-File",path.join(__dirname,"fixtures","dongle-data-lock.ps1")],{encoding:"utf8",windowsHide:true,timeout:20000});
+  assert.equal(r.status,0,r.stderr);assert.match(r.stdout,/PASS:/);
+});
 function harness(overrides={}) {
   const origin = "http://127.0.0.1:8888", frame={url:origin+"/?token=fixture"}, wc={mainFrame:frame};
   const event={sender:wc,senderFrame:frame}, win={webContents:wc,isDestroyed:()=>false};

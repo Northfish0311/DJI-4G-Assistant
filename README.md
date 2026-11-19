@@ -1,6 +1,6 @@
 # DJI 4G Assistant（大疆 4G 助手）
 
-> **本分支是 Tauri 实验版，不是最新正式版。** 下载、打开方法、功能限制和实测结果见 [实验版中文说明](lab/tauri/README.md)。实验包从 GitHub Actions 附件下载，不在 Releases；目前只开放读取功能。下方保留基线正式版说明，不代表实验版已支持所有功能。普通用户继续使用 [最新正式版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)。
+本页为 Windows 正式版说明。[Tauri 实验版](lab/tauri/README.md) 单独构建，不替代正式版。
 
 DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
@@ -12,9 +12,9 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 
 ## 下载入口
 
-**Windows 1.9.0（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.0/DJI-4G-Assistant-Setup-1.9.0-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.0/DJI-4G-Assistant-Portable-1.9.0-x64.exe)。先退出旧版，再双击下载的文件；两种都不需要安装 Node.js。
+**Windows 1.9.2（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.2/DJI-4G-Assistant-Setup-1.9.2-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.2/DJI-4G-Assistant-Portable-1.9.2-x64.exe)。先退出旧版，再双击下载的文件。无需安装 Node.js。
 
-1.9.0 的主题是「不用等」：设备检查从约 11 秒降到 0.1 秒以内，网络页流量从约 9.7 秒降到 0.05 秒，网卡信息从 0.3 秒降到 0.04 秒；没有 AT 端口时启动不再逐项扫描。1.8.8 到 1.8.12 带来的修复也都在：关掉窗口后整组进程真正退出、短信索引从 0 开始的模块可以正常删除、「优先使用 Wi-Fi」最多等 20 秒不会卡住按钮、页面与电脑端版本不一致会直接提示。[查看 1.9.0 中文更新说明](docs/RELEASE-v1.9.0.md) · [GitHub 发布页与校验文件](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/v1.9.0)
+**不想让电脑消耗大疆卡流量？** 先连上 Wi-Fi，插入模块，在桌面助手选 **网络 → 禁止大疆流量**，确认 Windows 管理员提示。要恢复，接回同一个模块，点 **允许大疆流量**。这两个按钮只控制识别到的 Quectel ECM 网卡，不改短信串口。只想优先走 Wi-Fi、断线后仍可用卡上网，则选 **优先使用 Wi-Fi**。[查看 1.9.2 中文更新说明](docs/RELEASE-v1.9.2.md)
 
 **驱动不是每台电脑都会自动装好。** 能上网不代表能读短信或管理 eSIM；这些管理功能还需要可用的 AT 串口。助手安装包不会自动修复缺失或被改成 WinUSB 的串口驱动，遇到这种情况先看[Windows 驱动说明](docs/Windows驱动说明.md)，不要反复修改模块或套餐。
 
