@@ -165,7 +165,9 @@ async function startDesktop() {
 
 const hasLock = app.requestSingleInstanceLock();
 if (!hasLock) {
-  app.quit();
+  // A second launch has nothing to clean up; exit immediately instead of going through
+  // app.quit(), which can leave the process alive before the app is ready.
+  app.exit(0);
 } else {
   app.on("second-instance", () => {
     if (!mainWindow) return;
@@ -176,11 +178,26 @@ if (!hasLock) {
     writeSmokeResult({ ok: false, error: error.stack || error.message });
     console.error("DESKTOP_START_ERROR", error.stack || error.message);
     if (!smokeTest) dialog.showErrorBox("DJI 4G Assistant could not start", error.stack || error.message);
-    app.quit();
+    quitEveryProcess();
   });
 }
 
-app.on("window-all-closed", () => app.quit());
+// Keep the v1.8.10 bounded exit fix even though the Tauri package does not use Electron.
+let quitting = false;
+function quitEveryProcess(code = 0) {
+  if (quitting) return;
+  quitting = true;
+  try { if (localServer?.listening) localServer.close(); } catch {}
+  try { require("../web/server").stopBonjour(); } catch {}
+  setTimeout(() => app.exit(code), 1500);
+  app.quit();
+}
+
+app.on("window-all-closed", () => quitEveryProcess());
 app.on("before-quit", () => {
-  if (localServer?.listening) localServer.close();
+  quitting = true;
+  try { if (localServer?.listening) localServer.close(); } catch {}
+  try { require("../web/server").stopBonjour(); } catch {}
 });
+process.on("SIGINT", () => quitEveryProcess());
+process.on("SIGTERM", () => quitEveryProcess());

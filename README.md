@@ -1,5 +1,7 @@
 ﻿# DJI 4G Assistant（大疆 4G 助手）
 
+> **本分支是 Tauri 实验版，不是最新正式版。** 下载、打开方法、功能限制和实测结果见 [实验版中文说明](lab/tauri/README.md)。实验包从 GitHub Actions 附件下载，不在 Releases；目前只开放读取功能。下方保留基线正式版说明，不代表实验版已支持所有功能。普通用户继续使用 [最新正式版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/latest)。
+
 DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
 
 **当前主攻 Windows 版，不开发 Mac 版。** 手机和平板可以通过同一局域网访问 Windows 助手；模块仍插在 Windows 电脑上。
