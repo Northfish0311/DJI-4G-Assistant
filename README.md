@@ -1,22 +1,27 @@
 # DJI 4G Assistant（大疆 4G 助手）
 
-本页为 Windows 正式版说明。[Tauri 实验版](lab/tauri/README.md) 单独构建，不替代正式版。
+DJI 4G Assistant 是第一代大疆 4G 模块及部分兼容 USB LTE 模块的 Windows 管理软件，可查看网络状态、收发短信和管理 eSIM。以下是正式版 **1.9.2** 的使用方法；开发者可另看 [Tauri 实验版说明](lab/tauri/README.md)。
 
-DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适用于第一代 DJI Cellular Dongle，以及部分 Baiwang / QDC507 / Quectel USB LTE 模块。
+## Windows 快速开始
 
-**当前主攻 Windows 版，不开发 Mac 版。** 手机和平板可以通过同一局域网访问 Windows 助手；模块仍插在 Windows 电脑上。
+1. **下载软件。** 大多数人选[安装版（Windows 64 位）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.2/DJI-4G-Assistant-Setup-1.9.2-x64.exe)，双击安装后，从开始菜单打开 **DJI 4G Assistant**。不想安装就选[免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.2/DJI-4G-Assistant-Portable-1.9.2-x64.exe)，双击即可。两个版本功能相同，只选一个；升级前先退出旧版。
+2. **插入模块。** 装好 SIM 卡或 eSIM 转接卡，把模块插到电脑的 USB 口。助手会自动查找设备，不用输入网址、COM 号，也不用装 Node.js。
+3. **打开你要用的页面。** 看来信点 **短信**，管理套餐点 **eSIM**，选择电脑是否使用卡流量点 **网络**。如果模块能上网、助手却找不到短信串口，先看 [Windows 驱动说明](docs/Windows驱动说明.md)。
 
-**安卓、iPhone 和 iPad 都可以用浏览器远程管理，无需装 App。** 模块插在 Windows 电脑上，助手保持运行；目前没有把模块直接插在手机或平板上就能管理短信、eSIM 的独立版。
+### 电脑用 Wi-Fi，模块留着收短信
 
-这是目前唯一维护的完整版本。
+在 **Windows 桌面助手 → 网络** 操作。先连好 Wi-Fi，再插模块；点击按钮后按 Windows 提示确认。**只插模块并不会自动开启流量保护。**
 
-## 下载入口
+| 你想怎么用 | 点哪个按钮 | Wi-Fi 断开后 | 怎么撤销 |
+| --- | --- | --- | --- |
+| 只用模块收短信，不让电脑走这张卡上网 | **禁止大疆流量** | 电脑不会改走这张大疆网卡 | **允许大疆流量** |
+| 平时用 Wi-Fi，断线时可以用卡上网 | **优先使用 Wi-Fi** | 电脑仍可能使用卡流量 | **恢复原优先级** |
 
-**Windows 1.9.2（64 位），两个文件选一个：** [下载安装版（推荐）](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.2/DJI-4G-Assistant-Setup-1.9.2-x64.exe)，或[下载免安装版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/v1.9.2/DJI-4G-Assistant-Portable-1.9.2-x64.exe)。先退出旧版，再双击下载的文件。无需安装 Node.js。
+禁止流量只停用模块的 USB 网卡，不修改 SIM、APN 或独立短信串口。**模块自带的 USB 管理网页也会暂时打不开**，这不等于卡坏了。能否收到短信还取决于串口驱动、蜂窝注册和套餐。手机浏览器不能操作这两个系统设置。[详细中文使用说明](docs/使用说明.md) · [1.9.2 更新说明](docs/RELEASE-v1.9.2.md)
 
-**不想让电脑消耗大疆卡流量？** 先连上 Wi-Fi，插入模块，在桌面助手选 **网络 → 禁止大疆流量**，确认 Windows 管理员提示。要恢复，接回同一个模块，点 **允许大疆流量**。这两个按钮只控制识别到的 Quectel ECM 网卡，不改短信串口。只想优先走 Wi-Fi、断线后仍可用卡上网，则选 **优先使用 Wi-Fi**。[查看 1.9.2 中文更新说明](docs/RELEASE-v1.9.2.md)
+## 手机和平板
 
-**驱动不是每台电脑都会自动装好。** 能上网不代表能读短信或管理 eSIM；这些管理功能还需要可用的 AT 串口。助手安装包不会自动修复缺失或被改成 WinUSB 的串口驱动，遇到这种情况先看[Windows 驱动说明](docs/Windows驱动说明.md)，不要反复修改模块或套餐。
+模块插在 **Windows 电脑** 上，电脑保持运行；手机或平板通过同一可信局域网远程管理。无需装 App，也不是把模块直插手机来管理。
 
 | 设备 | 下载与使用 |
 | --- | --- |
@@ -24,26 +29,7 @@ DJI 4G Assistant（大疆 4G 助手）是一款 Windows 桌面管理软件，适
 | 安卓手机/平板 | 无需安装，用浏览器即可。想用 App 扫码配对？Android 7.0 及以上可[下载 0.2.0 测试版 APK](https://github.com/Northfish0311/DJI-4G-Assistant/releases/download/android-remote-v0.2.0/DJI-4G-Remote-Android-0.2.0-test.apk)。[安卓安装和配对说明](docs/Android使用说明.md) |
 | iPhone/iPad | 推荐用 Safari。iOS/iPadOS 16 及以上可选用 [1.0.2 实验版](https://github.com/Northfish0311/DJI-4G-Assistant/releases/tag/ios-remote-v1.0.2)，真机 IPA 须自行签名，无公开 TestFlight 邀请。[iOS 安装说明](docs/iOS安装说明.md) |
 
-**手机和平板 App 都是远程管理版：模块插在 Windows，电脑保持运行，两台设备连接同一可信局域网。不是模块直插手机的独立版。**
-
-## Windows 怎么用
-
-**短信收件箱：** 短信页先显示一段会话的最后 40 条，向上翻或点“更早的短信”可继续；搜索包含较早的短信。在 Windows 上，构建时会编译一个小型 C# 组件，打开短信页后在串口空闲时监听新短信通知。卡、读取存储区及文本模式匹配才按编号读；不匹配或通知丢失会使用完整刷新，并保留原有的定时补查。它不会为了监听去切换套餐或修改通知配置。开发者从源码启动时可先运行 `npm run build:sms-reader`；未编译时仍可使用原收件箱。
-
-网络页分别显示正在统计的 USB 网卡和 Windows 默认 IPv4 出口；VPN 或特定目标可能有单独路由。仅查看页面或插入模块都不会更改路由。eSIM 页默认只显示卡号末六位，点“显示卡号”才展开，离开后会重新隐藏。Windows 电话接通并启动声音后，可分别查看麦克风输入与模块下行是否有声音信号；静音并不代表已挂断。
-
-**想用 Wi-Fi 上网、把大疆卡留着收短信？** 先连接 Wi-Fi，插入模块，在 Windows 桌面助手打开 **网络 → 优先使用 Wi-Fi**，核对提示并允许 Windows 管理员授权，再看上方“Windows 默认 IPv4 出口”。源码用户也可双击 [WiFi-Preference.cmd](scripts/windows/WiFi-Preference.cmd)。手机和普通浏览器不提供这个系统设置入口。
-
-它只调整唯一匹配的 Quectel ECM 大疆网卡。不会禁用设备，不改 APN、SIM、DNS 或 Wi-Fi；没插、识别不唯一、Wi-Fi 没有 IPv4 默认路由时不会设置。助手保存该 Windows 网卡原来的自动或手动优先级；要撤销，接回同一网卡，点 **恢复原优先级**。如果后来手动改过设置，助手不会强行覆盖。**这是优先 Wi-Fi，不是禁止 4G：Wi-Fi 断开时，Windows 仍可能使用 SIM 流量。**
-
-1. 打开 [Releases](https://github.com/Northfish0311/DJI-4G-Assistant/releases)，找到最上方带 **Latest** 标记的版本。
-2. 只下载 `DJI-4G-Assistant-Setup-版本号-x64.exe`，这是普通用户使用的安装版。
-3. 双击下载的安装包，按提示完成安装。
-4. 把 SIM/eSIM 卡装进模块，再把模块插到 Windows 电脑。
-5. 双击桌面上的 **DJI 4G Assistant** 图标。
-6. 等待程序自动发现 AT 口并读取设备状态；只有需要重新检查时才点击右上角“自动扫描”。
-
-如果提示找不到 AT 串口，即使模块能上网，也先按[驱动说明](docs/Windows驱动说明.md)检查 Windows 设备管理器。
+## 下载文件怎么选
 
 Releases 页面中的文件用途如下：
 
