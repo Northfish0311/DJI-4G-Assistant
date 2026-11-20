@@ -6,13 +6,9 @@ $script:wifi=$true
 $script:ops=@()
 function Get-ProblemCode($device) { $script:code }
 function Test-WifiRoute { $script:wifi }
-function Disable-PnpDevice($InstanceId,$Confirm) {
-  if ($InstanceId -ne $id) { throw 'unexpected adapter' }
-  $script:ops+='disable'; $script:code=22
-}
-function Enable-PnpDevice($InstanceId,$Confirm) {
-  if ($InstanceId -ne $id) { throw 'unexpected adapter' }
-  $script:ops+='enable'; $script:code=0
+function Set-DevNode($device, [bool]$disable) {
+  if ($device -ne $id) { throw 'unexpected adapter' }
+  if ($disable) { $script:ops+='disable'; $script:code=22 } else { $script:ops+='enable'; $script:code=0 }
 }
 function Expect-Error($reason,[scriptblock]$call) {
   try { & $call } catch { if ($_.Exception.Message -eq $reason) { return }; throw }
